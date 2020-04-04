@@ -9,22 +9,9 @@ attribute vec3 normal;
 uniform float time; // changes wave form
 // for projectionMatrix -> maps world view to screen view
 uniform mat4 worldViewProjection;
-// for modelViewMatrix
-uniform mat4 worldView;
-uniform mat4 world;
-uniform vec3 vCameraPosition;
-uniform vec2 waveData;
-uniform mat4 windMatrix;
 
 // Varying
-varying vec3 vPositionW;
-varying vec3 vNormalW;
-varying vec2 vBumpUV;
 varying vec2 vUv;
-varying vec3 viewZ;
-
-uniform vec3 cameraPosition;
-varying float vWaterDistanceToCamera;
 varying vec4 vClipSpace;
 
 
@@ -48,8 +35,4 @@ void main(void){
     // transforms model -> world -> view -> projection
     vClipSpace = worldViewProjection * vec4(newPosition,1.0);
     gl_Position = vClipSpace;
-
-    // calculate view position
-    vec4 positionV = worldView * vec4(newPosition,1.0);
-    vWaterDistanceToCamera = positionV.z;
 }

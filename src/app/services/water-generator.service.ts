@@ -28,7 +28,7 @@ export class WaterGeneratorService {
   private refractionRTT: any;
   private waterPlane: any;
   private reflectionTransform: Matrix = Matrix.Zero();
-  private showRTTPlane = true;
+  private showRTTPlane = false;
   private time = 0;
   private waveLength = 10.0;
   private waveHeight = 50.0;
@@ -150,35 +150,29 @@ export class WaterGeneratorService {
     const windMatrix = waterBumpTexture.getTextureMatrix().multiply(
       BABYLON.Matrix.Translation(waterDirection.x * this.time, waterDirection.y * this.time, 0));
 
-    console.log(windMatrix);
-    waterMaterial.setMatrix('windMatrix', windMatrix);
-    waterMaterial.setFloats('waveData', [this.waveLength, this.waveHeight]);
-    waterMaterial.setFloat('camera_near', this.camera.minZ);
-    waterMaterial.setFloat('camera_far', this.camera.maxZ);
-    console.log(this.camera.minZ);
-    console.log(this.camera.maxZ);
-
 
     // set shader uniforms
-    waterMaterial.setTexture('reflectionTexture', this.reflectionRTT);
-    waterMaterial.setTexture('refractionTexture', this.refractionRTT);
-    waterMaterial.setTexture('depthTexture', this.renderer.getDepthMap());
+
+
     waterMaterial.setTexture('bumpTexture', waterBumpTexture);
     waterMaterial.setFloat('bumpHeight', 0.4);
-
-    //waterMaterial.setMatrix('worldReflectionViewProjection', wrvp);
 
     waterMaterial.setTexture('waterTexture', waterSurfaceTexture);
     waterMaterial.setTexture('dudvTexture', dudvmap);
 
-    const shallowWaterColor = new Color4(0, 0.1, 0.3, 1.0);
-    const deepWaterColor = new Color4(0, 0.1, 0.1, 1.0);
+    const shallowWaterColor = new Color4(0.3, 0.4, 0.8, 1.0);
+    const deepWaterColor = new Color4(0, 0.2, 0.5, 1.0);
 
-    waterMaterial.setVector3('cameraPosition', this.scene.activeCamera.position);
+    waterMaterial.setColor4('shallowWaterColor', shallowWaterColor);
+    waterMaterial.setColor4('deepWaterColor', deepWaterColor);
 
-    waterMaterial.setColor3('shallowWaterColor', shallowWaterColor);
-    waterMaterial.setColor3('deepWaterColor', deepWaterColor);
-    waterMaterial.alpha = 0.0;
+    waterMaterial.setTexture('depthTexture', this.renderer.getDepthMap());
+    waterMaterial.setFloat('camera_near', this.camera.minZ);
+    waterMaterial.setFloat('camera_far', this.camera.maxZ);
+
+    waterMaterial.setTexture('reflectionTexture', this.reflectionRTT);
+    waterMaterial.setTexture('refractionTexture', this.refractionRTT);
+
     // set material
     this.waterPlane.material = waterMaterial;
 
@@ -187,7 +181,6 @@ export class WaterGeneratorService {
     this.scene.registerBeforeRender(() => {
       // @ts-ignore
       this.waterPlane.material.setFloat('time', this.time);
-      //waterMaterial.setVector3('cameraPosition', this.scene.activeCamera.position);
       this.time += 0.01;
     });
 

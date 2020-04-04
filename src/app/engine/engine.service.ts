@@ -20,9 +20,9 @@ import { TerrainGeneratorService } from '../services/terrain-generator.service';
 @Injectable({ providedIn: 'root' })
 export class EngineService {
   private canvas: HTMLCanvasElement;
-  private engine: Engine;
-  private camera: FreeCamera;
-  private scene: Scene;
+  private engine: BABYLON.Engine;
+  private camera: FlyCamera;
+  private scene: BABYLON.Scene;
   private light: Light;
 
   public constructor(
@@ -39,34 +39,34 @@ export class EngineService {
     this.canvas = canvas.nativeElement;
 
     // Then, load the Babylon 3D engine:
-    this.engine = new Engine(this.canvas,  true);
+    this.engine = new BABYLON.Engine(this.canvas,  true);
 
     // create a basic BJS Scene object
-    this.scene = new Scene(this.engine);
+    this.scene = new BABYLON.Scene(this.engine);
     this.scene.clearColor = new Color4(0, 0, 0, 0);
     this.scene.gravity = new BABYLON.Vector3(0, -9.81, 0);
 
-    // ***** Skybox ******
-    const skybox = BABYLON.MeshBuilder.CreateBox('skyBox', {size: 1000.0}, this.scene);
-    const skyboxMaterial = new BABYLON.StandardMaterial('skyBox', this.scene);
-    skyboxMaterial.backFaceCulling = false;
-    skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture('/assets/textures/material/TropicalSunnyDay', this.scene);
-    skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-    skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
-    skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-    skybox.material = skyboxMaterial;
+    // ***** SkyBox ******
+    const skyBox = BABYLON.MeshBuilder.CreateBox('skyBox', {size: 1000.0}, this.scene);
+    const skyBoxMaterial = new BABYLON.StandardMaterial('skyBox', this.scene);
+    skyBoxMaterial.backFaceCulling = false;
+    skyBoxMaterial.reflectionTexture = new BABYLON.CubeTexture('/assets/textures/material/TropicalSunnyDay', this.scene);
+    skyBoxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+    skyBoxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+    skyBoxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+    skyBox.material = skyBoxMaterial;
 
     // ****** CAMERA ******
     // create a FreeCamera, and set its position to (x:5, y:10, z:-20 )
     this.camera = new FlyCamera('flyCamera', new Vector3(0, 100, -200), this.scene);
     this.camera.applyGravity = false;
-    this.camera.ellipsoid = new BABYLON.Vector3(1, 1, 1);
+
     // target the camera to scene origin
     this.camera.setTarget(Vector3.Zero());
     // attach the camera to the canvas
     this.camera.attachControl(this.canvas, false);
-    //this.camera.maxZ = 1000;
 
+    // enable depth buffer
     const renderer = this.scene.enableDepthRenderer();
 
     // ***** Lights *****
@@ -81,11 +81,12 @@ export class EngineService {
     this.terrainGeneratorService.setScene(this.scene);
     const terrain = this.terrainGeneratorService.buildTerrain();
 
-    // add mesh to renderList
-    //this.waterGeneratorService.addToReflectionRenderList(skybox);
-   // this.waterGeneratorService.addToReflectionRenderList(terrain);
-    //this.waterGeneratorService.addToRefractionRenderList(terrain);
+    // add mesh to renderList of water
+    this.waterGeneratorService.addToReflectionRenderList(skyBox);
+    this.waterGeneratorService.addToReflectionRenderList(terrain);
+    this.waterGeneratorService.addToRefractionRenderList(terrain);
 
+    // add mesh to depth renderer
     renderer.getDepthMap().renderList = [terrain];
   }
 
