@@ -94,7 +94,7 @@ export class WaterGeneratorService {
       mirrorMatrix.multiplyToRef(savedViewMatrix, this.reflectionTransform);
       scene.setTransformMatrix(this.reflectionTransform, scene.getProjectionMatrix());
       // only render visible faces
-      scene.getEngine().cullBackFaces = false;
+      //scene.getEngine().cullBackFaces = false;
       scene._mirroredCameraPosition = Vector3.TransformCoordinates((scene.activeCamera as Camera).position, mirrorMatrix);
     };
 
@@ -110,8 +110,6 @@ export class WaterGeneratorService {
   }
 
   public buildWaterPlane() {
-    //const depthTexture = this.renderer.getDepthMap().getInternalTexture();
-
     // more resolution means better quality in reflection / refraction
     this.buildRenderTargetTexture(this.scene, new Vector2(512, 512));
 

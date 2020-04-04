@@ -35,10 +35,12 @@ void main(void)
     float waterDepth = depthOfObjectBehindWater - linearWaterDepth;
 
     // get reflection color
-    //vec4 reflectionColor = texture2D(reflectionTexture, reflectionTexCoords);
+    vec4 reflectionColor = texture2D(reflectionTexture, reflectionTexCoords);
 
     // mix colors
-    gl_FragColor = vec4(vec3(shallowWaterColor),1.0);
-    gl_FragColor = mix(gl_FragColor,deepWaterColor,clamp(waterDepth * 1000., 0.0, 1.0));
-
+    // if the water is deeper it gets darker
+    vec4 baseWaterColor = mix(shallowWaterColor,deepWaterColor,clamp(waterDepth * 1000., 0.0, 1.0));
+    // add reflection
+    vec4 waterWithReflection = mix(reflectionColor*.7,baseWaterColor,0.4);
+    gl_FragColor = waterWithReflection;
 }
