@@ -1,37 +1,55 @@
-attribute vec3 aPosition;
-attribute vec2 aUv0;
+precision mediump float;
 
-uniform mat4 matrix_model;
-uniform mat4 matrix_viewProjection;
-uniform float uTime;
+// Attributes
+attribute vec3 position; // model coordinate
+attribute vec2 uv;
+attribute vec3 normal;
 
-// Shared between Vertex & Fragment Shader
-varying vec2 vUv0;
-varying vec3 ScreenPosition;
-varying vec3 WorldPosition;
+// Uniforms
+uniform float time; // changes wave form
+// for projectionMatrix -> maps world view to screen view
+uniform mat4 worldViewProjection;
+// for modelViewMatrix
+uniform mat4 worldView;
+uniform mat4 world;
+uniform vec3 vCameraPosition;
+uniform vec2 waveData;
+uniform mat4 windMatrix;
+
+// Varying
+varying vec3 vPositionW;
+varying vec3 vNormalW;
+varying vec2 vBumpUV;
+varying vec2 vUv;
+varying vec3 viewZ;
+
+uniform vec3 cameraPosition;
+varying float vWaterDistanceToCamera;
+varying vec4 vClipSpace;
+
 
 float calculateSurface(float x, float z) {
-    float scale = 6.0;
+    float scale = 1.0;
     float y = 0.0;
-    y += (sin(x * 1.0 / scale + uTime * 1.0) + sin(x * 2.3 / scale + uTime * 1.5) + sin(x * 3.3 / scale + uTime * 0.4)) / 3.0;
-    y += (sin(z * 0.2 / scale + uTime * 1.8) + sin(z * 1.8 / scale +uTime * 1.8) + sin(z * 2.8 / scale + uTime * 0.8)) / 3.0;
+    float heightMultiplier = 0.5;
+    y += heightMultiplier * (sin(x * 1.0 / scale + time * 1.0) + sin(x * 2.3 / scale + time * 1.5) + sin(x * 3.3 / scale + time * 0.4)) / 3.0;
+    y += heightMultiplier * (sin(z * 0.2 / scale + time * 1.8) + sin(z * 1.8 / scale + time * 1.8) + sin(z * 2.8 / scale + time * 0.8)) / 3.0;
     return y;
 }
 
-void main(void)
-{
-   // share with fragment shader
-   vUv0 = aUv0;
-   vec3 pos = aPosition;
+void main(void){
+    // calculate new height of wave > model space
+    float y = calculateSurface(position.x, position.z);
 
-   // offset y to create waves
-   pos.y = calculateSurface(aPosition.x, aPosition.z);
-   vec3 newVertexCoord = vec3(pos.x, pos.y, pos.z);
-   // calculate new screen position
-   gl_Position = matrix_viewProjection * matrix_model * vec4(newVertexCoord, 1.0);
+    // calculate new vertex position > model space
+    vec3 newPosition = vec3(position.x, y, position.z);
 
-   // set Screen Position
-   ScreenPosition = gl_Position.xyz;
-   // set World Position
-   WorldPosition = pos;
+    // calculate new vertex position -> clipSpace
+    // transforms model -> world -> view -> projection
+    vClipSpace = worldViewProjection * vec4(newPosition,1.0);
+    gl_Position = vClipSpace;
+
+    // calculate view position
+    vec4 positionV = worldView * vec4(newPosition,1.0);
+    vWaterDistanceToCamera = positionV.z;
 }
