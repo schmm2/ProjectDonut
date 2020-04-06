@@ -2,7 +2,6 @@ import {Injectable} from '@angular/core';
 import {
   MeshBuilder,
   ShaderMaterial,
-  Texture,
   Color3,
   Vector2,
   RenderTargetTexture,
@@ -13,7 +12,8 @@ import {
   Color4,
   Vector4,
   Plane,
-  Nullable
+  Nullable,
+  Texture
 } from 'babylonjs';
 
 @Injectable({
@@ -28,7 +28,7 @@ export class WaterGeneratorService {
   private refractionRTT: any;
   private waterPlane: any;
   private reflectionTransform: Matrix = Matrix.Zero();
-  private showRTTPlane = false;
+  private showRTTPlane = true;
   private time = 0;
   private waveLength = 10.0;
   private waveHeight = 50.0;
@@ -84,8 +84,8 @@ export class WaterGeneratorService {
       // get plane water mesh position
       const planePositionY = this.waterPlane ? this.waterPlane.position.y : 0.0;
 
-      // position reflection slightly 0.05 below object
-      scene.clipPlane = Plane.FromPositionAndNormal(new Vector3(0, planePositionY - 0.05, 0), new Vector3(0, -1.0, 0));
+      // position reflection slightly below object
+      scene.clipPlane = Plane.FromPositionAndNormal(new Vector3(0, planePositionY , 0), new Vector3(0, -1.0, 0));
       // clip plane will be flipped
       Matrix.ReflectionToRef(scene.clipPlane, mirrorMatrix);
 
@@ -119,8 +119,8 @@ export class WaterGeneratorService {
       planeRTT.setPositionWithLocalVector(new BABYLON.Vector3(100, 50, 0));
 
       const rttMaterial = new BABYLON.StandardMaterial('RTT material', this.scene);
-      rttMaterial.emissiveTexture = this.renderer.getDepthMap();
-      //rttMaterial.disableLighting = true;
+      rttMaterial.emissiveTexture = this.reflectionRTT;
+      rttMaterial.disableLighting = true;
       planeRTT.material = rttMaterial;
     }
     // create material
@@ -135,41 +135,38 @@ export class WaterGeneratorService {
       });
 
     // set texture
-    const waterSurfaceTexture = new BABYLON.Texture('assets/textures/material/waterTexture.png', this.scene);
-    const waterBumpTexture = new BABYLON.Texture('assets/textures/material/waterBump.png', this.scene);
-    const dudvmap = new BABYLON.Texture('assets/textures/material/dudvmap.png', this.scene);
+    const waterSurfaceTexture = new Texture('assets/textures/material/waterTexture.png', this.scene);
+    const waterBumpTexture = new Texture('assets/textures/material/waterBump.png', this.scene);
+    const dudvTexture = new Texture('assets/textures/material/dudvmap2.png', this.scene);
 
 
     // create plane
     this.waterPlane = MeshBuilder.CreateGround('water', {width: 250, height: 250, subdivisions: 50}, this.scene, );
     this.waterPlane.position.y = 5;
 
-    const waterDirection = new BABYLON.Vector2(0, 1.0);
-    const windMatrix = waterBumpTexture.getTextureMatrix().multiply(
-      BABYLON.Matrix.Translation(waterDirection.x * this.time, waterDirection.y * this.time, 0));
-
+    const shallowWaterColor = new Color4(0.3, 0.4, 0.8, 1.0);
+    const deepWaterColor = new Color4(0, 0.263, 0.333, 1.0);
 
     // set shader uniforms
-
-
+    // texture
     waterMaterial.setTexture('bumpTexture', waterBumpTexture);
-    waterMaterial.setFloat('bumpHeight', 0.4);
-
     waterMaterial.setTexture('waterTexture', waterSurfaceTexture);
-    waterMaterial.setTexture('dudvTexture', dudvmap);
+    waterMaterial.setTexture('dudvTexture', dudvTexture);
+    waterMaterial.setTexture('depthTexture', this.renderer.getDepthMap());
+    waterMaterial.setTexture('reflectionTexture', this.reflectionRTT);
+    waterMaterial.setTexture('refractionTexture', this.refractionRTT);
 
-    const shallowWaterColor = new Color4(0.3, 0.4, 0.8, 1.0);
-    const deepWaterColor = new Color4(0, 0.2, 0.5, 1.0);
-
+    // colors
     waterMaterial.setColor4('shallowWaterColor', shallowWaterColor);
     waterMaterial.setColor4('deepWaterColor', deepWaterColor);
 
-    waterMaterial.setTexture('depthTexture', this.renderer.getDepthMap());
+    // camera
     waterMaterial.setFloat('camera_near', this.camera.minZ);
     waterMaterial.setFloat('camera_far', this.camera.maxZ);
 
-    waterMaterial.setTexture('reflectionTexture', this.reflectionRTT);
-    waterMaterial.setTexture('refractionTexture', this.refractionRTT);
+    // others
+    waterMaterial.setFloat('bumpHeight', 0.4);
+    waterMaterial.setFloat('dudvOffset', 0.4);
 
     // set material
     this.waterPlane.material = waterMaterial;

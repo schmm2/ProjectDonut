@@ -9,7 +9,11 @@ import {
   Color4,
   Vector3,
   HemisphericLight,
-  FlyCamera
+  FlyCamera,
+  MeshBuilder,
+  StandardMaterial,
+  CubeTexture,
+  Color3
 } from 'babylonjs';
 import 'babylonjs-materials';
 
@@ -20,9 +24,9 @@ import { TerrainGeneratorService } from '../services/terrain-generator.service';
 @Injectable({ providedIn: 'root' })
 export class EngineService {
   private canvas: HTMLCanvasElement;
-  private engine: BABYLON.Engine;
+  private engine: Engine;
   private camera: FlyCamera;
-  private scene: BABYLON.Scene;
+  private scene: Scene;
   private light: Light;
 
   public constructor(
@@ -39,21 +43,21 @@ export class EngineService {
     this.canvas = canvas.nativeElement;
 
     // Then, load the Babylon 3D engine:
-    this.engine = new BABYLON.Engine(this.canvas,  true);
+    this.engine = new Engine(this.canvas,  true);
 
     // create a basic BJS Scene object
-    this.scene = new BABYLON.Scene(this.engine);
+    this.scene = new Scene(this.engine);
     this.scene.clearColor = new Color4(0, 0, 0, 0);
-    this.scene.gravity = new BABYLON.Vector3(0, -9.81, 0);
+    this.scene.gravity = new Vector3(0, -9.81, 0);
 
     // ***** SkyBox ******
-    const skyBox = BABYLON.MeshBuilder.CreateBox('skyBox', {size: 1000.0}, this.scene);
-    const skyBoxMaterial = new BABYLON.StandardMaterial('skyBox', this.scene);
+    const skyBox = MeshBuilder.CreateBox('skyBox', {size: 1000.0}, this.scene);
+    const skyBoxMaterial = new StandardMaterial('skyBox', this.scene);
     skyBoxMaterial.backFaceCulling = false;
-    skyBoxMaterial.reflectionTexture = new BABYLON.CubeTexture('/assets/textures/material/TropicalSunnyDay', this.scene);
+    skyBoxMaterial.reflectionTexture = new CubeTexture('/assets/textures/material/TropicalSunnyDay', this.scene);
     skyBoxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-    skyBoxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
-    skyBoxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+    skyBoxMaterial.diffuseColor = new Color3(0, 0, 0);
+    skyBoxMaterial.specularColor = new Color3(0, 0, 0);
     skyBox.material = skyBoxMaterial;
 
     // ****** CAMERA ******
@@ -87,6 +91,7 @@ export class EngineService {
     this.waterGeneratorService.addToRefractionRenderList(terrain);
 
     // add mesh to depth renderer
+    // @ts-ignore
     renderer.getDepthMap().renderList = [terrain];
   }
 
