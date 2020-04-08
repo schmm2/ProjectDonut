@@ -135,9 +135,8 @@ export class WaterGeneratorService {
       });
 
     // set texture
-    const waterSurfaceTexture = new Texture('assets/textures/material/waterTexture.png', this.scene);
-    const waterBumpTexture = new Texture('assets/textures/material/waterBump.png', this.scene);
-    const dudvTexture = new Texture('assets/textures/material/dudvmap2.png', this.scene);
+    const waterNormalMap = new Texture('assets/textures/material/matchingNormalMap.png', this.scene);
+    const dudvTexture = new Texture('assets/textures/material/waterDUDV.png', this.scene);
 
 
     // create plane
@@ -145,12 +144,11 @@ export class WaterGeneratorService {
     this.waterPlane.position.y = 5;
 
     const shallowWaterColor = new Color4(0.3, 0.4, 0.8, 1.0);
-    const deepWaterColor = new Color4(0, 0.263, 0.333, 1.0);
+    const deepWaterColor = new Color4(0, 0.3, 0.333, 1.0);
 
     // set shader uniforms
     // texture
-    waterMaterial.setTexture('bumpTexture', waterBumpTexture);
-    waterMaterial.setTexture('waterTexture', waterSurfaceTexture);
+    waterMaterial.setTexture('normalMap', waterNormalMap);
     waterMaterial.setTexture('dudvTexture', dudvTexture);
     waterMaterial.setTexture('depthTexture', this.renderer.getDepthMap());
     waterMaterial.setTexture('reflectionTexture', this.reflectionRTT);
@@ -163,7 +161,6 @@ export class WaterGeneratorService {
     // camera
     waterMaterial.setFloat('camera_near', this.camera.minZ);
     waterMaterial.setFloat('camera_far', this.camera.maxZ);
-
     // others
     waterMaterial.setFloat('bumpHeight', 0.4);
     waterMaterial.setFloat('dudvOffset', 0.4);
@@ -171,11 +168,11 @@ export class WaterGeneratorService {
     // set material
     this.waterPlane.material = waterMaterial;
 
-
     // tslint:disable-next-line:only-arrow-functions
     this.scene.registerBeforeRender(() => {
       // @ts-ignore
       this.waterPlane.material.setFloat('time', this.time);
+      this.waterPlane.material.setVector3('cameraPosition', this.camera.position);
       this.time += 0.01;
     });
 

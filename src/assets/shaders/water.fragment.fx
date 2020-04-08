@@ -4,15 +4,19 @@ precision mediump float;
 varying vec2 vUv;
 varying vec4 vClipSpace;
 varying vec2 textureCoords;
+varying vec3 vPositionW; // world position
+varying vec3 vNormalW; // normal world
 
 // uniform
 // camera
 uniform float camera_near;
 uniform float camera_far;
+uniform vec3 cameraPosition;
 
 // textures
 uniform sampler2D depthTexture;
 uniform sampler2D dudvTexture;
+uniform sampler2D normalMap;
 uniform sampler2D reflectionTexture;
 uniform sampler2D refractionTexture;
 // colors
@@ -24,10 +28,22 @@ uniform float dudvOffset;
 
 uniform float time;
 
+vec3 getNormal(vec2 textureCoords) {
+    vec4 normalMapColor = texture2D(normalMap, textureCoords);
+    float makeNormalPointUpwardsMore = 10.0;
+    vec3 normal = vec3(
+      normalMapColor.r * 2.0 - 1.0,
+      normalMapColor.b * makeNormalPointUpwardsMore,
+      normalMapColor.g * 2.0 - 1.0
+    );
+    normal = normalize(normal);
+    return normal;
+}
+
 void main(void)
 {
-    float waterDistortionStrength = 0.02;
-    float dudvOffsetOverTime = dudvOffset * time;
+    float waterDistortionStrength = 0.03;
+    float dudvOffsetOverTime = dudvOffset * time * 0.5;
 
     // ***** Texture Coords *****
     // source: https://www.youtube.com/watch?v=GADTasvDOX4
@@ -48,18 +64,19 @@ void main(void)
 
     // calculate water depth
     float waterDepth = depthOfObjectBehindWater - linearWaterDepth;
+    float beachAreaWaterDepth = clamp(waterDepth * 3000., 0.0, 1.0);
+    float foamAreaWaterDepth = clamp(waterDepth * 10000., 0.0, 1.0);
 
     // ***** DISTORTION *****
     // dudv map contains red and green values (vec(RED,GREEN)) ranging from 0.0 to 1.0, convert to -1.0 to 1.0
-    vec2 distortion1 = texture2D(dudvTexture, vec2(textureCoords.x + dudvOffsetOverTime, textureCoords.y)).rg * 2.0 - 1.0;
-    // add multiple distortions to make water look more realistic
-    vec2 distortion2 = texture2D(dudvTexture, vec2(-textureCoords.x + dudvOffsetOverTime, textureCoords.y + dudvOffsetOverTime)).rg * 2.0 - 1.0;
-    // sum up distortion
-    vec2 totalDistortion = distortion1 + distortion2;
+    vec2 distortedTexCoords = texture2D(dudvTexture, vec2(textureCoords.x + dudvOffsetOverTime, textureCoords.y)).rg * 0.1;
+     // add multiple distortions to make water look more realistic
+    distortedTexCoords = textureCoords + vec2(distortedTexCoords.x, distortedTexCoords.y + dudvOffsetOverTime);
+    vec2 totalDistortion = (texture2D(dudvTexture, distortedTexCoords).rg * 2.0 - 1.0) * waterDistortionStrength;
 
     //refractTexCoords += totalDistortion;
-    reflectionTexCoords += totalDistortion * waterDistortionStrength;
-    refractionTexCoords += totalDistortion * waterDistortionStrength;
+    reflectionTexCoords += totalDistortion;
+    refractionTexCoords += totalDistortion;
 
     // Prevent out distortions from sampling from the opposite side of the texture
     // NOTE: This will still cause artifacts towards the edges of the water. You can fix this by
@@ -69,15 +86,24 @@ void main(void)
     reflectionTexCoords.x = clamp(reflectionTexCoords.x, 0.001, 0.999);
     reflectionTexCoords.y = clamp(reflectionTexCoords.y, -0.999, -0.001);
 
+
+    vec3 normal = getNormal(distortedTexCoords);
+    vec3 viewDirectionW = normalize(cameraPosition - vPositionW);
+    float refractiveFactor = dot(viewDirectionW, normal);
+    // A higher fresnelStrength makes the water more reflective since the
+    // refractive factor will decrease
+    float fresnelStrength = 1.0;
+    refractiveFactor = refractiveFactor * fresnelStrength;
+
     // get texture color
     vec4 reflectionColor = texture2D(reflectionTexture, reflectionTexCoords);
     vec4 refractionColor = texture2D(refractionTexture, refractionTexCoords);
 
     // mix colors
     // The deeper the water the darker the color
-    refractionColor = mix(refractionColor,deepWaterColor,clamp(waterDepth * 2000., 0.0, 1.0));
+    refractionColor = mix(refractionColor,deepWaterColor, beachAreaWaterDepth);
     // add reflection & refraction
-    vec4 waterColor = mix(reflectionColor,refractionColor,0.5);
+    vec4 waterColor = mix(reflectionColor,refractionColor, refractiveFactor);
     // add some blue
     gl_FragColor = mix(waterColor,shallowWaterColor,0.2);
 }
