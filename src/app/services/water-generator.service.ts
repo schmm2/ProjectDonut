@@ -136,22 +136,25 @@ export class WaterGeneratorService {
       });
 
     // set texture
-    const waterNormalMap = new Texture('assets/textures/material/matchingNormalMap.png', this.scene);
-    const dudvTexture = new Texture('assets/textures/material/waterDUDV.png', this.scene);
+    const waterNormalMap = new Texture('assets/textures/material/water_normal.png', this.scene);
+    const dudvTexture = new Texture('assets/textures/material/water_dudv.png', this.scene);
     const foamShoreTexture = new Texture('assets/textures/material/foam_shore.png', this.scene);
+    const foamTexture = new Texture('assets/textures/material/foam.png', this.scene);
+
 
     // create plane
-    this.waterPlane = MeshBuilder.CreateGround('water', {width: 250, height: 250, subdivisions: 50}, this.scene, );
+    this.waterPlane = MeshBuilder.CreateGround('water', {width: 250, height: 250, subdivisions: 200}, this.scene, );
     this.waterPlane.position.y = 5;
 
-    const shallowWaterColor = new Color4(0.3, 0.4, 0.8, 1.0);
-    const deepWaterColor = new Color4(0, 0.3, 0.333, 1.0);
+    const shallowWaterColor = new Color4(0.3, 0.4, 0.7, 1.0);
+    const deepWaterColor = new Color4(0, 0.25, 0.283, 1.0);
 
     // set shader uniforms
     // texture
     waterMaterial.setTexture('normalMap', waterNormalMap);
     waterMaterial.setTexture('dudvTexture', dudvTexture);
     waterMaterial.setTexture('foamShoreTexture', foamShoreTexture);
+    waterMaterial.setTexture('foamTexture', foamTexture);
     waterMaterial.setTexture('depthTexture', this.renderer.getDepthMap());
     waterMaterial.setTexture('reflectionTexture', this.reflectionRTT);
     waterMaterial.setTexture('refractionTexture', this.refractionRTT);

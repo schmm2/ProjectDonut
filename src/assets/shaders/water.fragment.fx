@@ -6,6 +6,8 @@ varying vec4 vClipSpace;
 varying vec2 textureCoords;
 varying vec3 vPositionW; // world position
 varying vec3 vNormalW; // normal world
+varying vec3 vNewNormal;
+varying vec3 vPositionM;
 
 // uniform
 // camera
@@ -20,6 +22,7 @@ uniform sampler2D normalMap;
 uniform sampler2D reflectionTexture;
 uniform sampler2D refractionTexture;
 uniform sampler2D foamShoreTexture;
+uniform sampler2D foamTexture;
 
 // colors
 uniform vec4 shallowWaterColor;
@@ -31,9 +34,14 @@ uniform float dudvOffset;
 uniform float waterDistortionStrength;
 uniform float time;
 
+vec3 sunlightColor = vec3(1.0, 1.0, 1.0);
+vec3 sunlightDir = normalize(vec3(-1.0, -1.0, 0.5));
+const float shineDamper = 20.0;
+const float waterReflectivity = 0.1;
+
 vec3 getNormal(vec2 textureCoords) {
     vec4 normalMapColor = texture2D(normalMap, textureCoords);
-    float makeNormalPointUpwardsMore = 10.0;
+    float makeNormalPointUpwardsMore = 3.0;
     vec3 normal = vec3(
       normalMapColor.r * 2.0 - 1.0,
       normalMapColor.b * makeNormalPointUpwardsMore,
@@ -46,7 +54,7 @@ vec3 getNormal(vec2 textureCoords) {
 void main(void)
 {
     float dudvOffsetOverTime = dudvOffset * time * 0.5;
-    float fresnelStrength = 0.3;
+    float fresnelStrength = 0.2;
 
     // ***** Texture Coords *****
     // source: https://www.youtube.com/watch?v=GADTasvDOX4
@@ -90,6 +98,7 @@ void main(void)
     reflectionTexCoords.y = clamp(reflectionTexCoords.y, -0.999, -0.001);
 
 
+
     vec3 normal = getNormal(distortedTexCoords);
     vec3 viewDirectionW = normalize(cameraPosition - vPositionW);
     float refractiveFactor = dot(viewDirectionW, normal);
@@ -103,14 +112,40 @@ void main(void)
     // foam texture, add bit of tiling
     vec4 foamShoreColor = texture2D(foamShoreTexture, textureCoords * 2.0);
 
+    // WATER Light Reflection
+    vec3 reflectedLight = reflect(normalize(sunlightDir), normal);
+    float specular = max(dot(reflectedLight, viewDirectionW), 0.0);
+    specular = pow(specular, shineDamper);
+    vec3 specularHighlights = sunlightColor * specular * waterReflectivity;
+
     // mix colors
     // The deeper the water the darker the color
     refractionColor = mix(refractionColor, deepWaterColor, beachAreaWaterDepth);
     // add reflection & refraction
     vec4 waterColor = mix(reflectionColor,refractionColor, refractiveFactor);
-    // add some blue
-    gl_FragColor = mix(waterColor,shallowWaterColor,0.2);
+
+    // add foam structure on wave
+    vec4 foamColor = texture2D(foamTexture, textureCoords) ;
+
+    // define were foam can show up
+    float heightToStartWaveFoam = 0.15;
+    float foamArea = clamp((vPositionM.y  - heightToStartWaveFoam),0.0,1.0);
+    // multiply normal with y up normal, so only the area where the normal is up will get the texture
+    float foamAngleExponent =  dot(vNewNormal, vec3(0.0, 1.0, 0.0));
+    float foamSaturation = foamArea * foamAngleExponent;
+    waterColor +=  foamColor.r * foamSaturation; // add to watercolor
+
+    // add some blue and light reflections
+    gl_FragColor = mix(waterColor,shallowWaterColor,0.2) + vec4(specularHighlights, 0.0);
     // add foam to the water edges
     gl_FragColor = mix(gl_FragColor,foamShoreColor,(1.0-foamAreaWaterDepth));
+
+    //gl_FragColor = mix(gl_FragColor,foamColor,foamSaturation);
+
+    if(beachAreaWaterDepth < 0.08){
+          gl_FragColor.a = foamAreaWaterDepth + 0.1;
+    }
+
+    //gl_FragColor = vec4(vec3(foamSaturation),1.0);
 }
 
