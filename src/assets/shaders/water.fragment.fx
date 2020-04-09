@@ -54,7 +54,7 @@ vec3 getNormal(vec2 textureCoords) {
 void main(void)
 {
     float dudvOffsetOverTime = dudvOffset * time * 0.5;
-    float fresnelStrength = 0.2;
+    float fresnelStrength = 0.15;
 
     // ***** Texture Coords *****
     // source: https://www.youtube.com/watch?v=GADTasvDOX4
