@@ -28,7 +28,7 @@ export class WaterGeneratorService {
   private refractionRTT: any;
   private waterPlane: any;
   private reflectionTransform: Matrix = Matrix.Zero();
-  private showRTTPlane = true;
+  private showRTTPlane = false;
   private time = 0;
   private waveLength = 10.0;
   private waveHeight = 50.0;
@@ -73,7 +73,8 @@ export class WaterGeneratorService {
 
     this.refractionRTT.onBeforeRender = () => {
       const planePositionY = this.waterPlane ? this.waterPlane.position.y : 0.0;
-      scene.clipPlane = Plane.FromPositionAndNormal(new Vector3(0, planePositionY + 0.05, 0), new Vector3(0, 1, 0));
+      // y +1.0 to avoid wierd refraction if wave gets high
+      scene.clipPlane = Plane.FromPositionAndNormal(new Vector3(0, planePositionY + 1.00, 0), new Vector3(0, 1, 0));
     };
 
     this.refractionRTT.onAfterRender = () => {
@@ -119,7 +120,7 @@ export class WaterGeneratorService {
       planeRTT.setPositionWithLocalVector(new BABYLON.Vector3(100, 50, 0));
 
       const rttMaterial = new BABYLON.StandardMaterial('RTT material', this.scene);
-      rttMaterial.emissiveTexture = this.reflectionRTT;
+      rttMaterial.emissiveTexture = this.refractionRTT;
       rttMaterial.disableLighting = true;
       planeRTT.material = rttMaterial;
     }

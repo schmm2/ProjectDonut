@@ -68,7 +68,7 @@ void main(void)
     // calculate water depth
     float waterDepth = depthOfObjectBehindWater - linearWaterDepth;
     float beachAreaWaterDepth = clamp(waterDepth * 3000., 0.0, 1.0);
-    float foamAreaWaterDepth = clamp(waterDepth * 70000., 0.0, 1.0);
+    float foamAreaWaterDepth = clamp(waterDepth * 80000., 0.0, 1.0);
 
     // ***** DISTORTION *****
     // dudv map contains red and green values (vec(RED,GREEN)) ranging from 0.0 to 1.0, convert to -1.0 to 1.0
@@ -100,18 +100,17 @@ void main(void)
     // get texture color
     vec4 reflectionColor = texture2D(reflectionTexture, reflectionTexCoords);
     vec4 refractionColor = texture2D(refractionTexture, refractionTexCoords);
-
-    // foam texture
+    // foam texture, add bit of tiling
     vec4 foamShoreColor = texture2D(foamShoreTexture, textureCoords * 2.0);
-
 
     // mix colors
     // The deeper the water the darker the color
-    refractionColor = mix(refractionColor,deepWaterColor, beachAreaWaterDepth);
+    refractionColor = mix(refractionColor, deepWaterColor, beachAreaWaterDepth);
     // add reflection & refraction
     vec4 waterColor = mix(reflectionColor,refractionColor, refractiveFactor);
     // add some blue
     gl_FragColor = mix(waterColor,shallowWaterColor,0.2);
+    // add foam to the water edges
     gl_FragColor = mix(gl_FragColor,foamShoreColor,(1.0-foamAreaWaterDepth));
 }
 
