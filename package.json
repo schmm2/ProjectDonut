@@ -23,6 +23,7 @@
     "@angular/platform-browser-dynamic": "^9.0.0",
     "@angular/router": "^9.0.0",
     "babylonjs": "^4.1.0",
+    "babylonjs-loaders": "^4.1.0",
     "babylonjs-materials": "^4.1.0",
     "bootstrap": "^4.4.1",
     "rxjs": "~6.5.2",

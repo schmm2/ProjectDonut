@@ -17,7 +17,8 @@
     ],
     "types": [
       "babylonjs",
-      "babylonjs-materials"
+      "babylonjs-materials",
+      "babylonjs-loaders"
     ],
     "lib": [
       "es2018",

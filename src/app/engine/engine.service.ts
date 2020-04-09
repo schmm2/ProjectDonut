@@ -19,7 +19,8 @@ import 'babylonjs-materials';
 
 import { WaterGeneratorService } from  '../services/water-generator.service';
 import { TerrainGeneratorService } from '../services/terrain-generator.service';
-
+import { ShipGeneratorService } from '../services/ship-generator.service';
+import {Ship} from '../models/ship';
 
 @Injectable({ providedIn: 'root' })
 export class EngineService {
@@ -28,12 +29,14 @@ export class EngineService {
   private camera: FlyCamera;
   private scene: Scene;
   private light: Light;
+  private shipList: Ship[];
 
   public constructor(
     private ngZone: NgZone,
     private windowRef: WindowRefService,
     private waterGeneratorService: WaterGeneratorService,
-    private terrainGeneratorService: TerrainGeneratorService
+    private terrainGeneratorService: TerrainGeneratorService,
+    private shipGeneratorService: ShipGeneratorService,
   ) {}
 
   public createScene(canvas: ElementRef<HTMLCanvasElement>): void {
@@ -90,6 +93,10 @@ export class EngineService {
     this.waterGeneratorService.addToReflectionRenderList(skyBox);
     this.waterGeneratorService.addToReflectionRenderList(terrain);
     this.waterGeneratorService.addToRefractionRenderList(terrain);
+
+    this.shipGeneratorService.setScene(this.scene);
+    this.shipGeneratorService.init();
+
 
     // add mesh to depth renderer
     // @ts-ignore
