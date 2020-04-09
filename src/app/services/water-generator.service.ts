@@ -136,10 +136,10 @@ export class WaterGeneratorService {
       });
 
     // set texture
-    const waterNormalMap = new Texture('assets/textures/material/water_normal.png', this.scene);
-    const dudvTexture = new Texture('assets/textures/material/water_dudv.png', this.scene);
-    const foamShoreTexture = new Texture('assets/textures/material/foam_shore.png', this.scene);
-    const foamTexture = new Texture('assets/textures/material/foam.png', this.scene);
+    const waterNormalMap = new Texture('assets/textures/material/water/water_normal.png', this.scene);
+    const dudvTexture = new Texture('assets/textures/material/water/water_dudv.png', this.scene);
+    const foamShoreTexture = new Texture('assets/textures/material/water/foam_shore.png', this.scene);
+    const foamTexture = new Texture('assets/textures/material/water/water_foam.png', this.scene);
 
 
     // create plane
