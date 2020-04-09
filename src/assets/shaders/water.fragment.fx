@@ -19,6 +19,8 @@ uniform sampler2D dudvTexture;
 uniform sampler2D normalMap;
 uniform sampler2D reflectionTexture;
 uniform sampler2D refractionTexture;
+uniform sampler2D foamShoreTexture;
+
 // colors
 uniform vec4 shallowWaterColor;
 uniform vec4 deepWaterColor;
@@ -26,6 +28,7 @@ uniform vec4 deepWaterColor;
 // dudv
 uniform float dudvOffset;
 
+uniform float waterDistortionStrength;
 uniform float time;
 
 vec3 getNormal(vec2 textureCoords) {
@@ -42,8 +45,8 @@ vec3 getNormal(vec2 textureCoords) {
 
 void main(void)
 {
-    float waterDistortionStrength = 0.03;
     float dudvOffsetOverTime = dudvOffset * time * 0.5;
+    float fresnelStrength = 0.3;
 
     // ***** Texture Coords *****
     // source: https://www.youtube.com/watch?v=GADTasvDOX4
@@ -65,7 +68,7 @@ void main(void)
     // calculate water depth
     float waterDepth = depthOfObjectBehindWater - linearWaterDepth;
     float beachAreaWaterDepth = clamp(waterDepth * 3000., 0.0, 1.0);
-    float foamAreaWaterDepth = clamp(waterDepth * 10000., 0.0, 1.0);
+    float foamAreaWaterDepth = clamp(waterDepth * 70000., 0.0, 1.0);
 
     // ***** DISTORTION *****
     // dudv map contains red and green values (vec(RED,GREEN)) ranging from 0.0 to 1.0, convert to -1.0 to 1.0
@@ -92,12 +95,15 @@ void main(void)
     float refractiveFactor = dot(viewDirectionW, normal);
     // A higher fresnelStrength makes the water more reflective since the
     // refractive factor will decrease
-    float fresnelStrength = 1.0;
-    refractiveFactor = refractiveFactor * fresnelStrength;
+    refractiveFactor = pow(refractiveFactor, fresnelStrength);
 
     // get texture color
     vec4 reflectionColor = texture2D(reflectionTexture, reflectionTexCoords);
     vec4 refractionColor = texture2D(refractionTexture, refractionTexCoords);
+
+    // foam texture
+    vec4 foamShoreColor = texture2D(foamShoreTexture, textureCoords * 2.0);
+
 
     // mix colors
     // The deeper the water the darker the color
@@ -106,5 +112,6 @@ void main(void)
     vec4 waterColor = mix(reflectionColor,refractionColor, refractiveFactor);
     // add some blue
     gl_FragColor = mix(waterColor,shallowWaterColor,0.2);
+    gl_FragColor = mix(gl_FragColor,foamShoreColor,(1.0-foamAreaWaterDepth));
 }
 

@@ -64,6 +64,7 @@ export class EngineService {
     // create a FreeCamera, and set its position to (x:5, y:10, z:-20 )
     this.camera = new FlyCamera('flyCamera', new Vector3(0, 100, -200), this.scene);
     this.camera.applyGravity = false;
+    this.camera.rollCorrect = 10;
 
     // target the camera to scene origin
     this.camera.setTarget(Vector3.Zero());

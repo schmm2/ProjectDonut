@@ -137,7 +137,7 @@ export class WaterGeneratorService {
     // set texture
     const waterNormalMap = new Texture('assets/textures/material/matchingNormalMap.png', this.scene);
     const dudvTexture = new Texture('assets/textures/material/waterDUDV.png', this.scene);
-
+    const foamShoreTexture = new Texture('assets/textures/material/foam_shore.png', this.scene);
 
     // create plane
     this.waterPlane = MeshBuilder.CreateGround('water', {width: 250, height: 250, subdivisions: 50}, this.scene, );
@@ -150,6 +150,7 @@ export class WaterGeneratorService {
     // texture
     waterMaterial.setTexture('normalMap', waterNormalMap);
     waterMaterial.setTexture('dudvTexture', dudvTexture);
+    waterMaterial.setTexture('foamShoreTexture', foamShoreTexture);
     waterMaterial.setTexture('depthTexture', this.renderer.getDepthMap());
     waterMaterial.setTexture('reflectionTexture', this.reflectionRTT);
     waterMaterial.setTexture('refractionTexture', this.refractionRTT);
@@ -164,6 +165,7 @@ export class WaterGeneratorService {
     // others
     waterMaterial.setFloat('bumpHeight', 0.4);
     waterMaterial.setFloat('dudvOffset', 0.4);
+    waterMaterial.setFloat('waterDistortionStrength', 0.03);
 
     // set material
     this.waterPlane.material = waterMaterial;
