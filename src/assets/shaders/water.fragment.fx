@@ -139,13 +139,5 @@ void main(void)
     gl_FragColor = mix(waterColor,shallowWaterColor,0.2) + vec4(specularHighlights, 0.0);
     // add foam to the water edges
     gl_FragColor = mix(gl_FragColor,foamShoreColor,(1.0-foamAreaWaterDepth));
-
-    //gl_FragColor = mix(gl_FragColor,foamColor,foamSaturation);
-
-    if(beachAreaWaterDepth < 0.08){
-          gl_FragColor.a = foamAreaWaterDepth + 0.1;
-    }
-
-    //gl_FragColor = vec4(vec3(foamSaturation),1.0);
 }
 
