@@ -1,0 +1,16 @@
+[
+  {
+    "name": "ships",
+    "url": "./assets/models/ships/",
+    "models": [
+      {
+        "name": "fluyt",
+        "fileName": "cartoon-fluyt.obj",
+        "scale": 0.008,
+        "diffuseTextures": [
+          "assets/textures/ships/cartoon-fluyt-diffuse.png"
+        ]
+      }
+    ]
+  }
+]

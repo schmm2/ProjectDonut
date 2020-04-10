@@ -20,6 +20,8 @@ import 'babylonjs-materials';
 import { WaterGeneratorService } from  '../services/water-generator.service';
 import { TerrainGeneratorService } from '../services/terrain-generator.service';
 import { ShipGeneratorService } from '../services/ship-generator.service';
+import { AssetLoaderService } from '../services/asset-loader.service';
+
 import {Ship} from '../models/ship';
 
 @Injectable({ providedIn: 'root' })
@@ -37,6 +39,7 @@ export class EngineService {
     private waterGeneratorService: WaterGeneratorService,
     private terrainGeneratorService: TerrainGeneratorService,
     private shipGeneratorService: ShipGeneratorService,
+    private assetLoaderService: AssetLoaderService
   ) {}
 
   public createScene(canvas: ElementRef<HTMLCanvasElement>): void {
@@ -53,6 +56,9 @@ export class EngineService {
     this.scene.clearColor = new Color4(0, 0, 0, 0);
     this.scene.gravity = new Vector3(0, -9.81, 0);
 
+    // ***** AssetLoader *****
+    this.assetLoaderService.init(this.scene);
+
     // ***** SkyBox ******
     const skyBox = MeshBuilder.CreateBox('skyBox', {size: 1000.0}, this.scene);
     const skyBoxMaterial = new StandardMaterial('skyBox', this.scene);
@@ -67,7 +73,8 @@ export class EngineService {
     // create a FreeCamera, and set its position to (x:5, y:10, z:-20 )
     this.camera = new FlyCamera('flyCamera', new Vector3(0, 100, -200), this.scene);
     this.camera.applyGravity = false;
-    this.camera.rollCorrect = 10;
+    this.camera.bankedTurn = false;
+    this.camera.rollCorrect = 1;
 
     // target the camera to scene origin
     this.camera.setTarget(Vector3.Zero());

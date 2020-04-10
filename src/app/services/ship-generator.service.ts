@@ -8,30 +8,14 @@ import Vector3 = BABYLON.Vector3;
 })
 export class ShipGeneratorService {
   private scene;
-  private modelUrl = './assets/models/ships/';
   public constructor() { }
-  private meshContainer;
+  private shipList = [];
+  private initalShipPositionY = 4.2;
 
-  private assetManager;
-  private shipList = [
-    {
-      name: 'fluyt',
-      modelName: 'cartoon-fluyt.obj',
-      scale: 0.008,
-      diffuseTextures: [
-        'assets/textures/ships/cartoon-fluyt-diffuse.png'
-      ]
-    }
-  ];
 
-  public setScene(scene) {
+  public init(scene) {
     this.scene = scene;
-  }
 
-  public init() {
-    this.meshContainer = new Map();
-
-    this.assetManager = new BABYLON.AssetsManager(this.scene);
     this.assetManager.onTaskError = (error) => {
       console.log(error);
     };
@@ -55,6 +39,7 @@ export class ShipGeneratorService {
           let path = ship.diffuseTextures[numberOfMesh];
           if (path) {
             mesh.material = new BABYLON.StandardMaterial('mat', this.scene);
+            // @ts-ignore
             mesh.material.diffuseTexture = new BABYLON.Texture(path, this.scene);
           }
           // next
@@ -66,7 +51,7 @@ export class ShipGeneratorService {
         };
 
         this.meshContainer[ship.name] = newMeshes;
-        this.buildShip(new Vector3(0,4,-50));
+        this.buildShip(new Vector3(0, this.shipPositionY, -50));
         //console.log(newScene);
       });
 
