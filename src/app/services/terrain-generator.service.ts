@@ -26,7 +26,7 @@ export class TerrainGeneratorService {
     // Use CreateGroundFromHeightMap to create a height map of 200 units by 200
     // units, with 250 subdivisions in each of the `x` and `z` directions, for a
     // total of 62,500 divisions.
-    const islandA2Mesh = BABYLON.Mesh.CreateGroundFromHeightMap('island', islandCUrl, 250, 250, 250, 0, 20, this.scene, false, TerrainGeneratorService.successCallback);
+    const islandA2Mesh = BABYLON.Mesh.CreateGroundFromHeightMap('island', islandCUrl, 250, 250, 400, 0, 20, this.scene, false, TerrainGeneratorService.successCallback);
 
     // create materials
     // Create the mix material

@@ -7,8 +7,11 @@
         "name": "fluyt",
         "fileName": "cartoon-fluyt.obj",
         "scale": 0.008,
+        "enableCOT": true,
         "diffuseTextures": [
-          "assets/textures/ships/cartoon-fluyt-diffuse.png"
+          "assets/textures/ships/cartoon-fluyt-diffuse.png",
+          "assets/textures/ships/cartoon-fluyt-ropes-diffuse.png",
+          "assets/textures/ships/cartoon-fluyt-sail-diffuse.png"
         ]
       }
     ]

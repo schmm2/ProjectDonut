@@ -3,6 +3,7 @@ import * as BABYLON from 'babylonjs';
 // @ts-ignore
 import AssetsJSON from '../../assets/assets.json';
 import Vector3 = BABYLON.Vector3;
+import {BehaviorSubject} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -10,24 +11,39 @@ import Vector3 = BABYLON.Vector3;
 export class AssetLoaderService {
   private assetManager: BABYLON.AssetsManager;
   private scene;
-  private modelList;
+  private assetList;
+  private isLoaded: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   public constructor() {}
 
   public init(scene) {
     this.scene = scene;
-    this.modelList = new Map();
+    this.assetList = new Map();
     this.loadAssets();
   }
 
+  public subscribeToAssetsLoadState() {
+    return this.isLoaded;
+  }
+
+  public getAsset(id: any) {
+    if (this.assetList.has(id)) {
+      return this.assetList.get(id);
+    } else {
+      return null;
+    }
+  }
+
   private loadAssets() {
-    let modelsToLoad = 0;
+    let assetsToLoad = 0;
+
     this.assetManager = new BABYLON.AssetsManager(this.scene);
     // console.log(AssetsJSON);
 
     AssetsJSON.forEach(assetCategory => {
-      // console.log(assetCategory);
-      modelsToLoad += assetCategory.models.length;
+      console.log(assetCategory);
+      assetsToLoad += assetCategory.models.length;
+
       assetCategory.models.forEach(assetModel => {
         // console.log(assetModel);
 
@@ -36,11 +52,12 @@ export class AssetLoaderService {
           const meshsOfModel = [];
 
           newMeshes.forEach(mesh => {
+            console.log(mesh);
             mesh.setEnabled(false);
             mesh.position = Vector3.Zero();
             mesh.scaling = new Vector3(assetModel.scale, assetModel.scale, assetModel.scale);
 
-            // diffuseTexture exist
+            // add diffuseTexture
             const path = assetModel.diffuseTextures[numberOfMesh];
             if (path) {
               mesh.material = new BABYLON.StandardMaterial('mat', this.scene);
@@ -56,17 +73,19 @@ export class AssetLoaderService {
             name: assetModel.name,
             type: assetCategory.name,
             scale: assetModel.scale,
-            meshes: meshsOfModel
+            enableCOT: assetModel.enableCOT,
+            enablePhysics: assetModel.enablePhysics,
+            meshes: meshsOfModel,
           };
           const modelId = assetCategory.name + '-' + assetModel.name;
-          this.modelList.set(modelId, model);
+          this.assetList.set(modelId, model);
 
           // one done
-          modelsToLoad--;
+          assetsToLoad--;
           // check if we are done loading
-          if (modelsToLoad === 0) {
-            console.log('AssetLoader: all models loaded');
-            console.log(this.modelList);
+          if (assetsToLoad === 0) {
+            console.log(this.assetList);
+            this.isLoaded.next(true);
           }
         });
       });

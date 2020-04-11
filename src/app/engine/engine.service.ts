@@ -13,16 +13,18 @@ import {
   MeshBuilder,
   StandardMaterial,
   CubeTexture,
-  Color3
+  Color3,
+  Vector2,
+  CannonJSPlugin
 } from 'babylonjs';
 import 'babylonjs-materials';
 
+import CANNON from 'cannon';
 import { WaterGeneratorService } from  '../services/water-generator.service';
 import { TerrainGeneratorService } from '../services/terrain-generator.service';
 import { ShipGeneratorService } from '../services/ship-generator.service';
 import { AssetLoaderService } from '../services/asset-loader.service';
 
-import {Ship} from '../models/ship';
 
 @Injectable({ providedIn: 'root' })
 export class EngineService {
@@ -31,7 +33,6 @@ export class EngineService {
   private camera: FlyCamera;
   private scene: Scene;
   private light: Light;
-  private shipList: Ship[];
 
   public constructor(
     private ngZone: NgZone,
@@ -40,7 +41,9 @@ export class EngineService {
     private terrainGeneratorService: TerrainGeneratorService,
     private shipGeneratorService: ShipGeneratorService,
     private assetLoaderService: AssetLoaderService
-  ) {}
+  ) {
+    window.CANNON = CANNON;
+  }
 
   public createScene(canvas: ElementRef<HTMLCanvasElement>): void {
 
@@ -54,10 +57,25 @@ export class EngineService {
     // create a basic BJS Scene object
     this.scene = new Scene(this.engine);
     this.scene.clearColor = new Color4(0, 0, 0, 0);
-    this.scene.gravity = new Vector3(0, -9.81, 0);
+    const gravityVector = new Vector3(0, -9.81, 0);
+    const physicsPlugin = new CannonJSPlugin();
+    this.scene.enablePhysics(gravityVector, physicsPlugin);
+    //this.scene.getPhysicsEngine().setGravity(new Vector3(0,0,0));
+
+    // init injector services
+    this.shipGeneratorService.init(this.scene);
+    this.assetLoaderService.init(this.scene);
 
     // ***** AssetLoader *****
-    this.assetLoaderService.init(this.scene);
+    this.assetLoaderService.subscribeToAssetsLoadState().subscribe(isLoaded => {
+      if (isLoaded) {
+        console.log('AssetLoader: all models loaded');
+        // build ships
+        this.shipGeneratorService.buildShip(new Vector2(0, -50), 'fluyt');
+        //this.shipGeneratorService.buildShip(new Vector2(20, -100), 'fluyt');
+        //this.shipGeneratorService.buildShip(new Vector2(-20, -80), 'fluyt');
+      }
+    });
 
     // ***** SkyBox ******
     const skyBox = MeshBuilder.CreateBox('skyBox', {size: 1000.0}, this.scene);
@@ -95,14 +113,13 @@ export class EngineService {
     // add terrain
     this.terrainGeneratorService.setScene(this.scene);
     const terrain = this.terrainGeneratorService.buildTerrain();
+    terrain.physicsImpostor = new BABYLON.PhysicsImpostor(terrain, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);
+
 
     // add mesh to renderList of water
     this.waterGeneratorService.addToReflectionRenderList(skyBox);
     this.waterGeneratorService.addToReflectionRenderList(terrain);
     this.waterGeneratorService.addToRefractionRenderList(terrain);
-
-    this.shipGeneratorService.setScene(this.scene);
-    this.shipGeneratorService.init();
 
 
     // add mesh to depth renderer
