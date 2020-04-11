@@ -60,7 +60,6 @@ export class EngineService {
     const gravityVector = new Vector3(0, -9.81, 0);
     const physicsPlugin = new CannonJSPlugin();
     this.scene.enablePhysics(gravityVector, physicsPlugin);
-    //this.scene.getPhysicsEngine().setGravity(new Vector3(0,0,0));
 
     // init injector services
     this.shipGeneratorService.init(this.scene);
