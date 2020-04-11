@@ -15,10 +15,12 @@ import {
   CubeTexture,
   Color3,
   Vector2,
-  CannonJSPlugin
+  CannonJSPlugin,
+  RecastJSPlugin
 } from 'babylonjs';
 import 'babylonjs-materials';
 
+import Recast from 'recast-detour';
 import CANNON from 'cannon';
 import { WaterGeneratorService } from  '../services/water-generator.service';
 import { TerrainGeneratorService } from '../services/terrain-generator.service';
@@ -38,7 +40,6 @@ export class EngineService {
   // objects
   private  shipList: Ship[] = [];
 
-
   public constructor(
     private ngZone: NgZone,
     private windowRef: WindowRefService,
@@ -47,11 +48,28 @@ export class EngineService {
     private shipGeneratorService: ShipGeneratorService,
     private assetLoaderService: AssetLoaderService
   ) {
-    window.CANNON = CANNON;
+   window.CANNON = CANNON;
   }
 
   public createScene(canvas: ElementRef<HTMLCanvasElement>): void {
 
+    const navigationPlugin = new BABYLON.RecastJSPlugin();
+    // tslint:disable-next-line:prefer-const
+    var navigationParameters = {
+      cs: 0.2,
+      ch: 0.2,
+      walkableSlopeAngle: 0,
+      walkableHeight: 0,
+      walkableClimb: 0,
+      walkableRadius: 1,
+      maxEdgeLen: 12.,
+      maxSimplificationError: 1.3,
+      minRegionArea: 8,
+      mergeRegionArea: 20,
+      maxVertsPerPoly: 6,
+      detailSampleDist: 6,
+      detailSampleMaxError: 1,
+    };
 
     // The first step is to get the reference of the canvas element from our HTML document
     this.canvas = canvas.nativeElement;
@@ -75,6 +93,7 @@ export class EngineService {
       if (isLoaded) {
         console.log('AssetLoader: all models loaded');
         // build ships
+        // @ts-ignore
         this.shipList.push(this.shipGeneratorService.buildShip(new Vector2(0, -50), 'fluyt'));
         this.shipGeneratorService.buildShip(new Vector2(20, -100), 'fluyt');
         this.shipGeneratorService.buildShip(new Vector2(-20, -80), 'fluyt');
@@ -119,6 +138,7 @@ export class EngineService {
     // add terrain
     this.terrainGeneratorService.setScene(this.scene);
     const terrain = this.terrainGeneratorService.buildTerrain();
+    // @ts-ignore
     terrain.physicsImpostor = new BABYLON.PhysicsImpostor(terrain, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);
 
 
@@ -127,11 +147,20 @@ export class EngineService {
     this.waterGeneratorService.addToReflectionRenderList(terrain);
     this.waterGeneratorService.addToRefractionRenderList(terrain);
 
+    // navigation
+    navigationPlugin.createNavMesh([terrain, waterPlane], navigationParameters);
+
+    let navmeshdebug = navigationPlugin.createDebugNavMesh(this.scene);
+    var matdebug = new BABYLON.StandardMaterial('matdebug', this.scene);
+    matdebug.diffuseColor = new BABYLON.Color3(0.1, 0.2, 1);
+    matdebug.alpha = 0.2;
+    navmeshdebug.material = matdebug;
+
     // LOGIC
     this.shipGeneratorService.subscribeToShipList().subscribe(shipList => {
       console.log(shipList);
       shipList.forEach(ship => {
-        ship.meshes.forEach(mesh => {
+        ship.getMeshes().forEach(mesh => {
           this.waterGeneratorService.addToReflectionRenderList(mesh);
         });
 

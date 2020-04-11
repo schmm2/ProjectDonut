@@ -14,14 +14,14 @@ export class ShipGeneratorService {
   private scene;
   private shipList: BehaviorSubject<Ship[]> = new BehaviorSubject([]);
   private modelPrefix = 'ships-';
-  private initialShipPositionY = 4.2;
+  private initialShipPositionY = 4.15;
 
   public constructor(
     private assetLoaderService: AssetLoaderService,
     private waterGeneratorService: WaterGeneratorService
   ) {}
 
-  subscribeToShipList(){
+  public subscribeToShipList() {
     return this.shipList;
   }
 

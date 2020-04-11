@@ -1,7 +1,7 @@
 export class Ship {
   private name;
   private type;
-  meshes;
+  private meshes;
   private cot;
   private speed = 2.0;
 
@@ -10,5 +10,9 @@ export class Ship {
     this.type = type;
     this.meshes = meshes;
     this.cot = cot;
+  }
+
+  public getMeshes(){
+    return this.meshes;
   }
 }
