@@ -24,6 +24,7 @@ import { WaterGeneratorService } from  '../services/water-generator.service';
 import { TerrainGeneratorService } from '../services/terrain-generator.service';
 import { ShipGeneratorService } from '../services/ship-generator.service';
 import { AssetLoaderService } from '../services/asset-loader.service';
+import {Ship} from '../models/ship';
 
 
 @Injectable({ providedIn: 'root' })
@@ -33,6 +34,10 @@ export class EngineService {
   private camera: FlyCamera;
   private scene: Scene;
   private light: Light;
+
+  // objects
+  private  shipList: Ship[] = [];
+
 
   public constructor(
     private ngZone: NgZone,
@@ -70,11 +75,13 @@ export class EngineService {
       if (isLoaded) {
         console.log('AssetLoader: all models loaded');
         // build ships
-        this.shipGeneratorService.buildShip(new Vector2(0, -50), 'fluyt');
-        //this.shipGeneratorService.buildShip(new Vector2(20, -100), 'fluyt');
-        //this.shipGeneratorService.buildShip(new Vector2(-20, -80), 'fluyt');
+        this.shipList.push(this.shipGeneratorService.buildShip(new Vector2(0, -50), 'fluyt'));
+        this.shipGeneratorService.buildShip(new Vector2(20, -100), 'fluyt');
+        this.shipGeneratorService.buildShip(new Vector2(-20, -80), 'fluyt');
       }
     });
+
+
 
     // ***** SkyBox ******
     const skyBox = MeshBuilder.CreateBox('skyBox', {size: 1000.0}, this.scene);
@@ -120,6 +127,16 @@ export class EngineService {
     this.waterGeneratorService.addToReflectionRenderList(terrain);
     this.waterGeneratorService.addToRefractionRenderList(terrain);
 
+    // LOGIC
+    this.shipGeneratorService.subscribeToShipList().subscribe(shipList => {
+      console.log(shipList);
+      shipList.forEach(ship => {
+        ship.meshes.forEach(mesh => {
+          this.waterGeneratorService.addToReflectionRenderList(mesh);
+        });
+
+      });
+    });
 
     // add mesh to depth renderer
     // @ts-ignore

@@ -1,4 +1,5 @@
 import {Injectable} from '@angular/core';
+
 import {
   MeshBuilder,
   ShaderMaterial,
@@ -33,7 +34,10 @@ export class WaterGeneratorService {
   private waveLength = 10.0;
   private waveHeight = 50.0;
 
-  public constructor() {}
+  public constructor() {
+
+
+  }
 
   public setScene(scene: any, camera: any, renderer: any, light: any) {
     this.light = light;

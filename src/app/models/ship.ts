@@ -1,7 +1,7 @@
 export class Ship {
   private name;
   private type;
-  private meshes;
+  meshes;
   private cot;
   private speed = 2.0;
 

@@ -4,19 +4,27 @@ import 'babylonjs-loaders';
 import Vector3 = BABYLON.Vector3;
 import { AssetLoaderService } from './asset-loader.service';
 import { Ship } from '../models/ship';
+import { WaterGeneratorService } from './water-generator.service';
+import {BehaviorSubject} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ShipGeneratorService {
   private scene;
-  private shipList: Ship[] = [];
+  private shipList: BehaviorSubject<Ship[]> = new BehaviorSubject([]);
   private modelPrefix = 'ships-';
   private initialShipPositionY = 4.2;
 
   public constructor(
     private assetLoaderService: AssetLoaderService,
+    private waterGeneratorService: WaterGeneratorService
   ) {}
+
+  subscribeToShipList(){
+    return this.shipList;
+  }
+
 
   public init(scene) {
     this.scene = scene;
@@ -50,8 +58,10 @@ export class ShipGeneratorService {
       }
 
       // create new ship object and add it to the list
-      this.shipList.push(new Ship(shipModel.name,  shipModel.type, shipMeshes, cot));
-      console.log(this.shipList);
+      const ship = new Ship(shipModel.name,  shipModel.type, shipMeshes, cot);
+      const currentValue = this.shipList.value;
+      const updatedValue = [...currentValue, ship];
+      this.shipList.next(updatedValue);
 
     } else {
       console.log('asset not found: ' + this.modelPrefix + type);
