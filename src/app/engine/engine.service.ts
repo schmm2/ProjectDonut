@@ -84,6 +84,31 @@ export class EngineService {
     const physicsPlugin = new CannonJSPlugin();
     this.scene.enablePhysics(gravityVector, physicsPlugin);
 
+    // ***** SkyBox ******
+    const skyBox = MeshBuilder.CreateBox('skyBox', {size: 2000.0}, this.scene);
+    /*const skyBoxMaterial = new StandardMaterial('skyBox', this.scene);
+    skyBoxMaterial.backFaceCulling = false;
+    skyBoxMaterial.reflectionTexture = new CubeTexture('/assets/textures/material/TropicalSunnyDay', this.scene);
+    skyBoxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+    skyBoxMaterial.diffuseColor = new Color3(0, 0, 0);
+    skyBoxMaterial.specularColor = new Color3(0, 0, 0);
+    //skyBoxMaterial.turbidity = 20.0;*/
+    const skyMaterial = new BABYLON.SkyMaterial("skyMaterial", this.scene);
+    skyMaterial.backFaceCulling = false;
+    skyMaterial.inclination = 0;
+    skyBox.material = skyMaterial;
+
+    // ***** Lights *****
+    // create a basic light, aiming 0,1,0 - meaning, to the sky
+    this.light = new HemisphericLight('light1', new Vector3(0, 1, 0), this.scene);
+    this.light.intensity = 1.0;
+
+    //Adding a light
+    var light2 = new BABYLON.PointLight("Omni", new BABYLON.Vector3(-300, 20, 50), this.scene);
+    light2.intensity = 1;
+    light2.diffuse = new BABYLON.Color3(220/255, 220 /255, 139 /255);
+    let shadowGenerator = new BABYLON.ShadowGenerator(1024, light2);
+
     // init injector services
     this.shipGeneratorService.init(this.scene);
     this.assetLoaderService.init(this.scene);
@@ -91,26 +116,68 @@ export class EngineService {
     // ***** AssetLoader *****
     this.assetLoaderService.subscribeToAssetsLoadState().subscribe(isLoaded => {
       if (isLoaded) {
+        // enable depth buffer
+        const renderer = this.scene.enableDepthRenderer();
+
         console.log('AssetLoader: all models loaded');
         // build ships
         // @ts-ignore
         this.shipList.push(this.shipGeneratorService.buildShip(new Vector2(0, -50), 'fluyt'));
         this.shipGeneratorService.buildShip(new Vector2(20, -100), 'fluyt');
         this.shipGeneratorService.buildShip(new Vector2(-20, -80), 'fluyt');
+
+        // add water plane
+        this.waterGeneratorService.setScene(this.scene, this.camera, renderer, this.light);
+        const waterPlane = this.waterGeneratorService.buildWaterPlane();
+
+        // add terrain
+        this.terrainGeneratorService.setScene(this.scene);
+        const terrain = this.terrainGeneratorService.buildTerrain();
+
+        // @ts-ignore
+        //terrain.physicsImpostor = new BABYLON.PhysicsImpostor(terrain, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);
+
+        // add mesh to renderList of water
+        this.waterGeneratorService.addToReflectionRenderList(skyBox);
+        this.waterGeneratorService.addToReflectionRenderList(terrain);
+        this.waterGeneratorService.addToRefractionRenderList(terrain);
+
+
+        terrain.receiveShadows = true;
+        waterPlane.receiveShadows = true;
+
+        // navigation
+        //navigationPlugin.createNavMesh([terrain, waterPlane], navigationParameters);
+
+        /*let navmeshdebug = navigationPlugin.createDebugNavMesh(this.scene);
+        var matdebug = new BABYLON.StandardMaterial('matdebug', this.scene);
+        matdebug.diffuseColor = new BABYLON.Color3(0.1, 0.2, 1);
+        matdebug.alpha = 0.2;
+        navmeshdebug.material = matdebug;
+        */
+
+        // add mesh to depth renderer
+        // @ts-ignore
+        renderer.getDepthMap().renderList = [terrain];
+
+
+        // LOGIC
+        this.shipGeneratorService.subscribeToShipList().subscribe(shipList => {
+          console.log(shipList);
+          shipList.forEach(ship => {
+            ship.getMeshes().forEach(mesh => {
+              this.waterGeneratorService.addToReflectionRenderList(mesh);
+              shadowGenerator.getShadowMap().renderList.push(mesh);
+            });
+
+          });
+        });
       }
     });
 
 
 
-    // ***** SkyBox ******
-    const skyBox = MeshBuilder.CreateBox('skyBox', {size: 1000.0}, this.scene);
-    const skyBoxMaterial = new StandardMaterial('skyBox', this.scene);
-    skyBoxMaterial.backFaceCulling = false;
-    skyBoxMaterial.reflectionTexture = new CubeTexture('/assets/textures/material/TropicalSunnyDay', this.scene);
-    skyBoxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-    skyBoxMaterial.diffuseColor = new Color3(0, 0, 0);
-    skyBoxMaterial.specularColor = new Color3(0, 0, 0);
-    skyBox.material = skyBoxMaterial;
+
 
     // ****** CAMERA ******
     // create a FreeCamera, and set its position to (x:5, y:10, z:-20 )
@@ -124,52 +191,9 @@ export class EngineService {
     // attach the camera to the canvas
     this.camera.attachControl(this.canvas, false);
 
-    // enable depth buffer
-    const renderer = this.scene.enableDepthRenderer();
-
-    // ***** Lights *****
-    // create a basic light, aiming 0,1,0 - meaning, to the sky
-    this.light = new HemisphericLight('light1', new Vector3(0, 1, 0), this.scene);
-
-    // add water plane
-    this.waterGeneratorService.setScene(this.scene, this.camera, renderer, this.light);
-    const waterPlane = this.waterGeneratorService.buildWaterPlane();
-
-    // add terrain
-    this.terrainGeneratorService.setScene(this.scene);
-    const terrain = this.terrainGeneratorService.buildTerrain();
-    // @ts-ignore
-    terrain.physicsImpostor = new BABYLON.PhysicsImpostor(terrain, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);
 
 
-    // add mesh to renderList of water
-    this.waterGeneratorService.addToReflectionRenderList(skyBox);
-    this.waterGeneratorService.addToReflectionRenderList(terrain);
-    this.waterGeneratorService.addToRefractionRenderList(terrain);
 
-    // navigation
-    navigationPlugin.createNavMesh([terrain, waterPlane], navigationParameters);
-
-    let navmeshdebug = navigationPlugin.createDebugNavMesh(this.scene);
-    var matdebug = new BABYLON.StandardMaterial('matdebug', this.scene);
-    matdebug.diffuseColor = new BABYLON.Color3(0.1, 0.2, 1);
-    matdebug.alpha = 0.2;
-    navmeshdebug.material = matdebug;
-
-    // LOGIC
-    this.shipGeneratorService.subscribeToShipList().subscribe(shipList => {
-      console.log(shipList);
-      shipList.forEach(ship => {
-        ship.getMeshes().forEach(mesh => {
-          this.waterGeneratorService.addToReflectionRenderList(mesh);
-        });
-
-      });
-    });
-
-    // add mesh to depth renderer
-    // @ts-ignore
-    renderer.getDepthMap().renderList = [terrain];
   }
 
   public animate(): void {

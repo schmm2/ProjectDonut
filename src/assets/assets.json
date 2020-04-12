@@ -15,5 +15,21 @@
         ]
       }
     ]
+  },
+  {
+    "name": "terrain",
+    "url": "./assets/models/terrain/",
+    "models": [
+      {
+        "name": "island1a",
+        "fileName": "island1A.obj",
+        "scale": 20.0
+      },
+      {
+        "name": "island5a",
+        "fileName": "island5a.obj",
+        "scale": 1.5
+      }
+    ]
   }
 ]

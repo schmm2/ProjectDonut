@@ -34,6 +34,10 @@ export class AssetLoaderService {
     }
   }
 
+  public getAllAssets() {
+    return this.assetList;
+  }
+
   private loadAssets() {
     let assetsToLoad = 0;
 
@@ -48,6 +52,7 @@ export class AssetLoaderService {
         // console.log(assetModel);
 
         BABYLON.SceneLoader.ImportMesh(null, assetCategory.url, assetModel.fileName, this.scene, (newMeshes) => {
+          console.log(newMeshes);
           let numberOfMesh = 0;
           const meshsOfModel = [];
 
@@ -57,13 +62,17 @@ export class AssetLoaderService {
             mesh.position = Vector3.Zero();
             mesh.scaling = new Vector3(assetModel.scale, assetModel.scale, assetModel.scale);
 
+            console.log("zzzsss");
             // add diffuseTexture
-            const path = assetModel.diffuseTextures[numberOfMesh];
-            if (path) {
-              mesh.material = new BABYLON.StandardMaterial('mat', this.scene);
-              // @ts-ignore
-              mesh.material.diffuseTexture = new BABYLON.Texture(path, this.scene);
+            if (assetModel.diffuseTextures) {
+              const path = assetModel.diffuseTextures[numberOfMesh];
+              if (path) {
+                mesh.material = new BABYLON.StandardMaterial('mat', this.scene);
+                // @ts-ignore
+                mesh.material.diffuseTexture = new BABYLON.Texture(path, this.scene);
+              }
             }
+            console.log("sss");
             meshsOfModel.push(mesh);
             // next
             numberOfMesh++;
