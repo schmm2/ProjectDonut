@@ -3,6 +3,7 @@ import * as BABYLON from 'babylonjs';
 import { MixMaterial, GridMaterial } from 'babylonjs-materials';
 import { AssetLoaderService } from './asset-loader.service';
 import Vector3 = BABYLON.Vector3;
+import {Color3} from 'babylonjs/Maths/math.color';
 
 @Injectable({
   providedIn: 'root'
@@ -60,6 +61,7 @@ export class TerrainGeneratorService {
       if(mesh.geometry){
       const newMesh = mesh.createInstance('terrain-' + mesh.id);
       newMesh.position = new Vector3(0,0,0);
+      newMesh.material.specularColor = new BABYLON.Color3(0.,0.,0.);
       console.log(newMesh.material);
       // apply material
       /*if(mesh.material) {

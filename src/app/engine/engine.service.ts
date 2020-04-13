@@ -93,7 +93,8 @@ export class EngineService {
     skyBoxMaterial.diffuseColor = new Color3(0, 0, 0);
     skyBoxMaterial.specularColor = new Color3(0, 0, 0);
     //skyBoxMaterial.turbidity = 20.0;*/
-    const skyMaterial = new BABYLON.SkyMaterial("skyMaterial", this.scene);
+    // @ts-ignore
+    const skyMaterial = new BABYLON.SkyMaterial('skyMaterial', this.scene);
     skyMaterial.backFaceCulling = false;
     skyMaterial.inclination = 0;
     skyBox.material = skyMaterial;
@@ -104,7 +105,8 @@ export class EngineService {
     this.light.intensity = 1.0;
 
     //Adding a light
-    var light2 = new BABYLON.PointLight("Omni", new BABYLON.Vector3(-300, 20, 50), this.scene);
+    // @ts-ignore
+    var light2 = new BABYLON.PointLight("Omni", new BABYLON.Vector3(-800, 200, -400), this.scene);
     light2.intensity = 1;
     light2.diffuse = new BABYLON.Color3(220/255, 220 /255, 139 /255);
     let shadowGenerator = new BABYLON.ShadowGenerator(1024, light2);
@@ -143,6 +145,7 @@ export class EngineService {
         this.waterGeneratorService.addToRefractionRenderList(terrain);
 
 
+        // @ts-ignore
         terrain.receiveShadows = true;
         waterPlane.receiveShadows = true;
 
