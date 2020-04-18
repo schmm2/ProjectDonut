@@ -33,7 +33,7 @@ export class ShipGeneratorService {
   public buildShip(location, type) {
     const shipModel = this.assetLoaderService.getModel(this.modelPrefix + type);
     if ( shipModel) {
-      console.log(shipModel);
+      // console.log(shipModel);
       const shipMeshes = [];
 
       // create transform node

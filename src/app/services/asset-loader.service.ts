@@ -43,7 +43,7 @@ export class AssetLoaderService {
   private loadAssets() {
     AssetsJSON.forEach(assetCategory => {
       // load available images
-      console.log(assetCategory);
+      // console.log(assetCategory);
       if (assetCategory.images) {
         assetCategory.images.forEach(imageAsset => {
           const path = assetCategory.url + 'images/' + imageAsset.fileName;
@@ -119,7 +119,6 @@ export class AssetLoaderService {
     };
 
     // load assets
-    console.log(this.assetsManager);
     this.assetsManager.load();
   }
 }
