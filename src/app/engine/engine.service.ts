@@ -127,17 +127,24 @@ export class EngineService {
         const renderer = this.scene.enableDepthRenderer();
         // build ships
         // @ts-ignore
-        this.shipList.push(this.shipGeneratorService.buildShip(new Vector2(0, -50), 'fluyt'));
-        this.shipGeneratorService.buildShip(new Vector2(20, -100), 'fluyt');
-        this.shipGeneratorService.buildShip(new Vector2(-20, -80), 'fluyt');
+        this.shipList.push(this.shipGeneratorService.buildShip(new Vector2(0, -150), 'fluyt'));
+        this.shipGeneratorService.buildShip(new Vector2(20, -180), 'fluyt');
+        this.shipGeneratorService.buildShip(new Vector2(-20, -180), 'fluyt');
 
         // add water plane
         this.waterGeneratorService.setScene(this.scene, this.camera, renderer, this.light);
         const waterPlane = this.waterGeneratorService.buildWaterPlane();
 
-        // add terrain
-        this.terrainGeneratorService.setScene(this.scene);
-        const terrain = this.terrainGeneratorService.buildTerrain();
+        let terrain = null;
+        this.gameBoardGenerator.subscribeToGeneratedGameBoardLandTiles().subscribe(landTiles => {
+          if (landTiles.length > 0) {
+            console.log('engine: Game Board land tiles generated');
+            // add terrain
+            this.terrainGeneratorService.setScene(this.scene);
+            terrain = this.terrainGeneratorService.buildTerrain(landTiles);
+          }
+        });
+
 
         // @ts-ignore
         // terrain.physicsImpostor = new BABYLON.PhysicsImpostor(terrain, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);

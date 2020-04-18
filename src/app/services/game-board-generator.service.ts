@@ -2,6 +2,7 @@ import {Injectable} from '@angular/core';
 import {AssetLoaderService} from './asset-loader.service';
 import {GameBoardTile} from '../classes/game-board-tile';
 import {GameBoardTileType} from '../enums/game-board-tile-type.enum';
+import {BehaviorSubject} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +11,7 @@ export class GameBoardGeneratorService {
   private assetPrefix = 'terrain-';
   private tilesArray: any[];
   private landTilesArray: GameBoardTile[] = [];
+  private generatedLandTiles: BehaviorSubject<GameBoardTile[]> = new BehaviorSubject(this.landTilesArray);
 
   // surrounding tiles vertices
   private aUp = new BABYLON.Vector2(-1, 1);
@@ -34,10 +36,15 @@ export class GameBoardGeneratorService {
     private assetLoaderService: AssetLoaderService
   ) { }
 
+  public subscribeToGeneratedGameBoardLandTiles() {
+    return this.generatedLandTiles;
+  }
+
   public init() {
     this.tilesArray = [];
     const textures = this.loadTerrainTextures();
     this.buildTilesArray(textures);
+    this.generatedLandTiles.next(this.landTilesArray);
   }
 
   private buildTilesArray(terrainTextures) {

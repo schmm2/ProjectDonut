@@ -42,9 +42,14 @@ export class GameBoardTile {
     this._yPositionShifted = value;
   }
 
+  get name() {
+    return ('tile' + this._mapCoordinates.x + '-' + this._mapCoordinates.y);
+  }
+
   private _type: GameBoardTileType;
   private _mapCoordinates: Vector2;
   private _yPositionShifted = false;
   private _surroundingTilesCoordinates: Vector2[];
   private _coastStyleCode;
+  private _name;
 }
