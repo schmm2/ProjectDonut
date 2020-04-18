@@ -118,12 +118,8 @@ export class EngineService {
     // ***** AssetLoader *****
     this.assetLoaderService.subscribeToAssetsLoadState().subscribe(isLoaded => {
       if (isLoaded) {
-        console.log("All assets have been loaded");
-
         // enable depth buffer
         const renderer = this.scene.enableDepthRenderer();
-
-        console.log('AssetLoader: all models loaded');
         // build ships
         // @ts-ignore
         this.shipList.push(this.shipGeneratorService.buildShip(new Vector2(0, -50), 'fluyt'));

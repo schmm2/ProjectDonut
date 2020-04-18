@@ -43,13 +43,22 @@ export class AssetLoaderService {
   private loadAssets() {
     AssetsJSON.forEach(assetCategory => {
       // load available images
+      console.log(assetCategory);
       if (assetCategory.images) {
         assetCategory.images.forEach(imageAsset => {
           const path = assetCategory.url + 'images/' + imageAsset.fileName;
+          // console.log(path);
           const imageTask = this.assetsManager.addImageTask(imageAsset.name, path);
+
           imageTask.onSuccess = (task) => {
             // console.log(task);
-            this.imageAssetList.set(imageAsset.name, task.image);
+            const imageId = assetCategory.name + '-' + imageAsset.name;
+            this.imageAssetList.set(imageId, task.image);
+          };
+
+          imageTask.onError = (task) => {
+            console.log('image loader task failed');
+            console.log(task);
           };
         });
       }
@@ -100,15 +109,17 @@ export class AssetLoaderService {
           };
         });
       }
-
-      this.assetsManager.onFinish = (tasks) => {
-        console.log(this.modelAssetList);
-        console.log(this.imageAssetList);
-        this.isLoaded.next(true);
-      };
-
-      // load assets
-      this.assetsManager.load();
     });
+
+    this.assetsManager.onFinish = (tasks) => {
+      console.log('AssetLoader: all models loaded');
+      console.log(this.modelAssetList);
+      console.log(this.imageAssetList);
+      this.isLoaded.next(true);
+    };
+
+    // load assets
+    console.log(this.assetsManager);
+    this.assetsManager.load();
   }
 }
