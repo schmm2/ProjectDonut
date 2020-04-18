@@ -12,7 +12,7 @@ export class AssetLoaderService {
   private assetsManager: BABYLON.AssetsManager;
   private scene;
   private modelAssetList;
-  private imageAssetList;
+  private textureAssetList;
   private isLoaded: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   public constructor() {}
@@ -20,7 +20,7 @@ export class AssetLoaderService {
   public init(scene) {
     this.scene = scene;
     this.modelAssetList = new Map();
-    this.imageAssetList = new Map();
+    this.textureAssetList = new Map();
     this.assetsManager = new BABYLON.AssetsManager(this.scene);
     this.loadAssets();
   }
@@ -36,28 +36,39 @@ export class AssetLoaderService {
     return this.modelAssetList.get(id);
   }
 
+  public getTexture(id: any ) {
+    if (!this.textureAssetList.has(id)) {
+      return null;
+    }
+    return this.textureAssetList.get(id);
+  }
+
+  public getAllTextures() {
+    return this.textureAssetList;
+  }
+
   public getAllModels() {
     return this.modelAssetList;
   }
 
   private loadAssets() {
     AssetsJSON.forEach(assetCategory => {
-      // load available images
+      // load available textures
       // console.log(assetCategory);
-      if (assetCategory.images) {
-        assetCategory.images.forEach(imageAsset => {
-          const path = assetCategory.url + 'images/' + imageAsset.fileName;
+      if (assetCategory.textures) {
+        assetCategory.textures.forEach(textureAsset => {
+          const path = assetCategory.url + 'textures/' + textureAsset.fileName;
           // console.log(path);
-          const imageTask = this.assetsManager.addImageTask(imageAsset.name, path);
+          const textureTask = this.assetsManager.addTextureTask(textureAsset.name, path);
 
-          imageTask.onSuccess = (task) => {
+          textureTask.onSuccess = (task) => {
             // console.log(task);
-            const imageId = assetCategory.name + '-' + imageAsset.name;
-            this.imageAssetList.set(imageId, task.image);
+            const textureId = assetCategory.name + '-' + textureAsset.name;
+            this.textureAssetList.set(textureId, task.texture);
           };
 
-          imageTask.onError = (task) => {
-            console.log('image loader task failed');
+          textureTask.onError = (task) => {
+            console.log('texture loader task failed');
             console.log(task);
           };
         });
@@ -112,9 +123,9 @@ export class AssetLoaderService {
     });
 
     this.assetsManager.onFinish = (tasks) => {
-      console.log('AssetLoader: all models loaded');
+      console.log('AssetLoader: all assets loaded');
       console.log(this.modelAssetList);
-      console.log(this.imageAssetList);
+      console.log(this.textureAssetList);
       this.isLoaded.next(true);
     };
 

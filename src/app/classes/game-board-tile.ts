@@ -1,12 +1,23 @@
 import Vector2 = BABYLON.Vector2;
-
-enum GameBoardTileType {
-  water,
-  land,
-  coast
-}
+import {GameBoardTileType} from '../enums/game-board-tile-type.enum';
 
 export class GameBoardTile {
+  get coastStyleCode() {
+    return this._coastStyleCode;
+  }
+
+  set coastStyleCode(value) {
+    this._coastStyleCode = value;
+  }
+  get surroundingTilesCoordinates(): Vector2[] {
+    return this._surroundingTilesCoordinates;
+  }
+
+  set surroundingTilesCoordinates(value: Vector2[]) {
+    this._surroundingTilesCoordinates = value;
+  }
+  public constructor() {}
+
   get type(): GameBoardTileType {
     return this._type;
   }
@@ -23,15 +34,17 @@ export class GameBoardTile {
     this._mapCoordinates = value;
   }
 
-  get tileYShifted(): boolean {
-    return this._tileYShifted;
+  get yPositionShifted(): boolean {
+    return this._yPositionShifted;
   }
 
-  set tileYShifted(value: boolean) {
-    this._tileYShifted = value;
+  set yPositionShifted(value: boolean) {
+    this._yPositionShifted = value;
   }
 
   private _type: GameBoardTileType;
   private _mapCoordinates: Vector2;
-  private _tileYShifted = false;
+  private _yPositionShifted = false;
+  private _surroundingTilesCoordinates: Vector2[];
+  private _coastStyleCode;
 }

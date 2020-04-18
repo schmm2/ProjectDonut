@@ -27,6 +27,7 @@ import { TerrainGeneratorService } from '../services/terrain-generator.service';
 import { ShipGeneratorService } from '../services/ship-generator.service';
 import { AssetLoaderService } from '../services/asset-loader.service';
 import {Ship} from '../classes/ship';
+import {GameBoardGeneratorService} from '../services/game-board-generator.service';
 
 
 @Injectable({ providedIn: 'root' })
@@ -46,7 +47,8 @@ export class EngineService {
     private waterGeneratorService: WaterGeneratorService,
     private terrainGeneratorService: TerrainGeneratorService,
     private shipGeneratorService: ShipGeneratorService,
-    private assetLoaderService: AssetLoaderService
+    private assetLoaderService: AssetLoaderService,
+    private gameBoardGenerator: GameBoardGeneratorService
   ) {
    window.CANNON = CANNON;
   }
@@ -55,7 +57,7 @@ export class EngineService {
 
     const navigationPlugin = new BABYLON.RecastJSPlugin();
     // tslint:disable-next-line:prefer-const
-    var navigationParameters = {
+    let navigationParameters = {
       cs: 0.2,
       ch: 0.2,
       walkableSlopeAngle: 0,
@@ -104,12 +106,12 @@ export class EngineService {
     this.light = new HemisphericLight('light1', new Vector3(0, 1, 0), this.scene);
     this.light.intensity = 1.0;
 
-    //Adding a light
+    // Adding a light
     // @ts-ignore
-    var light2 = new BABYLON.PointLight("Omni", new BABYLON.Vector3(-800, 200, -400), this.scene);
+    let light2 = new BABYLON.PointLight('Omni', new BABYLON.Vector3(-800, 200, -400), this.scene);
     light2.intensity = 1;
-    light2.diffuse = new BABYLON.Color3(220/255, 220 /255, 139 /255);
-    let shadowGenerator = new BABYLON.ShadowGenerator(1024, light2);
+    light2.diffuse = new BABYLON.Color3(220 / 255, 220 / 255, 139 / 255);
+    // let shadowGenerator = new BABYLON.ShadowGenerator(1024, light2);
 
     // init injector services
     this.shipGeneratorService.init(this.scene);
@@ -118,6 +120,9 @@ export class EngineService {
     // ***** AssetLoader *****
     this.assetLoaderService.subscribeToAssetsLoadState().subscribe(isLoaded => {
       if (isLoaded) {
+        console.log('engine: assets loaded, start building scene...');
+        this.gameBoardGenerator.init();
+
         // enable depth buffer
         const renderer = this.scene.enableDepthRenderer();
         // build ships
@@ -135,7 +140,7 @@ export class EngineService {
         const terrain = this.terrainGeneratorService.buildTerrain();
 
         // @ts-ignore
-        //terrain.physicsImpostor = new BABYLON.PhysicsImpostor(terrain, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);
+        // terrain.physicsImpostor = new BABYLON.PhysicsImpostor(terrain, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);
 
         // add mesh to renderList of water
         this.waterGeneratorService.addToReflectionRenderList(skyBox);
@@ -144,11 +149,11 @@ export class EngineService {
 
 
         // @ts-ignore
-        terrain.receiveShadows = true;
-        waterPlane.receiveShadows = true;
+        // terrain.receiveShadows = true;
+        // waterPlane.receiveShadows = true;
 
         // navigation
-        //navigationPlugin.createNavMesh([terrain, waterPlane], navigationParameters);
+        // navigationPlugin.createNavMesh([terrain, waterPlane], navigationParameters);
 
         /*let navmeshdebug = navigationPlugin.createDebugNavMesh(this.scene);
         var matdebug = new BABYLON.StandardMaterial('matdebug', this.scene);
@@ -168,7 +173,7 @@ export class EngineService {
           shipList.forEach(ship => {
             ship.getMeshes().forEach(mesh => {
               this.waterGeneratorService.addToReflectionRenderList(mesh);
-              shadowGenerator.getShadowMap().renderList.push(mesh);
+              // shadowGenerator.getShadowMap().renderList.push(mesh);
             });
 
           });

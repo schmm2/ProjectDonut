@@ -31,7 +31,7 @@
         "scale": 1.5
       }
     ],
-    "images": [
+    "textures": [
       {
         "name": "borneo",
         "fileName": "borneo.png"
