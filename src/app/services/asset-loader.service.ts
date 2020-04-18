@@ -9,16 +9,19 @@ import {BehaviorSubject} from 'rxjs';
   providedIn: 'root'
 })
 export class AssetLoaderService {
-  private assetManager: BABYLON.AssetsManager;
+  private assetsManager: BABYLON.AssetsManager;
   private scene;
-  private assetList;
+  private modelAssetList;
+  private imageAssetList;
   private isLoaded: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   public constructor() {}
 
   public init(scene) {
     this.scene = scene;
-    this.assetList = new Map();
+    this.modelAssetList = new Map();
+    this.imageAssetList = new Map();
+    this.assetsManager = new BABYLON.AssetsManager(this.scene);
     this.loadAssets();
   }
 
@@ -26,78 +29,86 @@ export class AssetLoaderService {
     return this.isLoaded;
   }
 
-  public getAsset(id: any) {
-    if (this.assetList.has(id)) {
-      return this.assetList.get(id);
-    } else {
+  public getModel(id: any) {
+    if (!this.modelAssetList.has(id)) {
       return null;
     }
+    return this.modelAssetList.get(id);
   }
 
-  public getAllAssets() {
-    return this.assetList;
+  public getAllModels() {
+    return this.modelAssetList;
   }
 
   private loadAssets() {
-    let assetsToLoad = 0;
-
-    this.assetManager = new BABYLON.AssetsManager(this.scene);
-    // console.log(AssetsJSON);
-
     AssetsJSON.forEach(assetCategory => {
-      console.log(assetCategory);
-      assetsToLoad += assetCategory.models.length;
-
-      assetCategory.models.forEach(assetModel => {
-        // console.log(assetModel);
-
-        BABYLON.SceneLoader.ImportMesh(null, assetCategory.url, assetModel.fileName, this.scene, (newMeshes) => {
-          console.log(newMeshes);
-          let numberOfMesh = 0;
-          const meshsOfModel = [];
-
-          newMeshes.forEach(mesh => {
-            console.log(mesh);
-            mesh.setEnabled(false);
-            mesh.position = Vector3.Zero();
-            mesh.scaling = new Vector3(assetModel.scale, assetModel.scale, assetModel.scale);
-
-            console.log("zzzsss");
-            // add diffuseTexture
-            if (assetModel.diffuseTextures) {
-              const path = assetModel.diffuseTextures[numberOfMesh];
-              if (path) {
-                mesh.material = new BABYLON.StandardMaterial('mat', this.scene);
-                // @ts-ignore
-                mesh.material.diffuseTexture = new BABYLON.Texture(path, this.scene);
-              }
-            }
-            console.log("sss");
-            meshsOfModel.push(mesh);
-            // next
-            numberOfMesh++;
-          });
-          // add model to modeList
-          const model = {
-            name: assetModel.name,
-            type: assetCategory.name,
-            scale: assetModel.scale,
-            enableCOT: assetModel.enableCOT,
-            enablePhysics: assetModel.enablePhysics,
-            meshes: meshsOfModel,
+      // load available images
+      if (assetCategory.images) {
+        assetCategory.images.forEach(imageAsset => {
+          const path = assetCategory.url + 'images/' + imageAsset.fileName;
+          const imageTask = this.assetsManager.addImageTask(imageAsset.name, path);
+          imageTask.onSuccess = (task) => {
+            // console.log(task);
+            this.imageAssetList.set(imageAsset.name, task.image);
           };
-          const modelId = assetCategory.name + '-' + assetModel.name;
-          this.assetList.set(modelId, model);
-
-          // one done
-          assetsToLoad--;
-          // check if we are done loading
-          if (assetsToLoad === 0) {
-            console.log(this.assetList);
-            this.isLoaded.next(true);
-          }
         });
-      });
+      }
+
+      // load available models
+      if (assetCategory.models) {
+        assetCategory.models.forEach(assetModel => {
+          // console.log(assetModel);
+          const meshPath = assetCategory.url + 'models/';
+          const meshTask = this.assetsManager.addMeshTask(assetModel.name, '', meshPath, assetModel.fileName);
+          meshTask.onSuccess = (task) => {
+            //console.log(task);
+            const newMeshes = task.loadedMeshes;
+            const meshsOfModel = [];
+
+            let count = 0;
+            newMeshes.forEach(mesh => {
+              // console.log(mesh);
+              mesh.setEnabled(false);
+              mesh.position = Vector3.Zero();
+              mesh.scaling = new Vector3(assetModel.scale, assetModel.scale, assetModel.scale);
+
+              // add diffuseTexture
+              if (assetModel.diffuseTextures) {
+                const diffuseTexturePath =  assetCategory.url + 'textures/' + assetModel.diffuseTextures[count];
+                // console.log(diffuseTexturePath);
+                if (diffuseTexturePath) {
+                  mesh.material = new BABYLON.StandardMaterial('mat', this.scene);
+                  // @ts-ignore
+                  mesh.material.diffuseTexture = new BABYLON.Texture(diffuseTexturePath, this.scene);
+                }
+              }
+              count++;
+              meshsOfModel.push(mesh);
+              // console.log(meshsOfModel);
+            });
+            const model = {
+              name: assetModel.name,
+              type: assetCategory.name,
+              scale: assetModel.scale,
+              enableCOT: assetModel.enableCOT,
+              enablePhysics: assetModel.enablePhysics,
+              meshes: meshsOfModel,
+            };
+            // add model to list
+            const modelId = assetCategory.name + '-' + assetModel.name;
+            this.modelAssetList.set(modelId, model);
+          };
+        });
+      }
+
+      this.assetsManager.onFinish = (tasks) => {
+        console.log(this.modelAssetList);
+        console.log(this.imageAssetList);
+        this.isLoaded.next(true);
+      };
+
+      // load assets
+      this.assetsManager.load();
     });
   }
 }

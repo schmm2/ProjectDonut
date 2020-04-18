@@ -3,7 +3,7 @@ import * as BABYLON from 'babylonjs';
 import 'babylonjs-loaders';
 import Vector3 = BABYLON.Vector3;
 import { AssetLoaderService } from './asset-loader.service';
-import { Ship } from '../models/ship';
+import { Ship } from '../classes/ship';
 import { WaterGeneratorService } from './water-generator.service';
 import {BehaviorSubject} from 'rxjs';
 
@@ -31,7 +31,7 @@ export class ShipGeneratorService {
   }
 
   public buildShip(location, type) {
-    const shipModel = this.assetLoaderService.getAsset(this.modelPrefix + type);
+    const shipModel = this.assetLoaderService.getModel(this.modelPrefix + type);
     if ( shipModel) {
       console.log(shipModel);
       const shipMeshes = [];

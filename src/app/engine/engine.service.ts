@@ -26,7 +26,7 @@ import { WaterGeneratorService } from  '../services/water-generator.service';
 import { TerrainGeneratorService } from '../services/terrain-generator.service';
 import { ShipGeneratorService } from '../services/ship-generator.service';
 import { AssetLoaderService } from '../services/asset-loader.service';
-import {Ship} from '../models/ship';
+import {Ship} from '../classes/ship';
 
 
 @Injectable({ providedIn: 'root' })
@@ -118,6 +118,8 @@ export class EngineService {
     // ***** AssetLoader *****
     this.assetLoaderService.subscribeToAssetsLoadState().subscribe(isLoaded => {
       if (isLoaded) {
+        console.log("All assets have been loaded");
+
         // enable depth buffer
         const renderer = this.scene.enableDepthRenderer();
 

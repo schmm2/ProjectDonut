@@ -1,7 +1,7 @@
 [
   {
     "name": "ships",
-    "url": "./assets/models/ships/",
+    "url": "./assets/ships/",
     "models": [
       {
         "name": "fluyt",
@@ -9,16 +9,16 @@
         "scale": 0.008,
         "enableCOT": true,
         "diffuseTextures": [
-          "assets/textures/ships/cartoon-fluyt-diffuse.png",
-          "assets/textures/ships/cartoon-fluyt-ropes-diffuse.png",
-          "assets/textures/ships/cartoon-fluyt-sail-diffuse.png"
+          "cartoon-fluyt-diffuse.png",
+          "cartoon-fluyt-ropes-diffuse.png",
+          "cartoon-fluyt-sail-diffuse.png"
         ]
       }
     ]
   },
   {
     "name": "terrain",
-    "url": "./assets/models/terrain/",
+    "url": "./assets/terrain/",
     "models": [
       {
         "name": "island1a",
@@ -29,6 +29,12 @@
         "name": "island5a",
         "fileName": "island5a.obj",
         "scale": 1.5
+      }
+    ],
+    "images": [
+      {
+        "name": "borneo",
+        "fileName": "borneo.png"
       }
     ]
   }

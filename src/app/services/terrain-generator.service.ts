@@ -61,8 +61,8 @@ export class TerrainGeneratorService {
 
     //mix.diffuseTexture4.vScale = mix.diffuseTexture4.uScale = 100;
 
-    /* console.log(this.assetLoaderService.getAllAssets());
-     let islandX = this.assetLoaderService.getAsset('terrain-island5a');
+    /* console.log(this.assetLoaderService.getAllModels());
+     let islandX = this.assetLoaderService.getModel('terrain-island5a');
      console.log(islandX);
      islandX.meshes.forEach(mesh => {
        if(mesh.geometry){
