@@ -146,9 +146,10 @@ export class WaterGeneratorService {
     const foamTexture = new Texture('assets/textures/material/water/water_foam.png', this.scene);
 
 
+
     // create plane
     this.waterPlane = MeshBuilder.CreateGround('water', {width: 250, height: 250, subdivisions: 100}, this.scene, );
-    this.waterPlane.position.y = 3;
+    this.waterPlane.position.y = 1;
 
     const shallowWaterColor = new Color4(0.3, 0.4, 0.7, 1.0);
     const deepWaterColor = new Color4(0, 0.25, 0.283, 1.0);
