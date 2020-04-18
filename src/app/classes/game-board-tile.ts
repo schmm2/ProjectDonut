@@ -2,6 +2,13 @@ import Vector2 = BABYLON.Vector2;
 import {GameBoardTileType} from '../enums/game-board-tile-type.enum';
 
 export class GameBoardTile {
+  get isMountainCenter() {
+    return this._isMountainCenter;
+  }
+
+  set isMountainCenter(value) {
+    this._isMountainCenter = value;
+  }
   get coastStyleCode() {
     return this._coastStyleCode;
   }
@@ -9,12 +16,12 @@ export class GameBoardTile {
   set coastStyleCode(value) {
     this._coastStyleCode = value;
   }
-  get surroundingTilesCoordinates(): Vector2[] {
-    return this._surroundingTilesCoordinates;
+  get surroundingTiles(): GameBoardTile[] {
+    return this._surroundingTiles;
   }
 
-  set surroundingTilesCoordinates(value: Vector2[]) {
-    this._surroundingTilesCoordinates = value;
+  set surroundingTiles(value: GameBoardTile[]) {
+    this._surroundingTiles = value;
   }
   public constructor() {}
 
@@ -49,7 +56,8 @@ export class GameBoardTile {
   private _type: GameBoardTileType;
   private _mapCoordinates: Vector2;
   private _yPositionShifted = false;
-  private _surroundingTilesCoordinates: Vector2[];
+  private _surroundingTiles: GameBoardTile[];
   private _coastStyleCode;
   private _name;
+  private _isMountainCenter = false;
 }

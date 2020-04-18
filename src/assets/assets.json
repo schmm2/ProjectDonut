@@ -37,5 +37,15 @@
         "fileName": "borneo.png"
       }
     ]
+  },
+  {
+    "name": "mountains",
+    "url": "./assets/mountains/",
+    "textures": [
+      {
+        "name": "601C1",
+        "fileName": "601C1.png"
+      }
+    ]
   }
 ]

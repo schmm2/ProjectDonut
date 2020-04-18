@@ -51,6 +51,15 @@ export class AssetLoaderService {
     return this.modelAssetList;
   }
 
+  public loadTexturesOfCategory(category: any) {
+    const images = [];
+    const allImages = this.getAllTextures();
+    allImages.forEach((image, key) => {
+      if (key.startsWith(category)) {images.push(image); }
+    });
+    return images;
+  }
+
   private loadAssets() {
     AssetsJSON.forEach(assetCategory => {
       // load available textures

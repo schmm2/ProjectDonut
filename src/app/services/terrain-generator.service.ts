@@ -1,13 +1,16 @@
 import { Injectable } from '@angular/core';
 import * as BABYLON from 'babylonjs';
 import {GameBoardTile} from '../classes/game-board-tile';
+import {AssetLoaderService} from './asset-loader.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TerrainGeneratorService {
 
-  public constructor() { }
+  public constructor(
+    private assetLoaderService: AssetLoaderService
+  ) { }
 
   private scene: any;
   private tileElevation = 5.0;
@@ -18,12 +21,33 @@ export class TerrainGeneratorService {
   private tileHeightHalf = Math.sqrt(Math.pow(this.tileRadius, 2) - Math.pow(this.tileSideHalf, 2));
   private tileHeight = this.tileHeightHalf * 2.0;
 
+  private mountainTextures;
+  private mountainMeshes = [];
 
-  public setScene(scene) {
-    this.scene = scene;
+  public init(scene) {
+    return new Promise((resolve, reject) => {
+      this.scene = scene;
+      this.mountainTextures = this.assetLoaderService.loadTexturesOfCategory('mountains');
+      let newMeshesCounter = this.mountainTextures.length;
+      for (const mountainTexture of this.mountainTextures) {
+        console.log(mountainTexture);
+        BABYLON.Mesh.CreateGroundFromHeightMap(mountainTexture.name, mountainTexture.url, 150, 150, 250, 0, 30, this.scene, false,
+          (newMesh) => {
+            console.log(newMesh);
+            newMeshesCounter--;
+            newMesh.rotation.y = -Math.PI / 3;
+            newMesh.isVisible = false;
+            this.mountainMeshes.push(newMesh);
+            if(newMeshesCounter == 0){
+              resolve();
+            }
+          });
+      }
+    });
   }
 
   public buildTerrain(landTiles: GameBoardTile[]) {
+    console.log(this.mountainMeshes);
     const meshArray = [];
 
     for (const landTile of landTiles) {
@@ -48,9 +72,22 @@ export class TerrainGeneratorService {
         newCylinder.position.z += this.tileHeightHalf;
       }
       const cylinderMaterial = new BABYLON.StandardMaterial('mat1', this.scene);
-      console.log(landTile.type);
+
       if (landTile.type === 2) {
-        //cylinderMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0);
+        cylinderMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0);
+      }
+      if (landTile.type === 3 && landTile.isMountainCenter) {
+        console.log("BULD MOUNTAIN");
+        // get a random mesh
+        console.log(this.mountainMeshes);
+        let newMountainMesh = this.mountainMeshes[0].createInstance('dd');
+        newMountainMesh.isVisible = true;
+        newMountainMesh.position = newCylinder.position;
+        let meshBoundingBoxSize = newMountainMesh.getBoundingInfo().boundingBox.extendSize;
+        console.log(meshBoundingBoxSize);
+        let scalingVectorFactor = //this.tileHeightHalf / meshBoundingBoxSize.x;
+        newMountainMesh.scaling = new BABYLON.Vector3(0.4,0.4,0.4);
+        console.log(newMountainMesh);
       }
 
       //newCylinder.mapCoordinates = landTile.mapCoordinates;
@@ -69,9 +106,10 @@ export class TerrainGeneratorService {
       meshArray.push(newCylinder);
     }
     // merge all meshes together
-    const mergedMeshes = BABYLON.Mesh.MergeMeshes(meshArray);
-    mergedMeshes.position = new BABYLON.Vector3(-120, 0, -120);
+    //const mergedMeshes = BABYLON.Mesh.MergeMeshes(meshArray);
+    //mergedMeshes.position = new BABYLON.Vector3(-120, 0, -120);
 
+    return null;
     return mergedMeshes;
   }
 }

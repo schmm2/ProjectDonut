@@ -140,8 +140,10 @@ export class EngineService {
           if (landTiles.length > 0) {
             console.log('engine: Game Board land tiles generated');
             // add terrain
-            this.terrainGeneratorService.setScene(this.scene);
-            terrain = this.terrainGeneratorService.buildTerrain(landTiles);
+            this.terrainGeneratorService.init(this.scene).then((returnedValue) => {
+              console.log("DONE LAODING");
+              terrain = this.terrainGeneratorService.buildTerrain(landTiles);
+            });
           }
         });
 

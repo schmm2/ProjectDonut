@@ -1,5 +1,6 @@
 export enum GameBoardTileType {
   water,
   land,
-  coast
+  coast,
+  mountain,
 }
