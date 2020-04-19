@@ -29,6 +29,7 @@ import { AssetLoaderService } from '../services/asset-loader.service';
 import {Ship} from '../classes/ship';
 import {TilesGeneratorService} from '../services/tiles-generator.service';
 import {InteractionManagerService} from '../services/interactionManager.service';
+import {GameStateService} from '../services/game-state.service';
 
 
 @Injectable({ providedIn: 'root' })
@@ -50,7 +51,8 @@ export class EngineService {
     private shipGeneratorService: ShipGeneratorService,
     private assetLoaderService: AssetLoaderService,
     private gameBoardGenerator: TilesGeneratorService,
-    private actionManagerService: InteractionManagerService
+    private actionManagerService: InteractionManagerService,
+    private gameStateService: GameStateService
   ) {
    window.CANNON = CANNON;
   }
@@ -118,6 +120,7 @@ export class EngineService {
     // init injector services
     this.shipGeneratorService.init(this.scene);
     this.assetLoaderService.init(this.scene);
+    this.gameStateService.init(this.scene);
 
     // ***** AssetLoader *****
     this.assetLoaderService.subscribeToAssetsLoadState().subscribe(isLoaded => {
@@ -183,7 +186,7 @@ export class EngineService {
         this.shipGeneratorService.subscribeToShipList().subscribe(shipList => {
           console.log(shipList);
           shipList.forEach(ship => {
-            let mesh = ship.getMesh();
+            const mesh = ship.getMesh();
             this.waterGeneratorService.addToReflectionRenderList(mesh);
               // shadowGenerator.getShadowMap().renderList.push(mesh);
           });

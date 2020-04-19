@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import * as BABYLON from 'babylonjs';
 import {GameBoardTile} from '../classes/game-board-tile';
 import {AssetLoaderService} from './asset-loader.service';
+import {BehaviorSubject} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -21,19 +22,23 @@ export class TerrainGeneratorService {
   private tileHeightHalf = Math.sqrt(Math.pow(this.tileRadius, 2) - Math.pow(this.tileSideHalf, 2));
   private tileHeight = this.tileHeightHalf * 2.0;
 
-  private mountainTextures;
   private mountainMeshes = [];
+  private terrainMesh;
+
+  private generatedTerrain: BehaviorSubject<any> = new BehaviorSubject(this.terrainMesh);
 
   public init(scene) {
+    this.scene = scene;
+    const mountainTextures = this.assetLoaderService.loadTexturesOfCategory('mountains');
+    return this.createMeshFromHeightMaps(mountainTextures);
+  }
+
+  private createMeshFromHeightMaps(mountainTextures) {
     return new Promise((resolve, reject) => {
-      this.scene = scene;
-      this.mountainTextures = this.assetLoaderService.loadTexturesOfCategory('mountains');
-      let newMeshesCounter = this.mountainTextures.length;
-      for (const mountainTexture of this.mountainTextures) {
-        console.log(mountainTexture);
+      let newMeshesCounter = mountainTextures.length;
+      for (const mountainTexture of mountainTextures) {
         BABYLON.Mesh.CreateGroundFromHeightMap(mountainTexture.name, mountainTexture.url, 250, 250, 250, 0, 40, this.scene, false,
           (newMesh) => {
-            console.log(newMesh);
             newMeshesCounter--;
             newMesh.rotation.y = -Math.PI / 3;
             newMesh.isVisible = false;
@@ -41,7 +46,8 @@ export class TerrainGeneratorService {
             mat.diffuseColor = new BABYLON.Color3(1, 0, 0);
             newMesh.material = mat;
             this.mountainMeshes.push(newMesh);
-            if (newMeshesCounter == 0) {
+            // no more height maps to generate
+            if (newMeshesCounter === 0) {
               resolve();
             }
           });
@@ -50,7 +56,6 @@ export class TerrainGeneratorService {
   }
 
   public buildTerrain(landTiles: GameBoardTile[]) {
-    console.log(this.mountainMeshes);
     const meshArray = [];
 
     for (const landTile of landTiles) {

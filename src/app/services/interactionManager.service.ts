@@ -1,20 +1,23 @@
 import { Injectable } from '@angular/core';
+import {GameStateService} from './game-state.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InteractionManagerService {
   private scene;
-  public constructor() { }
+  public constructor(
+    private gameStateService: GameStateService
+  ) { }
 
-  private static handleKeyDown(key) {
+  private handleKeyDown(key) {
     const keyUpperCase = key.toUpperCase();
     switch (keyUpperCase) {
       case 'B':
         console.log('Toggle Building System');
         break;
       case 'C':
-        console.log('Center Camera to active Object');
+        this.gameStateService.centerCameraToSelectedObject();
         break;
     }
   }
@@ -29,7 +32,7 @@ export class InteractionManagerService {
     this.scene.onKeyboardObservable.add((kbInfo) => {
       switch (kbInfo.type) {
         case BABYLON.KeyboardEventTypes.KEYDOWN:
-          InteractionManagerService.handleKeyDown(kbInfo.event.key);
+          this.handleKeyDown(kbInfo.event.key);
           break;
         case BABYLON.KeyboardEventTypes.KEYUP:
           // console.log('KEY UP: ', kbInfo.event.keyCode);

@@ -5,6 +5,7 @@ import Vector3 = BABYLON.Vector3;
 import { AssetLoaderService } from './asset-loader.service';
 import { Ship } from '../classes/ship';
 import {BehaviorSubject} from 'rxjs';
+import {GameStateService} from './game-state.service';
 
 @Injectable({
   providedIn: 'root'
@@ -17,6 +18,7 @@ export class ShipGeneratorService {
 
   public constructor(
     private assetLoaderService: AssetLoaderService,
+    private gameStateService: GameStateService
   ) {}
 
   public subscribeToShipList() {
@@ -46,8 +48,8 @@ export class ShipGeneratorService {
       mergedShipMesh.actionManager.registerAction(
         new BABYLON.ExecuteCodeAction(
           BABYLON.ActionManager.OnPickTrigger, (pickEvent) => {
-            console.log(pickEvent.source);
-            console.log(pickEvent.source.shipId);
+            // set ship as selected
+            this.gameStateService.setSelectedObject(pickEvent.source.shipId, pickEvent.source);
           }
         )
       );
