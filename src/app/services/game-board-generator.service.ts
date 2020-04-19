@@ -3,6 +3,8 @@ import {AssetLoaderService} from './asset-loader.service';
 import {GameBoardTile} from '../classes/game-board-tile';
 import {GameBoardTileType} from '../enums/game-board-tile-type.enum';
 import {BehaviorSubject} from 'rxjs';
+import {type} from 'os';
+import {MountainSizes} from '../enums/mountain-sizes.enum';
 
 @Injectable({
   providedIn: 'root'
@@ -39,19 +41,48 @@ export class GameBoardGeneratorService {
   private surroundingTileNames = ['A', 'B', 'C', 'D', 'E', 'F'];
 
   // check if the surrounding tile is of GameBoardTileType
-  private static checkSurroundingTilesForType(tile: GameBoardTile, typeArray: GameBoardTileType[]) {
-    for (const surroundingTile of tile.surroundingTiles) {
-      if (typeArray.includes(surroundingTile.type)) {
-        return true;
-      }
+  private tilesCheck = [];
+
+
+  private static changeTypeOfTiles(tiles: GameBoardTile[], type: GameBoardTileType) {
+    for (const tile of tiles) {
+      tile.type = type;
     }
-    return false;
   }
 
-  private static changeTypeOfSurroundingTiles(tile: GameBoardTile, type: GameBoardTileType) {
-    for (const surroundingType of tile.surroundingTiles) {
-      surroundingType.type = type;
+  // input
+  // tile: tile to check surrounding
+  // range: how many levels away from the center we will search
+  private  checkSurroundingTilesForType(tile: GameBoardTile, typeArray: GameBoardTileType[], range, tileMemory: GameBoardTile[]) {
+    // stop if the tile doesnt have a defined surrounding
+    if (tile.surroundingTiles && tile.surroundingTiles.length === 6) {
+      for (const surroundingTile of tile.surroundingTiles) {
+        // check if new should check one level further from the center
+        if (range > 0) {
+          // recursive, go one level deeper
+          if (this.checkSurroundingTilesForType(surroundingTile, typeArray, (range - 1), tileMemory)) {
+            // found an unsuitable tile, break
+            return true;
+          }
+        }
+        // check if the surrounding tile is of the specified types we dont want
+        if (typeArray.includes(surroundingTile.type)) {
+          // console.log('not suitable tile detected');
+          return true;
+        }
+      }
+      // check if tile already saved
+      const filtered = tileMemory.filter(existingTile => existingTile.name === tile.name );
+      if ( filtered.length === 0) {
+        // everything is ok, tile seems suited, lets save this tile
+        tileMemory.push(tile);
+      }
+      return false;
+    } else {
+      // console.log('not suitable tile detected');
+      return true;
     }
+
   }
 
   public subscribeToGeneratedGameBoardLandTiles() {
@@ -147,31 +178,42 @@ export class GameBoardGeneratorService {
       // calculate how many mountain fields we should generate
       const mountainFieldCount = Math.round(this.landTilesArray.length * this.mountainsOccuranceFactor);
       const maxTries = 5;
-      // find a suitable spot
+      const maxMountainAreaSize = 4;
+      const minMountainAreaSize = 2;
+
+      // find a suitable tile for a mountain
       for (let m = 0; m < mountainFieldCount; m++) {
-        // take a random field
-        let mountainNotFound = true;
-        let counter = 0;
-        while (mountainNotFound && counter < maxTries) {
+        let mountainTileNotFound = true;
+        let exitCounter = 0;
+        // do some retries
+        while (mountainTileNotFound && exitCounter < maxTries) {
           // select a random field
           const randomLandTileIndex = Math.round(Math.random() * (this.landTilesArray.length - 1));
           const possibleMountainTile = this.landTilesArray[randomLandTileIndex];
-          const coastOrMountainNextToTheSelectedTile = GameBoardGeneratorService.checkSurroundingTilesForType(
+
+          const newMountainTiles = [];
+          let coastOrMountainNextToTheSelectedTile = false;
+          const mountainAreaSize = minMountainAreaSize + Math.round(Math.random() * (maxMountainAreaSize - minMountainAreaSize));
+
+          coastOrMountainNextToTheSelectedTile = this.checkSurroundingTilesForType(
             possibleMountainTile,
-            [GameBoardTileType.coast,GameBoardTileType.mountain]
+            [GameBoardTileType.coast, GameBoardTileType.mountain],
+            mountainAreaSize,
+            newMountainTiles
           );
 
           // the tile needs to be land + should not be next to a mountain or the coast
           if (possibleMountainTile.type === GameBoardTileType.land && !coastOrMountainNextToTheSelectedTile) {
             // console.log('found a mountain tile');
-            // change tile type to mountain
-            possibleMountainTile.type = GameBoardTileType.mountain;
             possibleMountainTile.isMountainCenter = true;
+            possibleMountainTile.mountainAreaSize = mountainAreaSize;
+
+            // change tile type to mountain
             // change surrounding tiles to mountain
-            GameBoardGeneratorService.changeTypeOfSurroundingTiles(possibleMountainTile, GameBoardTileType.mountain);
-            mountainNotFound = false;
+            GameBoardGeneratorService.changeTypeOfTiles(newMountainTiles, GameBoardTileType.mountain);
+            mountainTileNotFound = false;
           }
-          counter++;
+          exitCounter++;
         }
       }
     });

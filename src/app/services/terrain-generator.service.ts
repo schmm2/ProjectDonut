@@ -31,12 +31,15 @@ export class TerrainGeneratorService {
       let newMeshesCounter = this.mountainTextures.length;
       for (const mountainTexture of this.mountainTextures) {
         console.log(mountainTexture);
-        BABYLON.Mesh.CreateGroundFromHeightMap(mountainTexture.name, mountainTexture.url, 150, 150, 250, 0, 30, this.scene, false,
+        BABYLON.Mesh.CreateGroundFromHeightMap(mountainTexture.name, mountainTexture.url, 250, 250, 250, 0, 40, this.scene, false,
           (newMesh) => {
             console.log(newMesh);
             newMeshesCounter--;
             newMesh.rotation.y = -Math.PI / 3;
             newMesh.isVisible = false;
+            let mat = new BABYLON.StandardMaterial('mat', this.scene);
+            mat.diffuseColor = new BABYLON.Color3(1,0,0);
+            newMesh.material = mat;
             this.mountainMeshes.push(newMesh);
             if(newMeshesCounter == 0){
               resolve();
@@ -76,18 +79,30 @@ export class TerrainGeneratorService {
       if (landTile.type === 2) {
         cylinderMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0);
       }
+
+      if (landTile.type === 3) {
+        cylinderMaterial.diffuseColor = new BABYLON.Color3(0, 1, 0);
+      }
+
       if (landTile.type === 3 && landTile.isMountainCenter) {
-        console.log("BULD MOUNTAIN");
+
+        //console.log("BULD MOUNTAIN");
         // get a random mesh
-        console.log(this.mountainMeshes);
+        //console.log(this.mountainMeshes);
         let newMountainMesh = this.mountainMeshes[0].createInstance('dd');
         newMountainMesh.isVisible = true;
-        newMountainMesh.position = newCylinder.position;
+        let mountainMeshPositionY = this.tileElevation / 2 - 0.1;
+        newMountainMesh.position = new BABYLON.Vector3(newCylinder.position.x, mountainMeshPositionY, newCylinder.position.z);
         let meshBoundingBoxSize = newMountainMesh.getBoundingInfo().boundingBox.extendSize;
-        console.log(meshBoundingBoxSize);
-        let scalingVectorFactor = //this.tileHeightHalf / meshBoundingBoxSize.x;
-        newMountainMesh.scaling = new BABYLON.Vector3(0.4,0.4,0.4);
-        console.log(newMountainMesh);
+        //console.log(meshBoundingBoxSize);
+        let scalingVectorFactor = (1+landTile.mountainAreaSize) * this.tileRadius / meshBoundingBoxSize.x;
+        //console.log(scalingVectorFactor);
+        newMountainMesh.scaling = new BABYLON.Vector3(scalingVectorFactor, scalingVectorFactor, scalingVectorFactor);
+
+        //let mat = new BABYLON.StandardMaterial('mat', this.scene);
+        //mat.diffuseColor = new BABYLON.Color3(1,0,0);
+        //newMountainMesh.material = mat;
+        //console.log(newMountainMesh);
       }
 
       //newCylinder.mapCoordinates = landTile.mapCoordinates;
@@ -102,7 +117,7 @@ export class TerrainGeneratorService {
         )
       );*/
       newCylinder.material = cylinderMaterial;
-
+      // console.log(newCylinder);
       meshArray.push(newCylinder);
     }
     // merge all meshes together
@@ -110,6 +125,6 @@ export class TerrainGeneratorService {
     //mergedMeshes.position = new BABYLON.Vector3(-120, 0, -120);
 
     return null;
-    return mergedMeshes;
+    //return mergedMeshes;
   }
 }
