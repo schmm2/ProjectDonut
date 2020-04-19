@@ -183,11 +183,9 @@ export class EngineService {
         this.shipGeneratorService.subscribeToShipList().subscribe(shipList => {
           console.log(shipList);
           shipList.forEach(ship => {
-            ship.getMeshes().forEach(mesh => {
-              this.waterGeneratorService.addToReflectionRenderList(mesh);
+            let mesh = ship.getMesh();
+            this.waterGeneratorService.addToReflectionRenderList(mesh);
               // shadowGenerator.getShadowMap().renderList.push(mesh);
-            });
-
           });
         });
       }

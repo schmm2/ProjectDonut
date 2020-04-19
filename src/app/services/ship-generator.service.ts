@@ -4,7 +4,6 @@ import 'babylonjs-loaders';
 import Vector3 = BABYLON.Vector3;
 import { AssetLoaderService } from './asset-loader.service';
 import { Ship } from '../classes/ship';
-import { WaterGeneratorService } from './water-generator.service';
 import {BehaviorSubject} from 'rxjs';
 
 @Injectable({
@@ -18,7 +17,6 @@ export class ShipGeneratorService {
 
   public constructor(
     private assetLoaderService: AssetLoaderService,
-    private waterGeneratorService: WaterGeneratorService
   ) {}
 
   public subscribeToShipList() {
@@ -36,29 +34,36 @@ export class ShipGeneratorService {
       // console.log(shipModel);
       const shipMeshes = [];
 
-      // create transform node
-      let cot = null;
-      if (shipModel.enableCOT) {
-        cot = new BABYLON.TransformNode(shipModel.name + '-root');
-      }
-
       shipModel.meshes.forEach(mesh => {
-        // create mesh instance
-        const newMesh = mesh.createInstance('ship-' + type + mesh.id);
-        if (cot) {
-          newMesh.parent = cot;
-        }
+        // create mesh clone
+        const newMesh = mesh.clone('ship-' + type + mesh.id);
         shipMeshes.push(newMesh);
       });
+      const mergedShipMesh = BABYLON.Mesh.MergeMeshes(shipMeshes, true, false, null , false, true);
 
-      // set position
-      if (cot) {
-        cot.position = new Vector3(location.x, this.initialShipPositionY, location.y);
-        cot.rotation.y = 0.6;
-      }
+      // add action manager to first 'main' mesh
+      mergedShipMesh.actionManager = new BABYLON.ActionManager(this.scene);
+      mergedShipMesh.actionManager.registerAction(
+        new BABYLON.ExecuteCodeAction(
+          BABYLON.ActionManager.OnPickTrigger, (pickEvent) => {
+            console.log(pickEvent.source);
+            console.log(pickEvent.source.shipId);
+          }
+        )
+      );
 
-      // create new ship object and add it to the list
-      const ship = new Ship(shipModel.name,  shipModel.type, shipMeshes, cot);
+      mergedShipMesh.position = new Vector3(location.x, this.initialShipPositionY, location.y);
+      mergedShipMesh.rotation.y = 0.6;
+
+      // create ship id
+      const shipId = 'ship-' + BABYLON.Tools.RandomId();
+
+      // store id on mesh for reference reasons
+      // @ts-ignore
+      mergedShipMesh.shipId = shipId;
+
+      // create new ship game object and add it to the list
+      const ship = new Ship(shipId, shipModel.name, shipModel.type, mergedShipMesh);
       const currentValue = this.shipList.value;
       const updatedValue = [...currentValue, ship];
       this.shipList.next(updatedValue);

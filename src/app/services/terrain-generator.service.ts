@@ -103,17 +103,6 @@ export class TerrainGeneratorService {
         newMountainMesh.scaling = new BABYLON.Vector3(scalingVectorFactor, scalingVectorFactor, scalingVectorFactor);
       }
 
-      // newCylinder.mapCoordinates = landTile.mapCoordinates;
-      /*newCylinder.actionManager = new BABYLON.ActionManager(this.scene);
-      newCylinder.actionManager.registerAction(
-        new BABYLON.ExecuteCodeAction(
-          BABYLON.ActionManager.OnPickTrigger, function(bjsevt) {
-            console.log(bjsevt.source.type);
-            console.log(bjsevt.source.mapCoordinates);
-            console.log(bjsevt.source.costStyleCode);
-          }
-        )
-      );*/
       newCylinder.material = cylinderMaterial;
       // console.log(newCylinder);
       meshArray.push(newCylinder);

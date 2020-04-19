@@ -1,18 +1,18 @@
 export class Ship {
+  private id;
   private name;
   private type;
-  private meshes;
-  private cot;
+  private mesh;
   private speed = 2.0;
 
-  public constructor(name, type, meshes, cot) {
+  public constructor(id, name, type, mesh) {
+    this.id = id;
     this.name = name;
     this.type = type;
-    this.meshes = meshes;
-    this.cot = cot;
+    this.mesh = mesh;
   }
 
-  public getMeshes(){
-    return this.meshes;
+  public getMesh() {
+    return this.mesh;
   }
 }
