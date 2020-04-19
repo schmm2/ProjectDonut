@@ -28,6 +28,7 @@ import { ShipGeneratorService } from '../services/ship-generator.service';
 import { AssetLoaderService } from '../services/asset-loader.service';
 import {Ship} from '../classes/ship';
 import {TilesGeneratorService} from '../services/tiles-generator.service';
+import {InteractionManagerService} from '../services/interactionManager.service';
 
 
 @Injectable({ providedIn: 'root' })
@@ -48,7 +49,8 @@ export class EngineService {
     private terrainGeneratorService: TerrainGeneratorService,
     private shipGeneratorService: ShipGeneratorService,
     private assetLoaderService: AssetLoaderService,
-    private gameBoardGenerator: TilesGeneratorService
+    private gameBoardGenerator: TilesGeneratorService,
+    private actionManagerService: InteractionManagerService
   ) {
    window.CANNON = CANNON;
   }
@@ -175,6 +177,7 @@ export class EngineService {
         // @ts-ignore
         renderer.getDepthMap().renderList = [terrain];
 
+        this.actionManagerService.init(this.scene);
 
         // LOGIC
         this.shipGeneratorService.subscribeToShipList().subscribe(shipList => {
