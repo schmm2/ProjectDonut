@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { GameBoardGeneratorService } from './game-board-generator.service';
+import { TilesGeneratorService } from './tiles-generator.service';
 
 describe('GameBoardGeneratorService', () => {
-  let service: GameBoardGeneratorService;
+  let service: TilesGeneratorService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(GameBoardGeneratorService);
+    service = TestBed.inject(TilesGeneratorService);
   });
 
   it('should be created', () => {

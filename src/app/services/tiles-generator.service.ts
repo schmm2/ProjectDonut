@@ -7,16 +7,20 @@ import {BehaviorSubject} from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
-export class GameBoardGeneratorService {
+export class TilesGeneratorService {
 
   public constructor(
     private assetLoaderService: AssetLoaderService
   ) { }
-  private mountainsOccuranceFactor = 0.05;
+  private mountainsOccurrenceFactor = 0.05;
 
   private assetPrefix = 'terrain-';
   private tilesArray: any[];
   private landTilesArray: GameBoardTile[] = [];
+  // land + coast tiles, no water, mountains
+  private gameBoardTilesArray: GameBoardTile[] = [];
+
+  private generatedGameBoardTiles: BehaviorSubject<GameBoardTile[]> = new BehaviorSubject(this.gameBoardTilesArray);
   private generatedLandTiles: BehaviorSubject<GameBoardTile[]> = new BehaviorSubject(this.landTilesArray);
 
   // surrounding tiles vertices
@@ -37,7 +41,6 @@ export class GameBoardGeneratorService {
   private surroundingTilesVectorsDown = [this.aDown, this.b, this.cDown, this.dDown, this.e, this.fDown];
 
   private surroundingTileNames = ['A', 'B', 'C', 'D', 'E', 'F'];
-
 
   private static changeTypeOfTiles(tiles: GameBoardTile[], type: GameBoardTileType) {
     for (const tile of tiles) {
@@ -77,23 +80,33 @@ export class GameBoardGeneratorService {
       // console.log('not suitable tile detected');
       return true;
     }
-
   }
 
-  public subscribeToGeneratedGameBoardLandTiles() {
+  public subscribeToGeneratedGameBoardTiles() {
+    return this.generatedGameBoardTiles;
+  }
+
+  public subscribeToGeneratedLandTiles() {
     return this.generatedLandTiles;
   }
 
   public init() {
     this.tilesArray = [];
     const textures = this.assetLoaderService.loadTexturesOfCategory(this.assetPrefix);
+    // defines all tiles
     this.buildTilesArray(textures);
+    // checks which tile is a coast tile
+    this.findCoastTiles();
+    // defines mountains on the land
+    this.defineMountainTiles();
+    // build the game board where the player can build stuff
+    this.buildGameBoard();
     this.generatedLandTiles.next(this.landTilesArray);
   }
 
   private buildTilesArray(terrainTextures) {
     terrainTextures.forEach(terrainTexture => {
-      const rowLength =  terrainTexture.getBaseSize().width;
+      const rowLength = terrainTexture.getBaseSize().width;
       const rows = terrainTexture.getBaseSize().height;
 
       // get image and read if this is land or water
@@ -107,7 +120,7 @@ export class GameBoardGeneratorService {
             this.tilesArray[i] = [];
           }
 
-          const pixelStartingPosition = (r * rowLength + i)  * 4;
+          const pixelStartingPosition = (r * rowLength + i) * 4;
           const red = texturePixels[pixelStartingPosition];
           const green = texturePixels[pixelStartingPosition + 1];
           const blue = texturePixels[pixelStartingPosition + 2];
@@ -118,7 +131,9 @@ export class GameBoardGeneratorService {
           newTile.mapCoordinates = new BABYLON.Vector2(i, r);
 
           // remember that this tile will be shifted in the view
-          if (i % 2 !== 0) { newTile.yPositionShifted = true; }
+          if (i % 2 !== 0) {
+            newTile.yPositionShifted = true;
+          }
 
           if (colorValue < 127) {
             // we found a water tile
@@ -132,87 +147,102 @@ export class GameBoardGeneratorService {
           this.tilesArray[i][r] = newTile;
         }
       }
-
-      // *****************
-      // COAST
-      // find coast tiles
-      // *****************
-      for (const landTile of this.landTilesArray) {
-        const surroundingTilesObject = this.findSurroundingTiles(landTile);
-        let coastStyleCode = '';
-        let surroundingTileNumber = 0;
-
-        const surroundingTiles = surroundingTilesObject.surroundingTiles;
-        // store surrounding tiles of this tile
-        landTile.surroundingTiles = surroundingTiles;
-
-        // console.log(surroundingTiles);
-        if (surroundingTiles && surroundingTiles.length > 0) {
-          for (const surroundingTile of surroundingTiles) {
-            if (surroundingTile.type === GameBoardTileType.water) {
-              // found a water tile next to this land  tile -> this is a coast tile
-              // add Surrounding Tile Code, this defines the coast style
-              coastStyleCode += this.surroundingTileNames[surroundingTileNumber];
-            }
-            surroundingTileNumber++;
-          }
-          // redefine landTile to coast tile
-          if (coastStyleCode !== '') {
-            // console.log('found a coast tile');
-            landTile.type = GameBoardTileType.coast;
-            landTile.coastStyleCode = coastStyleCode;
-          }
-        }
-      }
-
-      // *****************
-      // MOUNTAINS
-      // define mountain tiles, -> center and surrounding
-      // Mountain fields do not reside next to a coast field + are a land tile
-      // *****************
-      // calculate how many mountain fields we should generate
-      const mountainFieldCount = Math.round(this.landTilesArray.length * this.mountainsOccuranceFactor);
-      // max tries to find a spot for a mountain
-      const maxTries = 5;
-      const maxMountainAreaSize = 5;
-      const minMountainAreaSize = 3;
-
-      // find a suitable tile for a mountain
-      for (let m = 0; m < mountainFieldCount; m++) {
-        let mountainTileNotFound = true;
-        let exitCounter = 0;
-        // do some retries
-        while (mountainTileNotFound && exitCounter < maxTries) {
-          // select a random field
-          const randomLandTileIndex = Math.round(Math.random() * (this.landTilesArray.length - 1));
-          const possibleMountainTile = this.landTilesArray[randomLandTileIndex];
-
-          const newMountainTiles = [];
-          let coastOrMountainNextToTheSelectedTile = false;
-          const mountainAreaSize = minMountainAreaSize + Math.round(Math.random() * (maxMountainAreaSize - minMountainAreaSize));
-
-          coastOrMountainNextToTheSelectedTile = this.checkSurroundingTilesForType(
-            possibleMountainTile,
-            [GameBoardTileType.coast, GameBoardTileType.mountain],
-            mountainAreaSize,
-            newMountainTiles
-          );
-
-          // the tile needs to be land + should not be next to a mountain or the coast
-          if (possibleMountainTile.type === GameBoardTileType.land && !coastOrMountainNextToTheSelectedTile) {
-            // console.log('found a mountain tile');
-            possibleMountainTile.isMountainCenter = true;
-            possibleMountainTile.mountainAreaSize = mountainAreaSize;
-
-            // change tile type to mountain
-            // change surrounding tiles to mountain
-            GameBoardGeneratorService.changeTypeOfTiles(newMountainTiles, GameBoardTileType.mountain);
-            mountainTileNotFound = false;
-          }
-          exitCounter++;
-        }
-      }
     });
+  }
+
+  // *****************
+  // MOUNTAINS
+  // define mountain tiles, -> center and surrounding
+  // Mountain fields do not reside next to a coast field + are a land tile
+  // *****************
+  private defineMountainTiles() {
+    // calculate how many mountain fields we should generate
+    const mountainFieldCount = Math.round(this.landTilesArray.length * this.mountainsOccurrenceFactor);
+    // max tries to find a spot for a mountain
+    const maxTries = 5;
+    const maxMountainAreaSize = 5;
+    const minMountainAreaSize = 3;
+
+    // find a suitable tile for a mountain
+    for (let m = 0; m < mountainFieldCount; m++) {
+      let mountainTileNotFound = true;
+      let exitCounter = 0;
+      // do some retries
+      while (mountainTileNotFound && exitCounter < maxTries) {
+        // select a random field
+        const randomLandTileIndex = Math.round(Math.random() * (this.landTilesArray.length - 1));
+        const possibleMountainTile = this.landTilesArray[randomLandTileIndex];
+
+        const newMountainTiles = [];
+        let coastOrMountainNextToTheSelectedTile = false;
+        const mountainAreaSize = minMountainAreaSize + Math.round(Math.random() * (maxMountainAreaSize - minMountainAreaSize));
+
+        coastOrMountainNextToTheSelectedTile = this.checkSurroundingTilesForType(
+          possibleMountainTile,
+          [GameBoardTileType.coast, GameBoardTileType.mountain],
+          mountainAreaSize,
+          newMountainTiles
+        );
+
+        // the tile needs to be land + should not be next to a mountain or the coast
+        if (possibleMountainTile.type === GameBoardTileType.land && !coastOrMountainNextToTheSelectedTile) {
+          // console.log('found a mountain tile');
+          possibleMountainTile.isMountainCenter = true;
+          possibleMountainTile.mountainAreaSize = mountainAreaSize;
+
+          // change tile type to mountain
+          // change surrounding tiles to mountain
+          TilesGeneratorService.changeTypeOfTiles(newMountainTiles, GameBoardTileType.mountain);
+          mountainTileNotFound = false;
+        }
+        exitCounter++;
+      }
+    }
+  }
+
+  // *****************
+  // COAST
+  // find coast tiles
+  // *****************
+  private findCoastTiles() {
+    for (const landTile of this.landTilesArray) {
+      const surroundingTilesObject = this.findSurroundingTiles(landTile);
+      let coastStyleCode = '';
+      let surroundingTileNumber = 0;
+
+      const surroundingTiles = surroundingTilesObject.surroundingTiles;
+      // store surrounding tiles of this tile
+      landTile.surroundingTiles = surroundingTiles;
+
+      // console.log(surroundingTiles);
+      if (surroundingTiles && surroundingTiles.length > 0) {
+        for (const surroundingTile of surroundingTiles) {
+          if (surroundingTile.type === GameBoardTileType.water) {
+            // found a water tile next to this land  tile -> this is a coast tile
+            // add Surrounding Tile Code, this defines the coast style
+            coastStyleCode += this.surroundingTileNames[surroundingTileNumber];
+          }
+          surroundingTileNumber++;
+        }
+        // redefine landTile to coast tile
+        if (coastStyleCode !== '') {
+          // console.log('found a coast tile');
+          landTile.type = GameBoardTileType.coast;
+          landTile.coastStyleCode = coastStyleCode;
+          this.gameBoardTilesArray.push(landTile);
+        }
+      }
+    }
+  }
+
+  // builds the actual game board
+  // loop through all landTiles, adds non Mountain Tiles
+  private buildGameBoard() {
+    for (const landTile of this.landTilesArray) {
+      if (landTile.type !== GameBoardTileType.mountain) {
+        this.gameBoardTilesArray.push(landTile);
+      }
+    }
   }
 
   private findSurroundingTiles(tile: GameBoardTile) {

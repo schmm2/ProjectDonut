@@ -27,7 +27,7 @@ import { TerrainGeneratorService } from '../services/terrain-generator.service';
 import { ShipGeneratorService } from '../services/ship-generator.service';
 import { AssetLoaderService } from '../services/asset-loader.service';
 import {Ship} from '../classes/ship';
-import {GameBoardGeneratorService} from '../services/game-board-generator.service';
+import {TilesGeneratorService} from '../services/tiles-generator.service';
 
 
 @Injectable({ providedIn: 'root' })
@@ -48,7 +48,7 @@ export class EngineService {
     private terrainGeneratorService: TerrainGeneratorService,
     private shipGeneratorService: ShipGeneratorService,
     private assetLoaderService: AssetLoaderService,
-    private gameBoardGenerator: GameBoardGeneratorService
+    private gameBoardGenerator: TilesGeneratorService
   ) {
    window.CANNON = CANNON;
   }
@@ -136,7 +136,7 @@ export class EngineService {
         const waterPlane = this.waterGeneratorService.buildWaterPlane();
 
         let terrain = null;
-        this.gameBoardGenerator.subscribeToGeneratedGameBoardLandTiles().subscribe(landTiles => {
+        this.gameBoardGenerator.subscribeToGeneratedLandTiles().subscribe(landTiles => {
           if (landTiles.length > 0) {
             console.log('engine: Game Board land tiles generated');
             // add terrain
