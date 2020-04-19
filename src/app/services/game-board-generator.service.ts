@@ -3,8 +3,6 @@ import {AssetLoaderService} from './asset-loader.service';
 import {GameBoardTile} from '../classes/game-board-tile';
 import {GameBoardTileType} from '../enums/game-board-tile-type.enum';
 import {BehaviorSubject} from 'rxjs';
-import {type} from 'os';
-import {MountainSizes} from '../enums/mountain-sizes.enum';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +12,7 @@ export class GameBoardGeneratorService {
   public constructor(
     private assetLoaderService: AssetLoaderService
   ) { }
-  private mountainsOccuranceFactor = 0.01;
+  private mountainsOccuranceFactor = 0.05;
 
   private assetPrefix = 'terrain-';
   private tilesArray: any[];
@@ -39,9 +37,6 @@ export class GameBoardGeneratorService {
   private surroundingTilesVectorsDown = [this.aDown, this.b, this.cDown, this.dDown, this.e, this.fDown];
 
   private surroundingTileNames = ['A', 'B', 'C', 'D', 'E', 'F'];
-
-  // check if the surrounding tile is of GameBoardTileType
-  private tilesCheck = [];
 
 
   private static changeTypeOfTiles(tiles: GameBoardTile[], type: GameBoardTileType) {
@@ -172,14 +167,15 @@ export class GameBoardGeneratorService {
 
       // *****************
       // MOUNTAINS
-      // define mountain tiles, 7 tiles -> center and surrounding
+      // define mountain tiles, -> center and surrounding
       // Mountain fields do not reside next to a coast field + are a land tile
       // *****************
       // calculate how many mountain fields we should generate
       const mountainFieldCount = Math.round(this.landTilesArray.length * this.mountainsOccuranceFactor);
+      // max tries to find a spot for a mountain
       const maxTries = 5;
-      const maxMountainAreaSize = 4;
-      const minMountainAreaSize = 2;
+      const maxMountainAreaSize = 5;
+      const minMountainAreaSize = 3;
 
       // find a suitable tile for a mountain
       for (let m = 0; m < mountainFieldCount; m++) {

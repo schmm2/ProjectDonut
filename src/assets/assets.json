@@ -43,6 +43,14 @@
     "url": "./assets/mountains/",
     "textures": [
       {
+        "name": "601D1",
+        "fileName": "601D1.png"
+      },
+      {
+        "name": "601D2",
+        "fileName": "601D2.png"
+      },
+      {
         "name": "601D3",
         "fileName": "601D3.png"
       }

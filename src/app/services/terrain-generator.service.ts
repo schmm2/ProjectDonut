@@ -37,11 +37,11 @@ export class TerrainGeneratorService {
             newMeshesCounter--;
             newMesh.rotation.y = -Math.PI / 3;
             newMesh.isVisible = false;
-            let mat = new BABYLON.StandardMaterial('mat', this.scene);
-            mat.diffuseColor = new BABYLON.Color3(1,0,0);
+            const mat = new BABYLON.StandardMaterial('mat', this.scene);
+            mat.diffuseColor = new BABYLON.Color3(1, 0, 0);
             newMesh.material = mat;
             this.mountainMeshes.push(newMesh);
-            if(newMeshesCounter == 0){
+            if (newMeshesCounter == 0) {
               resolve();
             }
           });
@@ -65,7 +65,7 @@ export class TerrainGeneratorService {
         tessellation: 6},
         this.scene);
       // hide until all is computed
-      //newCylinder.isVisible = false;
+      // newCylinder.isVisible = false;
 
       newCylinder.position.x = positionX * (this.tileRadius + this.tileSideHalf);
       // y coordinate in map 2d space is z axis in 3d world
@@ -84,28 +84,26 @@ export class TerrainGeneratorService {
         cylinderMaterial.diffuseColor = new BABYLON.Color3(0, 1, 0);
       }
 
+      // center of a mountain tile
       if (landTile.type === 3 && landTile.isMountainCenter) {
-
-        //console.log("BULD MOUNTAIN");
         // get a random mesh
-        //console.log(this.mountainMeshes);
-        let newMountainMesh = this.mountainMeshes[0].createInstance('dd');
+        const pickedMountainIndex = Math.round(Math.random() * (this.mountainMeshes.length - 1));
+        const meshName = 'mountainMesh-' + landTile.name;
+        const newMountainMesh = this.mountainMeshes[pickedMountainIndex].createInstance(meshName);
         newMountainMesh.isVisible = true;
-        let mountainMeshPositionY = this.tileElevation / 2 - 0.1;
-        newMountainMesh.position = new BABYLON.Vector3(newCylinder.position.x, mountainMeshPositionY, newCylinder.position.z);
-        let meshBoundingBoxSize = newMountainMesh.getBoundingInfo().boundingBox.extendSize;
-        //console.log(meshBoundingBoxSize);
-        let scalingVectorFactor = (1+landTile.mountainAreaSize) * this.tileRadius / meshBoundingBoxSize.x;
-        //console.log(scalingVectorFactor);
-        newMountainMesh.scaling = new BABYLON.Vector3(scalingVectorFactor, scalingVectorFactor, scalingVectorFactor);
 
-        //let mat = new BABYLON.StandardMaterial('mat', this.scene);
-        //mat.diffuseColor = new BABYLON.Color3(1,0,0);
-        //newMountainMesh.material = mat;
-        //console.log(newMountainMesh);
+        // set mesh position
+        // move mesh a bit down
+        const mountainMeshPositionY = this.tileElevation / 2 - 0.2;
+        newMountainMesh.position = new BABYLON.Vector3(newCylinder.position.x, mountainMeshPositionY, newCylinder.position.z);
+
+        // scale the mesh to fit the tile size
+        const meshBoundingBoxSize = newMountainMesh.getBoundingInfo().boundingBox.extendSize;
+        const scalingVectorFactor = (2 + landTile.mountainAreaSize) * this.tileRadius / meshBoundingBoxSize.x;
+        newMountainMesh.scaling = new BABYLON.Vector3(scalingVectorFactor, scalingVectorFactor, scalingVectorFactor);
       }
 
-      //newCylinder.mapCoordinates = landTile.mapCoordinates;
+      // newCylinder.mapCoordinates = landTile.mapCoordinates;
       /*newCylinder.actionManager = new BABYLON.ActionManager(this.scene);
       newCylinder.actionManager.registerAction(
         new BABYLON.ExecuteCodeAction(
@@ -121,10 +119,10 @@ export class TerrainGeneratorService {
       meshArray.push(newCylinder);
     }
     // merge all meshes together
-    //const mergedMeshes = BABYLON.Mesh.MergeMeshes(meshArray);
-    //mergedMeshes.position = new BABYLON.Vector3(-120, 0, -120);
+    // const mergedMeshes = BABYLON.Mesh.MergeMeshes(meshArray);
+    // mergedMeshes.position = new BABYLON.Vector3(-120, 0, -120);
 
     return null;
-    //return mergedMeshes;
+    // return mergedMeshes;
   }
 }
