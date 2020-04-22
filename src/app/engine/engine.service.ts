@@ -50,7 +50,7 @@ export class EngineService {
     private terrainGeneratorService: TerrainGeneratorService,
     private shipGeneratorService: ShipGeneratorService,
     private assetLoaderService: AssetLoaderService,
-    private gameBoardGenerator: TilesGeneratorService,
+    private tilesGeneratorService: TilesGeneratorService,
     private actionManagerService: InteractionManagerService,
     private gameStateService: GameStateService
   ) {
@@ -85,6 +85,10 @@ export class EngineService {
 
     // create a basic BJS Scene object
     this.scene = new Scene(this.engine);
+
+    // load assets
+    this.assetLoaderService.init(this.scene);
+
     this.scene.clearColor = new Color4(0, 0, 0, 0);
     const gravityVector = new Vector3(0, -9.81, 0);
     const physicsPlugin = new CannonJSPlugin();
@@ -119,14 +123,15 @@ export class EngineService {
 
     // init injector services
     this.shipGeneratorService.init(this.scene);
-    this.assetLoaderService.init(this.scene);
+
     this.gameStateService.init(this.scene);
 
     // ***** AssetLoader *****
     this.assetLoaderService.subscribeToAssetsLoadState().subscribe(isLoaded => {
       if (isLoaded) {
         console.log('engine: assets loaded, start building scene...');
-        this.gameBoardGenerator.init();
+
+        this.terrainGeneratorService.init(this.scene);
 
         // enable depth buffer
         const renderer = this.scene.enableDepthRenderer();
@@ -140,15 +145,14 @@ export class EngineService {
         this.waterGeneratorService.setScene(this.scene, this.camera, renderer, this.light);
         const waterPlane = this.waterGeneratorService.buildWaterPlane();
 
-        let terrain = null;
-        this.gameBoardGenerator.subscribeToGeneratedLandTiles().subscribe(landTiles => {
-          if (landTiles.length > 0) {
-            console.log('engine: Game Board land tiles generated');
-            // add terrain
-            this.terrainGeneratorService.init(this.scene).then((returnedValue) => {
-              console.log("DONE LAODING");
-              terrain = this.terrainGeneratorService.buildTerrain(landTiles);
-            });
+        this.terrainGeneratorService.subscribeToGeneratedTerrain().subscribe((terrainMesh) => {
+          if (terrainMesh) {
+            console.log("terrain loaded");
+            const terrain = terrainMesh;
+            terrain.receiveShadows = true;
+            this.waterGeneratorService.addToReflectionRenderList(terrain);
+            this.waterGeneratorService.addToRefractionRenderList(terrain);
+            renderer.getDepthMap().renderList = [terrain];
           }
         });
 
@@ -158,13 +162,13 @@ export class EngineService {
 
         // add mesh to renderList of water
         this.waterGeneratorService.addToReflectionRenderList(skyBox);
-        this.waterGeneratorService.addToReflectionRenderList(terrain);
-        this.waterGeneratorService.addToRefractionRenderList(terrain);
+
 
 
         // @ts-ignore
-        // terrain.receiveShadows = true;
-        // waterPlane.receiveShadows = true;
+
+        waterPlane.receiveShadows = true;
+
 
         // navigation
         // navigationPlugin.createNavMesh([terrain, waterPlane], navigationParameters);
@@ -178,7 +182,7 @@ export class EngineService {
 
         // add mesh to depth renderer
         // @ts-ignore
-        renderer.getDepthMap().renderList = [terrain];
+
 
         this.actionManagerService.init(this.scene);
 
@@ -200,7 +204,8 @@ export class EngineService {
 
     // ****** CAMERA ******
     // create a FreeCamera, and set its position to (x:5, y:10, z:-20 )
-    this.camera = new FlyCamera('flyCamera', new Vector3(0, 100, -200), this.scene);
+    // @ts-ignore
+    this.camera = new BABYLON.UniversalCamera('flyCamera', new BABYLON.Vector3(0, 100, -200), this.scene);
     this.camera.applyGravity = false;
     this.camera.bankedTurn = false;
     this.camera.rollCorrect = 1;

@@ -11,7 +11,13 @@ export class TilesGeneratorService {
 
   public constructor(
     private assetLoaderService: AssetLoaderService
-  ) { }
+  ) {
+    this.assetLoaderService.subscribeToAssetsLoadState().subscribe((isLoaded) => {
+      if (isLoaded) {
+        this.init();
+      }
+    });
+  }
   private mountainsOccurrenceFactor = 0.05;
 
   private assetPrefix = 'terrain-';
@@ -91,6 +97,7 @@ export class TilesGeneratorService {
   }
 
   public init() {
+    const time1 = performance.now();
     this.tilesArray = [];
     const textures = this.assetLoaderService.loadTexturesOfCategory(this.assetPrefix);
     // defines all tiles
@@ -99,9 +106,12 @@ export class TilesGeneratorService {
     this.findCoastTiles();
     // defines mountains on the land
     this.defineMountainTiles();
-    // build the game board where the player can build stuff
-    this.buildGameBoard();
+    // tiles are constructed, inform the listeners
     this.generatedLandTiles.next(this.landTilesArray);
+    // build the game board where the player can actually build stuff
+    this.buildGameBoard();
+    const time2 = performance.now();
+    console.log('Tiles Generator: Creating Tiles took ' + (time2 - time1) + ' milliseconds.');
   }
 
   private buildTilesArray(terrainTextures) {

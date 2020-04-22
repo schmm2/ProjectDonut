@@ -14,7 +14,7 @@ export class ShipGeneratorService {
   private scene;
   private shipList: BehaviorSubject<Ship[]> = new BehaviorSubject([]);
   private modelPrefix = 'ships-';
-  private initialShipPositionY = 0.65;
+  private initialShipPositionY = 0.55;
 
   public constructor(
     private assetLoaderService: AssetLoaderService,
