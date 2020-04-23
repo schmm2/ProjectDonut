@@ -43,7 +43,6 @@ export class InteractionManagerService {
         } else {
           // done translating remove from stack
           this.unitsToMove.splice(index, 1);
-          //console.log(this.unitsToMove);
         }
       }
     });
@@ -51,53 +50,37 @@ export class InteractionManagerService {
     this.scene.onPointerDown = (evt, pickResult) =>  {
       const activeObject = this.gameStateService.getSelectedObject();
       if (activeObject) {
-        console.log(activeObject);
-        console.log(pickResult);
         if (pickResult.hit && pickResult.pickedMesh.id === 'water') {
-          console.log('new unit to move');
+          // units destination
           let targetVec = pickResult.pickedPoint;
-          const initVec = activeObject.mesh.position.clone();
-          const distVec = BABYLON.Vector3.Distance(targetVec, initVec);
+          const initialPosition = activeObject.mesh.position.clone();
+          const distVec = BABYLON.Vector3.Distance(targetVec, initialPosition);
 
-          targetVec = targetVec.subtract(initVec);
+          targetVec = targetVec.subtract(initialPosition);
           const targetVecNorm = BABYLON.Vector3.Normalize(targetVec);
 
-          //let rotation = Math.acos(targetVecNorm.x / Math.sqrt(Math.pow(targetVecNorm.x, 2) + Math.pow(targetVecNorm.z, 2)));
-          console.log(targetVecNorm);
-          let hypothenuse = Math.sqrt(Math.pow(targetVecNorm.x,2)+ Math.pow(targetVecNorm.z,2));
-          let sin = targetVecNorm.z / hypothenuse;
+          // trigonometry to define the rotation angel tof the unit
+          const hypotenuse = Math.sqrt(Math.pow(targetVecNorm.x, 2) + Math.pow(targetVecNorm.z, 2));
+          const sin = targetVecNorm.z / hypotenuse;
           let angleInRadian = Math.acos(sin);
           // correct the radian from 180-360 degress
-          if(targetVecNorm.x <= 0){
+          if (targetVecNorm.x <= 0) {
             angleInRadian = 2 * Math.PI - angleInRadian;
           }
-          console.log("----------");
-          console.log(sin);
-          console.log(angleInRadian);
 
-          // object start at 90deg when rotation = 0;
-          let shipRotationCorrection = -(Math.PI / 2);
-
-          console.log("new rotation");
-          console.log(Math.PI + shipRotationCorrection);
-          let rotation = Math.atan(targetVecNorm.z / targetVecNorm.x);
-          //console.log(rotation)
-          //console.log((360/ (Math.PI * 2) * rotation));
           const unitToMove = {
             id: activeObject.id,
             object: activeObject.mesh,
             distVec,
             targetVecNorm,
-            rotation: angleInRadian  
+            rotation: angleInRadian
           };
-          console.log(unitToMove);
+
           // check if unit already is added to move array
           const unitToMoveIndex = this.unitsToMove.findIndex(unit => unit.id === activeObject.id);
-          console.log(unitToMoveIndex);
           // remove existing move commands
           if (unitToMoveIndex >= 0) {
             this.unitsToMove.splice(unitToMoveIndex, 1);
-            console.log(this.unitsToMove);
           }
           // add new command to unit
           this.unitsToMove.push(unitToMove);
