@@ -16,6 +16,7 @@ export class GameStateService {
     // disable unnecessary inputs;
     this.activeCamera.inputs.remove(this.activeCamera.inputs.attached.mouse);
     this.activeCamera.inputs.remove(this.activeCamera.inputs.attached.gamepad);
+
   }
 
   public setSelectedObject(id, mesh) {

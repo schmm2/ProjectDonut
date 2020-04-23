@@ -4,9 +4,11 @@ import {GameStateService} from './game-state.service';
 @Injectable({
   providedIn: 'root'
 })
+
 export class InteractionManagerService {
   private scene;
   private unitsToMove;
+  private mouseWheelSpeed = 8.0;
 
   public constructor(
     private gameStateService: GameStateService
@@ -24,6 +26,9 @@ export class InteractionManagerService {
       case 'F':
         this.gameStateService.toggleFreeMovingCamera();
         break;
+      case 'Y':
+        //
+        break;
     }
   }
 
@@ -33,6 +38,7 @@ export class InteractionManagerService {
     this.unitsToMove = [];
     this.registerUnitMovement();
     this.registerKeyboardInputs();
+    this.addMouseWheelZoom();
   }
 
 
@@ -67,7 +73,7 @@ export class InteractionManagerService {
           const hypotenuse = Math.sqrt(Math.pow(targetVecNorm.x, 2) + Math.pow(targetVecNorm.z, 2));
           const sin = targetVecNorm.z / hypotenuse;
           let angleInRadian = Math.acos(sin);
-          // correct the radian from 180-360 degress
+          // correct the radian from 180-360 degrees
           if (targetVecNorm.x <= 0) {
             angleInRadian = 2 * Math.PI - angleInRadian;
           }
@@ -104,5 +110,28 @@ export class InteractionManagerService {
           break;
       }
     });
+  }
+
+  private addMouseWheelZoom() {
+    this.scene.onPrePointerObservable.add( (pointerInfo, eventState) => {
+      const event = pointerInfo.event;
+      let delta = 0;
+      if (event.wheelDelta) {
+        delta = event.wheelDelta;
+      } else if (event.detail) {
+        delta = -event.detail;
+      }
+      if (delta) {
+        const dir = this.scene.activeCamera.getDirection(BABYLON.Axis.Z);
+        // tslint:disable-next-line:max-line-length
+        const directionScaled = new BABYLON.Vector3(dir.x * this.mouseWheelSpeed, dir.y * this.mouseWheelSpeed, dir.z * this.mouseWheelSpeed);
+
+        if (delta > 0) {
+          this.scene.activeCamera.position.addInPlace(directionScaled);
+        } else {
+          this.scene.activeCamera.position.subtractInPlace(directionScaled);
+        }
+      }
+    }, BABYLON.PointerEventTypes.POINTERWHEEL, false);
   }
 }
