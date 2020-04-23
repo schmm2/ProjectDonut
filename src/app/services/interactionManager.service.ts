@@ -88,7 +88,7 @@ export class InteractionManagerService {
             object: activeObject.mesh,
             distVec,
             targetVecNorm,
-            rotation: angleInRadian
+            rotation: angleInRadian  
           };
           console.log(unitToMove);
           // check if unit already is added to move array
