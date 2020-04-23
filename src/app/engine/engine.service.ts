@@ -111,7 +111,7 @@ export class EngineService {
     // target the camera to scene origin
     this.camera.setTarget(BABYLON.Vector3.Zero());
     // attach the camera to the canvas
-    this.camera.attachControl(this.canvas, false);
+    this.camera.attachControl(this.canvas, true);
 
     // enable depth buffer
     const renderer = this.scene.enableDepthRenderer();

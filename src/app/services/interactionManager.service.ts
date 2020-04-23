@@ -21,6 +21,9 @@ export class InteractionManagerService {
       case 'C':
         this.gameStateService.centerCameraToSelectedObject();
         break;
+      case 'F':
+        this.gameStateService.toggleFreeMovingCamera();
+        break;
     }
   }
 
@@ -31,6 +34,7 @@ export class InteractionManagerService {
     this.registerUnitMovement();
     this.registerKeyboardInputs();
   }
+
 
   private registerUnitMovement() {
     // Compute translation of Units

@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { ActionmanagerService } from './interactionManager.service';
+import { InteractionManagerService } from './interactionManager.service';
 
 describe('InputHandlerService', () => {
-  let service: ActionmanagerService;
+  let service: InteractionManagerService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(ActionmanagerService);
+    service = TestBed.inject(InteractionManagerService);
   });
 
   it('should be created', () => {
