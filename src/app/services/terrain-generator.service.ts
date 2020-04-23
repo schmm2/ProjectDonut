@@ -17,7 +17,7 @@ export class TerrainGeneratorService {
 
   private scene: any;
   private tileElevation = 5.0;
-  private tileRadius = 4.0;
+  private tileRadius = 1.5;
   private tileDiameter = this.tileRadius * 2;
   private tileLength = this.tileRadius * 2.0;
   private tileSideHalf = this.tileRadius / 2.0;
@@ -148,13 +148,14 @@ export class TerrainGeneratorService {
     // merge all meshes together
     const islandTransformerNode = new BABYLON.TransformNode('island-root');
     const coastTilesMerged = BABYLON.Mesh.MergeMeshes(coastTilesMeshArray, true, true, null, false, false);
+    coastTilesMerged.name = 'coastTiles-merged';
     const mountainTilesMerged = BABYLON.Mesh.MergeMeshes(mountainTilesMeshArray, true, true, null, false, false);
     const landTilesMerged = BABYLON.Mesh.MergeMeshes(landTileMeshArray, true, true, null, false, false);
     const mountainsMerged = BABYLON.Mesh.MergeMeshes(mountainsMeshArray, true, true, null, false, false);
     // set parent
     coastTilesMerged.parent = mountainTilesMerged.parent = landTilesMerged.parent = mountainsMerged.parent = islandTransformerNode;
     // move island to final location
-    islandTransformerNode.position = new BABYLON.Vector3(-120, 0, -120);
+    islandTransformerNode.position = new BABYLON.Vector3(-50, 0, -50);
     const time3 = performance.now();
 
     console.log('Terrain Generator: Merging Meshes took ' + (time3 - time2) + ' milliseconds.');

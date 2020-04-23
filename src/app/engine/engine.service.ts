@@ -1,4 +1,4 @@
-import { WindowRefService } from './../services/window-ref.service';
+import { WindowRefService } from '../services/window-ref.service';
 import {ElementRef, Injectable, NgZone} from '@angular/core';
 import {
   Engine,
@@ -16,13 +16,12 @@ import {
   Color3,
   Vector2,
   CannonJSPlugin,
-  RecastJSPlugin
 } from 'babylonjs';
 import 'babylonjs-materials';
 
-import Recast from 'recast-detour';
 import CANNON from 'cannon';
-import { WaterGeneratorService } from  '../services/water-generator.service';
+
+import { WaterGeneratorService} from  '../services/water-generator.service';
 import { TerrainGeneratorService } from '../services/terrain-generator.service';
 import { ShipGeneratorService } from '../services/ship-generator.service';
 import { AssetLoaderService } from '../services/asset-loader.service';
@@ -52,7 +51,7 @@ export class EngineService {
     private assetLoaderService: AssetLoaderService,
     private tilesGeneratorService: TilesGeneratorService,
     private actionManagerService: InteractionManagerService,
-    private gameStateService: GameStateService
+    private gameStateService: GameStateService,
   ) {
    window.CANNON = CANNON;
   }
@@ -109,6 +108,20 @@ export class EngineService {
     skyMaterial.inclination = 0;
     skyBox.material = skyMaterial;
 
+    // ****** CAMERA ******
+    // create a FreeCamera, and set its position to (x:5, y:10, z:-20 )
+    // @ts-ignore
+    this.camera = new BABYLON.UniversalCamera('flyCamera', new BABYLON.Vector3(0, 100, -200), this.scene);
+    this.camera.applyGravity = false;
+
+    // target the camera to scene origin
+    this.camera.setTarget(Vector3.Zero());
+    // attach the camera to the canvas
+    this.camera.attachControl(this.canvas, false);
+
+    // enable depth buffer
+    const renderer = this.scene.enableDepthRenderer();
+
     // ***** Lights *****
     // create a basic light, aiming 0,1,0 - meaning, to the sky
     this.light = new HemisphericLight('light1', new Vector3(0, 1, 0), this.scene);
@@ -116,15 +129,17 @@ export class EngineService {
 
     // Adding a light
     // @ts-ignore
-    let light2 = new BABYLON.PointLight('Omni', new BABYLON.Vector3(-800, 200, -400), this.scene);
+    const light2 = new BABYLON.PointLight('Omni', new BABYLON.Vector3(-800, 200, -400), this.scene);
     light2.intensity = 1;
     light2.diffuse = new BABYLON.Color3(220 / 255, 220 / 255, 139 / 255);
     // let shadowGenerator = new BABYLON.ShadowGenerator(1024, light2);
 
     // init injector services
     this.shipGeneratorService.init(this.scene);
-
     this.gameStateService.init(this.scene);
+
+
+
 
     // ***** AssetLoader *****
     this.assetLoaderService.subscribeToAssetsLoadState().subscribe(isLoaded => {
@@ -133,91 +148,96 @@ export class EngineService {
 
         this.terrainGeneratorService.init(this.scene);
 
-        // enable depth buffer
-        const renderer = this.scene.enableDepthRenderer();
+
         // build ships
         // @ts-ignore
-        this.shipList.push(this.shipGeneratorService.buildShip(new Vector2(0, -150), 'fluyt'));
-        this.shipGeneratorService.buildShip(new Vector2(20, -180), 'fluyt');
-        this.shipGeneratorService.buildShip(new Vector2(-20, -180), 'fluyt');
-
-        // add water plane
-        this.waterGeneratorService.setScene(this.scene, this.camera, renderer, this.light);
-        const waterPlane = this.waterGeneratorService.buildWaterPlane();
+        this.shipList.push(this.shipGeneratorService.buildShip(new Vector2(0, -60), 'fluyt'));
+        this.shipGeneratorService.buildShip(new Vector2(20, -60), 'fluyt');
+        this.shipGeneratorService.buildShip(new Vector2(-20, -60), 'fluyt');
 
         this.terrainGeneratorService.subscribeToGeneratedTerrain().subscribe((terrainMesh) => {
           if (terrainMesh) {
-            console.log("terrain loaded");
+            console.log('terrain loaded');
             const terrain = terrainMesh;
             terrain.receiveShadows = true;
+            console.log(terrain);
+
+
+            renderer.getDepthMap().renderList = [terrain];
+
+            // add water plane
+            this.waterGeneratorService.setScene(this.scene, this.camera, renderer, this.light);
+            const waterPlane = this.waterGeneratorService.buildWaterPlane();
+            waterPlane.receiveShadows = true;
             this.waterGeneratorService.addToReflectionRenderList(terrain);
             this.waterGeneratorService.addToRefractionRenderList(terrain);
-            renderer.getDepthMap().renderList = [terrain];
+            // add mesh to renderList of water
+            this.waterGeneratorService.addToReflectionRenderList(skyBox);
+
+
+
+            // navigation
+            navigationPlugin.createNavMesh([waterPlane], navigationParameters);
+
+            /*let navmeshdebug = navigationPlugin.createDebugNavMesh(this.scene);
+            var matdebug = new BABYLON.StandardMaterial('matdebug', this.scene);
+            matdebug.diffuseColor = new BABYLON.Color3(0.1, 0.2, 1);
+            matdebug.alpha = 0.2;
+            navmeshdebug.material = matdebug;*/
+
+            /*this.shipGeneratorService.subscribeToShipList().subscribe(shipList => {
+              console.log(shipList);
+              shipList.forEach(ship => {
+                const mesh = ship.getMesh();
+                //this.waterGeneratorService.addToReflectionRenderList(mesh);
+                // shadowGenerator.getShadowMap().renderList.push(mesh);
+              });
+            });*/
           }
         });
 
 
-        // @ts-ignore
-        // terrain.physicsImpostor = new BABYLON.PhysicsImpostor(terrain, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, this.scene);
-
-        // add mesh to renderList of water
-        this.waterGeneratorService.addToReflectionRenderList(skyBox);
-
-
-
-        // @ts-ignore
-
-        waterPlane.receiveShadows = true;
-
-
-        // navigation
-        // navigationPlugin.createNavMesh([terrain, waterPlane], navigationParameters);
-
-        /*let navmeshdebug = navigationPlugin.createDebugNavMesh(this.scene);
-        var matdebug = new BABYLON.StandardMaterial('matdebug', this.scene);
-        matdebug.diffuseColor = new BABYLON.Color3(0.1, 0.2, 1);
-        matdebug.alpha = 0.2;
-        navmeshdebug.material = matdebug;
-        */
-
-        // add mesh to depth renderer
-        // @ts-ignore
-
-
         this.actionManagerService.init(this.scene);
-
+        this.showWorldAxis(150);
         // LOGIC
-        this.shipGeneratorService.subscribeToShipList().subscribe(shipList => {
-          console.log(shipList);
-          shipList.forEach(ship => {
-            const mesh = ship.getMesh();
-            this.waterGeneratorService.addToReflectionRenderList(mesh);
-              // shadowGenerator.getShadowMap().renderList.push(mesh);
-          });
-        });
+
       }
     });
+  }
 
-
-
-
-
-    // ****** CAMERA ******
-    // create a FreeCamera, and set its position to (x:5, y:10, z:-20 )
-    // @ts-ignore
-    this.camera = new BABYLON.UniversalCamera('flyCamera', new BABYLON.Vector3(0, 100, -200), this.scene);
-    this.camera.applyGravity = false;
-    this.camera.bankedTurn = false;
-    this.camera.rollCorrect = 1;
-
-    // target the camera to scene origin
-    this.camera.setTarget(Vector3.Zero());
-    // attach the camera to the canvas
-    this.camera.attachControl(this.canvas, false);
-
-
-
-
+  private showWorldAxis(size) {
+    var makeTextPlane = (text, color, size) => {
+      var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", 50, this.scene, true);
+      dynamicTexture.hasAlpha = true;
+      dynamicTexture.drawText(text, 5, 40, "bold 36px Arial", color , "transparent", true);
+      var plane = BABYLON.Mesh.CreatePlane("TextPlane", size, this.scene, true);
+      plane.material = new BABYLON.StandardMaterial("TextPlaneMaterial", this.scene);
+      plane.material.backFaceCulling = false;
+      plane.material.specularColor = new BABYLON.Color3(0, 0, 0);
+      plane.material.diffuseTexture = dynamicTexture;
+      return plane;
+    };
+    var axisX = BABYLON.Mesh.CreateLines("axisX", [
+      BABYLON.Vector3.Zero(), new BABYLON.Vector3(size, 0, 0), new BABYLON.Vector3(size * 0.95, 0.05 * size, 0),
+      new BABYLON.Vector3(size, 0, 0), new BABYLON.Vector3(size * 0.95, -0.05 * size, 0)
+    ], this.scene);
+    axisX.color = new BABYLON.Color3(1, 0, 0);
+    var xChar = makeTextPlane("X", "red", size / 10);
+    xChar.position = new BABYLON.Vector3(0.9 * size, -0.05 * size, 0);
+    var axisY = BABYLON.Mesh.CreateLines("axisY", [
+      BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, size, 0), new BABYLON.Vector3( -0.05 * size, size * 0.95, 0),
+      new BABYLON.Vector3(0, size, 0), new BABYLON.Vector3( 0.05 * size, size * 0.95, 0)
+    ], this.scene);
+    axisY.color = new BABYLON.Color3(0, 1, 0);
+    var yChar = makeTextPlane("Y", "green", size / 10);
+    yChar.position = new BABYLON.Vector3(0, 0.9 * size, -0.05 * size);
+    var axisZ = BABYLON.Mesh.CreateLines("axisZ", [
+      BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 0, size), new BABYLON.Vector3( 0 , -0.05 * size, size * 0.95),
+      new BABYLON.Vector3(0, 0, size), new BABYLON.Vector3( 0, 0.05 * size, size * 0.95)
+    ], this.scene);
+    axisZ.color = new BABYLON.Color3(0, 0, 1);
+    var zChar = makeTextPlane("Z", "blue", size / 10);
+    zChar.position = new BABYLON.Vector3(0, 0.05 * size, 0.9 * size);
   }
 
   public animate(): void {

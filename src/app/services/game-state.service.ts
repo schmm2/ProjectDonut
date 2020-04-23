@@ -21,6 +21,11 @@ export class GameStateService {
     console.log('Game State Service: object now selected' + this.selectedGameObject.id);
   }
 
+  public getSelectedObject() {
+    return this.selectedGameObject;
+  }
+
+
   public centerCameraToSelectedObject() {
     console.log(this.selectedGameObject);
     if (this.selectedGameObject && this.selectedGameObject.mesh) {
