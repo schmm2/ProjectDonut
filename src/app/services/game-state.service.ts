@@ -31,6 +31,10 @@ export class GameStateService {
     return this.selectedGameObject;
   }
 
+  public removeSelectedObject() {
+    this.selectedGameObject = null;
+  }
+
   public toggleFreeMovingCamera() {
     // check if mouse is already attached
     if (this.activeCamera.inputs.attached.mouse) {

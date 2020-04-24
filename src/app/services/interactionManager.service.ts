@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import {GameStateService} from './game-state.service';
+import { GameStateService } from './game-state.service';
 
 @Injectable({
   providedIn: 'root'
@@ -28,6 +28,9 @@ export class InteractionManagerService {
         break;
       case 'Y':
         //
+        break;
+      case 'ESCAPE':
+        this.gameStateService.removeSelectedObject();
         break;
     }
   }
@@ -59,7 +62,7 @@ export class InteractionManagerService {
 
     this.scene.onPointerDown = (evt, pickResult) =>  {
       const activeObject = this.gameStateService.getSelectedObject();
-      if (activeObject) {
+      if (activeObject && activeObject.mesh) {
         if (pickResult.hit && pickResult.pickedMesh.id === 'water') {
           // units destination
           let targetVec = pickResult.pickedPoint;
