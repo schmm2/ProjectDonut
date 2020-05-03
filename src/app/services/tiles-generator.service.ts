@@ -4,6 +4,7 @@ import {GameBoardTile} from '../classes/game-board-tile';
 import {GameBoardTileType} from '../enums/game-board-tile-type.enum';
 import {BehaviorSubject} from 'rxjs';
 
+
 @Injectable({
   providedIn: 'root'
 })
@@ -148,9 +149,11 @@ export class TilesGeneratorService {
           if (colorValue < 127) {
             // we found a water tile
             newTile.type = GameBoardTileType.water;
+            newTile.evelation = 0;
           } else {
             // land aHoi!
             newTile.type = GameBoardTileType.land;
+            newTile.evelation = 1;
             this.landTilesArray.push(newTile);
           }
           // row element i -> x, row -> y
@@ -171,7 +174,7 @@ export class TilesGeneratorService {
     // max tries to find a spot for a mountain
     const maxTries = 5;
     const maxMountainAreaSize = 5;
-    const minMountainAreaSize = 3;
+    const minMountainAreaSize = 2;
 
     // find a suitable tile for a mountain
     for (let m = 0; m < mountainFieldCount; m++) {
@@ -239,6 +242,7 @@ export class TilesGeneratorService {
           // console.log('found a coast tile');
           landTile.type = GameBoardTileType.coast;
           landTile.coastStyleCode = coastStyleCode;
+          landTile.evelation = 0.5;
           this.gameBoardTilesArray.push(landTile);
         }
       }

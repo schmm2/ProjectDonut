@@ -148,7 +148,7 @@ export class WaterGeneratorService {
 
 
     // create plane
-    this.waterPlane = MeshBuilder.CreateGround('water', {width: 200, height: 200, subdivisions: 50}, this.scene, );
+    /*this.waterPlane = MeshBuilder.CreateGround('water', {width: 200, height: 200, subdivisions: 50}, this.scene, );
     this.waterPlane.position.y = 1;
 
     const shallowWaterColor = new Color4(0.3, 0.4, 0.7, 1.0);
@@ -187,6 +187,6 @@ export class WaterGeneratorService {
       this.time += 0.01;
     });
 
-    return this.waterPlane;
+    return this.waterPlane;*/
   }
 }

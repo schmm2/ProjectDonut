@@ -34,7 +34,17 @@
     "textures": [
       {
         "name": "borneo",
-        "fileName": "borneo.png"
+        "fileName": "borneo_high.png"
+      }
+    ]
+  },
+  {
+    "name": "gradient",
+    "url": "./assets/gradient/",
+    "textures": [
+      {
+        "name": "gradient",
+        "fileName": "gradient.png"
       }
     ]
   },

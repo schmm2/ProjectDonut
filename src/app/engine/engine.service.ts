@@ -23,7 +23,8 @@ import {Ship} from '../classes/ship';
 import {TilesGeneratorService} from '../services/tiles-generator.service';
 import {InteractionManagerService} from '../services/interactionManager.service';
 import {GameStateService} from '../services/game-state.service';
-
+import {Delaunay} from "d3-delaunay";
+import { defineGrid } from 'honeycomb-grid'
 
 @Injectable({ providedIn: 'root' })
 export class EngineService {
@@ -51,6 +52,12 @@ export class EngineService {
   }
 
   public createScene(canvas: ElementRef<HTMLCanvasElement>): void {
+    this.voronoi();
+    let objectX = {
+      name: 'wupsi'
+    };
+    //const myURL = window.document.defaultView.URL.createObjectURL(objectX);
+    //console.log(myURL);
 
     const navigationPlugin = new BABYLON.RecastJSPlugin();
     // tslint:disable-next-line:prefer-const
@@ -118,14 +125,14 @@ export class EngineService {
 
     // ***** Lights *****
     // create a basic light, aiming 0,1,0 - meaning, to the sky
-    this.light = new HemisphericLight('light1', new Vector3(0, 1, 0), this.scene);
-    this.light.intensity = 1.0;
+    //this.light = new HemisphericLight('light1', new Vector3(0, 1, 0), this.scene);
+    //this.light.intensity = 1.0;
 
     // Adding a light
     // @ts-ignore
-    const light2 = new BABYLON.PointLight('Omni', new BABYLON.Vector3(-800, 200, -400), this.scene);
-    light2.intensity = 1;
-    light2.diffuse = new BABYLON.Color3(220 / 255, 220 / 255, 139 / 255);
+    //const light2 = new BABYLON.PointLight('Omni', new BABYLON.Vector3(-800, 200, -400), this.scene);
+    //light2.intensity = 1;
+    //light2.diffuse = new BABYLON.Color3(220 / 255, 220 / 255, 139 / 255);
     // let shadowGenerator = new BABYLON.ShadowGenerator(1024, light2);
 
     // init injector services
@@ -160,14 +167,14 @@ export class EngineService {
             // add water plane
             this.waterGeneratorService.setScene(this.scene, this.camera, renderer, this.light);
             const waterPlane = this.waterGeneratorService.buildWaterPlane();
-            waterPlane.receiveShadows = true;
+            //waterPlane.receiveShadows = true;
             this.waterGeneratorService.addToReflectionRenderList(terrain);
             this.waterGeneratorService.addToRefractionRenderList(terrain);
             // add mesh to renderList of water
             this.waterGeneratorService.addToReflectionRenderList(skyBox);
 
             // navigation
-            navigationPlugin.createNavMesh([waterPlane], navigationParameters);
+            //navigationPlugin.createNavMesh([waterPlane], navigationParameters);
 
             /*let navmeshdebug = navigationPlugin.createDebugNavMesh(this.scene);
             var matdebug = new BABYLON.StandardMaterial('matdebug', this.scene);
@@ -229,6 +236,29 @@ export class EngineService {
     let zChar = makeTextPlane('Z', 'blue', size / 10);
     zChar.position = new BABYLON.Vector3(0, 0.05 * size, 0.9 * size);
   }*/
+
+  private voronoi(){
+    const Grid = defineGrid();
+    let tiles = Grid.hexagon({radius: 1});
+    console.log("ssssssssss");
+    console.log(tiles);
+
+    /*var c = document.getElementById("voronoi");
+    var ctx = c.getContext("2d");
+    console.log(ctx);
+    ctx.beginPath();
+    ctx.arc(95, 50, 40, 0, 2 * Math.PI);
+    ctx.stroke();
+    console.log('render voronoi');
+    const points = [[0, 0], [0, 1], [1, 0], [1, 1]];
+
+    const delaunay = Delaunay.from(points);
+    const voronoi = delaunay.voronoi([0, 0, 400, 400]);
+    console.log(voronoi);
+    ctx.beginPath();
+    voronoi.render(ctx);
+    ctx.stroke();*/
+  }
 
   public animate(): void {
     // We have to run this outside angular zones,

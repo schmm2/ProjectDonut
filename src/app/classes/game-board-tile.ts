@@ -2,6 +2,13 @@ import Vector2 = BABYLON.Vector2;
 import {GameBoardTileType} from '../enums/game-board-tile-type.enum';
 
 export class GameBoardTile {
+  get evelation() {
+    return this._evelation;
+  }
+
+  set evelation(value) {
+    this._evelation = value;
+  }
   get mountainAreaSize() {
     return this._mountainAreaSize;
   }
@@ -68,4 +75,5 @@ export class GameBoardTile {
   private _name;
   private _isMountainCenter = false;
   private _mountainAreaSize;
+  private _evelation;
 }
