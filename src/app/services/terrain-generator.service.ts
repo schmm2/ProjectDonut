@@ -67,6 +67,10 @@ export class TerrainGeneratorService {
     const rockTexture = new BABYLON.Texture('assets/textures/material/rock/sharp-rockface1-albedo.png', scene);
     const rockNormalMap = new BABYLON.Texture('assets/textures/material/rock/sharp-rockface1-normal-ogl.png', scene);
 
+    const sandTexture = new BABYLON.Texture('assets/textures/material/sand/sand1-albedo.png', scene);
+    const sandNormalMap = new BABYLON.Texture('assets/textures/material/sand/sand1-normal-ogl.png', scene);
+
+
     //const rockTexture = new BABYLON.Texture('assets/textures/material/rock/rock_sliced_Base_Color.png', scene);
     //const rockNormalMap = new BABYLON.Texture('assets/textures/material/rock/rock_sliced_Normal-ogl.png', scene);
 
@@ -95,6 +99,9 @@ export class TerrainGeneratorService {
     terrainMaterial.setTexture('grassTexture', grassTexture);
     terrainMaterial.setTexture('grassNormalMap', grassNormalMap);
 
+    terrainMaterial.setTexture('sandTexture', sandTexture);
+    terrainMaterial.setTexture('sandNormalMap', sandNormalMap);
+
     terrainMaterial.setVector3('cameraPosition', scene.activeCamera.position);
 
     terrainMaterial.setFloat('mountainHeight', 30.0);
@@ -105,7 +112,7 @@ export class TerrainGeneratorService {
     terrainMaterial.setVector2('resolution', new BABYLON.Vector2(1024, 1024));
     //terrainMaterial.wireframe = true;
 
-    let newGround = BABYLON.Mesh.CreateGround('terrainX', 300, 300, 600, this.scene, true );
+    let newGround = BABYLON.Mesh.CreateGround('terrainX', 300, 300, 400, this.scene, true );
     newGround.material = terrainMaterial;
     newGround.convertToFlatShadedMesh();
 

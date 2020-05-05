@@ -13,6 +13,9 @@ uniform sampler2D rockNormalMap;
 uniform sampler2D grassTexture;
 uniform sampler2D grassNormalMap;
 
+uniform sampler2D sandTexture;
+uniform sampler2D sandNormalMap;
+
 uniform vec3 lightPosition;
 uniform vec3 cameraPosition;
 uniform mat4 world;
@@ -42,9 +45,9 @@ vec3 calculateNormal(vec3 normalMapValue, vec3 vNormalW){
 }
 
 void main(void) {
-    float snowTop = 19.0;
-    float iceAltitude = 16.0;
+    float iceAltitude = 18.0;
     float mountainAltitude = 10.0;
+    float sandAltitude = 2.0;
 
     vec3 lightcolor = vec3(220 / 255, 220 / 255, 139 / 255);
     // World values
@@ -73,13 +76,19 @@ void main(void) {
     float ndl_grass = max(0.0,dot(lightVectorWN,normalMapValueN_grass)) * lightStrength;
     vec3 material_grass = clamp(color_grass * ndl_grass,0.0,1.0);
 
-
     // rock
     vec3 color_rock = texture2D(rockTexture, vUv * 24.0).rgb;
     vec3 normalMapValue_rock = texture2D(rockNormalMap,vUv * 24.0).rgb;
     vec3 normalMapValueN_rock = calculateNormal(normalMapValue_rock, vNormalWN);
     float ndl_rock = max(0.0,dot(normalMapValueN_rock, lightVectorWN)) * lightStrength;
     vec3 material_rock = clamp(color_rock * ndl_rock,0.0,1.0);
+
+     // sand
+      vec3 color_sand = texture2D(sandTexture, vUv * 24.0).rgb;
+      vec3 normalMapValue_sand = texture2D(sandNormalMap,vUv * 24.0).rgb;
+      vec3 normalMapValueN_sand = calculateNormal(normalMapValue_sand, vNormalWN);
+      float ndl_sand = max(0.0,dot(normalMapValueN_sand, lightVectorWN)) * lightStrength;
+      vec3 material_sand = clamp(color_sand * ndl_sand,0.0,1.0);
 
 
    // icy parts of mountain
@@ -104,7 +113,7 @@ void main(void) {
         finalColor = material_rock;
     }
 
-    if(vPositionW.y < mountainAltitude ){
+    if(vPositionW.y < mountainAltitude&& vPositionW.y > sandAltitude ){
       if(slope < 0.2) {
         float blendAmount = slope / 0.2;
         finalColor = mix(material_grass, material_rock, blendAmount);
@@ -112,6 +121,10 @@ void main(void) {
       if(slope >= 0.2) {
         finalColor = material_rock;
       }
+   }
+
+   if(vPositionW.y <= sandAltitude){
+      finalColor = material_sand;
    }
 
 
