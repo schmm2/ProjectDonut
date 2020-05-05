@@ -42,7 +42,8 @@ vec3 calculateNormal(vec3 normalMapValue, vec3 vNormalW){
 }
 
 void main(void) {
-    float iceAltitude = 15.0;
+    float snowTop = 19.0;
+    float iceAltitude = 16.0;
     float mountainAltitude = 10.0;
 
     vec3 lightcolor = vec3(220 / 255, 220 / 255, 139 / 255);
@@ -59,56 +60,59 @@ void main(void) {
     float slope = 1.0 - vNormalWN.y;
 
     // snow
-    vec3 color_snow = texture2D(snowTexture, vUv * 4.0).rgb;
-    vec3 normalMapValue_snow = texture2D(snowNormalMap,vUv * 4.0).rgb;
+    vec3 color_snow = texture2D(snowTexture, vUv * 40.0).rgb;
+    vec3 normalMapValue_snow = texture2D(snowNormalMap,vUv * 40.0).rgb;
     vec3 normalMapValueN_snow = calculateNormal(normalMapValue_snow, vNormalWN);
     float ndl_snow = max(0.0,dot(normalMapValueN_snow, lightVectorWN)) * lightStrength;
     vec3 material_snow = clamp(color_snow * ndl_snow,0.0,1.0);
 
     // grass
-    vec3 color_grass = texture2D(grassTexture, vUv * 20.0).rgb;
-    vec3 normalMapValue_grass = texture2D(grassNormalMap,vUv * 20.0).rgb;
+    vec3 color_grass = texture2D(grassTexture, vUv * 80.0).rgb;
+    vec3 normalMapValue_grass = texture2D(grassNormalMap,vUv * 80.0).rgb;
     vec3 normalMapValueN_grass = calculateNormal(normalMapValue_grass, vNormalWN);
     float ndl_grass = max(0.0,dot(lightVectorWN,normalMapValueN_grass)) * lightStrength;
     vec3 material_grass = clamp(color_grass * ndl_grass,0.0,1.0);
 
 
     // rock
-    vec3 color_rock = texture2D(rockTexture, vUv * 8.0).rgb;
-    vec3 normalMapValue_rock = texture2D(rockNormalMap,vUv * 8.0).rgb;
+    vec3 color_rock = texture2D(rockTexture, vUv * 24.0).rgb;
+    vec3 normalMapValue_rock = texture2D(rockNormalMap,vUv * 24.0).rgb;
     vec3 normalMapValueN_rock = calculateNormal(normalMapValue_rock, vNormalWN);
     float ndl_rock = max(0.0,dot(normalMapValueN_rock, lightVectorWN)) * lightStrength;
     vec3 material_rock = clamp(color_rock * ndl_rock,0.0,1.0);
 
+
+   // icy parts of mountain
    if(vPositionW.y > iceAltitude){
-      if(slope < 0.2) {
-          float blendAmount = slope / 0.2;
-          finalColor = mix(material_snow, material_rock, blendAmount);
+      float snowHeightFactor = clamp(vPositionW.y - iceAltitude,0.0,1.0);
+
+      // flat, amount of snow depending of height
+      if(slope <= 1.0) {
+          finalColor = mix(material_rock, material_snow, snowHeightFactor);
       }
-      if(slope >= 0.2) {
-          finalColor = material_rock;
-      }
+      // not that steep, has some
+      //if(slope >= 0.3) {
+        //float blendAmount = clamp(slope * 2.0,0.0,1.0) * snowHeightFactor; //snowHeightFactor;
+        //finalColor = mix(material_rock, material_snow, blendAmount);
+         //finalColor = vec3(1.0,0.0,0.0);
+         //finalColor = material_rock;
+      //}
     }
 
+    // Mountain Rocky part
     if(vPositionW.y > mountainAltitude && vPositionW.y < iceAltitude){
-        if(slope < 0.2) {
-                  float blendAmount = slope / 0.2;
-                  finalColor = mix(material_grass, material_rock, blendAmount);
-              }
-              if(slope >= 0.2) {
-                  finalColor = material_rock;
-              }
+        finalColor = material_rock;
     }
 
     if(vPositionW.y < mountainAltitude ){
-       if(slope < 0.2) {
-           float blendAmount = slope / 0.2;
-           finalColor = mix(material_grass, material_rock, blendAmount);
-       }
-       if(slope >= 0.2) {
-           finalColor = material_rock;
-       }
-    }
+      if(slope < 0.2) {
+        float blendAmount = slope / 0.2;
+        finalColor = mix(material_grass, material_rock, blendAmount);
+      }
+      if(slope >= 0.2) {
+        finalColor = material_rock;
+      }
+   }
 
 
     gl_FragColor = vec4(finalColor, 1.0 );

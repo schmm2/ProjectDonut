@@ -54,12 +54,21 @@ export class TerrainGeneratorService {
     const snowTexture = new BABYLON.Texture('assets/textures/material/snow/Snow_002_COLOR.jpg', scene);
     const snowNormalMap = new BABYLON.Texture('assets/textures/material/snow/Snow_002_NORM.jpg', scene);
 
-    const grassTexture = new BABYLON.Texture('assets/textures/material/grass/grass1-albedo3.png', scene);
-    const grassNormalMap = new BABYLON.Texture('assets/textures/material/grass/grass1-normal1-ogl.png', scene);
+    //const grassTexture = new BABYLON.Texture('assets/textures/material/grass/grass1-albedo3.png', scene);
+    //const grassNormalMap = new BABYLON.Texture('assets/textures/material/grass/grass1-normal1-ogl.png', scene);
+
+    const grassTexture = new BABYLON.Texture('assets/textures/material/grass/mossy-ground1-albedo.png', scene);
+    const grassNormalMap = new BABYLON.Texture('assets/textures/material/grass/mossy-groundnormal.png', scene);
 
 
-    const rockTexture = new BABYLON.Texture('assets/textures/material/rock/slate2-tiled-albedo2.png', scene);
-    const rockNormalMap = new BABYLON.Texture('assets/textures/material/rock/slate2-tiled-ogl.png', scene);
+    //const rockTexture = new BABYLON.Texture('assets/textures/material/rock/slate2-tiled-albedo2.png', scene);
+    //const rockNormalMap = new BABYLON.Texture('assets/textures/material/rock/slate2-tiled-ogl.png', scene);
+
+    const rockTexture = new BABYLON.Texture('assets/textures/material/rock/sharp-rockface1-albedo.png', scene);
+    const rockNormalMap = new BABYLON.Texture('assets/textures/material/rock/sharp-rockface1-normal-ogl.png', scene);
+
+    //const rockTexture = new BABYLON.Texture('assets/textures/material/rock/rock_sliced_Base_Color.png', scene);
+    //const rockNormalMap = new BABYLON.Texture('assets/textures/material/rock/rock_sliced_Normal-ogl.png', scene);
 
 
     var heightMapTexture = new BABYLON.CustomProceduralTexture('textureX', './assets/shaders/terrainNoise', 1024, scene);
@@ -96,8 +105,9 @@ export class TerrainGeneratorService {
     terrainMaterial.setVector2('resolution', new BABYLON.Vector2(1024, 1024));
     //terrainMaterial.wireframe = true;
 
-    let newGround = BABYLON.Mesh.CreateGround('terrainX', 300, 300, 400, this.scene, true );
+    let newGround = BABYLON.Mesh.CreateGround('terrainX', 300, 300, 600, this.scene, true );
     newGround.material = terrainMaterial;
+    newGround.convertToFlatShadedMesh();
 
 
 

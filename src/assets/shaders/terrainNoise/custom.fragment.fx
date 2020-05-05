@@ -118,9 +118,10 @@ void main(void) {
    float whaaat = 10.0;
    int shiftValue = 1200;
 
-   float gradientStrength = 2.0;
+   float gradientStrength = 1.4;
    float noiseValue = fbm3d(vec3(vUV, whaaat), octaves, shiftValue);
    float gradientValue = texture2D(gradient, vUV).x;
+
    float finalColor = noiseValue - (gradientValue * gradientStrength);
 
    gl_FragColor.rgb = vec3(1.0) * finalColor;

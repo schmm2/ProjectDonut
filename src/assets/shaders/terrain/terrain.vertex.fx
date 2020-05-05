@@ -20,7 +20,8 @@ varying vec2 vUv;
 float getHeight(vec2 uvParameter){
    // calculate new position
    float heightValueBase = texture2D(heightMap, uvParameter).x;
-   float heightValueScaled = heightValueBase * mountainHeight;
+   // move 0.0-1.0 up to 1.0-2.0 so pow works, pow make lower parts flat, higher parts more step
+   float heightValueScaled = pow(heightValueBase + 1.0, 6.0);
    return heightValueScaled;
 }
 
