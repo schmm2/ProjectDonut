@@ -105,14 +105,14 @@ export class TerrainGeneratorService {
     terrainMaterial.setVector3('cameraPosition', scene.activeCamera.position);
 
     terrainMaterial.setFloat('mountainHeight', 30.0);
-    let lightPosition = new BABYLON.Vector3(300, 500, -300);
+    let lightPosition = new BABYLON.Vector3(150, 350, -150);
     var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 10, segments: 32}, scene);
     sphere.position = lightPosition;
     terrainMaterial.setVector3('lightPosition', lightPosition);
     terrainMaterial.setVector2('resolution', new BABYLON.Vector2(1024, 1024));
     //terrainMaterial.wireframe = true;
 
-    let newGround = BABYLON.Mesh.CreateGround('terrainX', 300, 300, 400, this.scene, true );
+    let newGround = BABYLON.Mesh.CreateGround('terrainX', 300, 300, 300, this.scene, true );
     newGround.material = terrainMaterial;
     newGround.convertToFlatShadedMesh();
 

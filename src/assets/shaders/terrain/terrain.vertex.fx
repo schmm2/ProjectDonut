@@ -7,6 +7,7 @@ attribute vec2 uv;
 
 // Uniforms
 uniform mat4 worldViewProjection;
+uniform mat4 worldView;
 uniform sampler2D heightMap;
 uniform float mountainHeight;
 uniform vec2 resolution;
@@ -15,6 +16,7 @@ uniform vec2 resolution;
 varying vec3 vPosition;
 varying vec3 vNormal;
 varying vec2 vUv;
+varying vec3 vViewPosition;
 
 
 float getHeight(vec2 uvParameter){
@@ -56,7 +58,9 @@ void main() {
     vec4 p = vec4( position, 1. );
 
     float heightValueScaled = getHeight(uv);
-    vec4 newPosition = vec4(position.x, heightValueScaled, position.z, 1.0);
+    float offSetX = 0.02;
+    float offSetZ = 0.04;
+    vec4 newPosition = vec4(position.x + offSetX , heightValueScaled, position.z + offSetZ, 1.0);
 
     vec3 newNormal = calculateNormalFromDepth(newPosition);
 
@@ -64,5 +68,12 @@ void main() {
     vNormal = newNormal;
     vUv = uv;
 
-    gl_Position = worldViewProjection * newPosition;
+    vec4 viewPosition = worldViewProjection * newPosition;
+    // pass view position to fragment shader
+    vViewPosition = (newPosition * worldView).xyz;
+
+    gl_Position = viewPosition;
+
+
+
 }
