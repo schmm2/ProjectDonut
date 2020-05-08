@@ -48,7 +48,8 @@ vec3 calculateNormal(vec3 normalMapValue, vec3 vNormalW){
 }
 
 void main(void) {
-    float iceAltitude = 18.0;
+    float iceAltitude = 24.0;
+    float iceStop = 20.0;
     float mountainAltitude = 10.0;
     float sandAltitude = 2.0;
 
@@ -121,7 +122,7 @@ void main(void) {
       // flat, amount of snow depending of height
       if(slope <= 1.0) {
           finalColor = mix(material_rock, material_snow, snowHeightFactor);
-          diffuseLight = ndl_snow *0.5;
+          diffuseLight = diffuseLight * 0.8;
       }
       // not that steep, has some
       //if(slope >= 0.3) {
@@ -137,11 +138,12 @@ void main(void) {
         finalColor = material_rock;
     }
 
-    
+
 
     if(vPositionW.y < mountainAltitude&& vPositionW.y > sandAltitude ){
       if(slope < 0.2) {
-        float blendAmount = slope / 0.2;
+        float grassHeightFactor = clamp(mountainAltitude - vPositionW.y,0.0,1.0);
+        float blendAmount = clamp(slope / 0.2 / grassHeightFactor,0.,1.);
         finalColor = mix(material_grass, material_rock, blendAmount);
         diffuseLight = ndl_grass;
       }
@@ -161,11 +163,11 @@ void main(void) {
     //     gl_FragColor = vec4(1.0,1.0,1.0, 1.0 );
     //   }
 
-    float ambientStrength = 0.5;
+    float ambientStrength = 0.2;
     vec3 ambient = ambientStrength * lightColor;
 
     // show light
-    float lightStrength = 1.5;
+    float lightStrength = 1.7;
     diffuseLight = diffuseLight * lightStrength;
 
     gl_FragColor = vec4(vec3((diffuseLight + ambient) * finalColor), 1.0); //vec4(light,light,light,1.0);

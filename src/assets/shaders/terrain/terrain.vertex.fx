@@ -23,7 +23,7 @@ float getHeight(vec2 uvParameter){
    // calculate new position
    float heightValueBase = texture2D(heightMap, uvParameter).x;
    // move 0.0-1.0 up to 1.0-2.0 so pow works, pow make lower parts flat, higher parts more step
-   float heightValueScaled = pow(heightValueBase + 1.0, 6.0);
+   float heightValueScaled = pow(heightValueBase + 1.0, 6.5);
    return heightValueScaled;
 }
 
