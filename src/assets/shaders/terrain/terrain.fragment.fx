@@ -49,10 +49,9 @@ vec3 calculateNormal(vec3 normalMapValue, vec3 vNormalW){
 
 void main(void) {
     float iceAltitude = 24.0;
-    float iceStop = 20.0;
-    float mountainAltitude = 10.0;
-    float sandAltitude = 2.0;
-
+    float rockAltitude = 10.0;
+    float grassAltitude = 2.0;
+    float sandAltitude = 0.0;
 
 
     vec3 lightcolor = vec3(220 / 255, 220 / 255, 139 / 255);
@@ -115,63 +114,58 @@ void main(void) {
       vec3 material_sand = clamp(color_sand * ndl_sand,0.0,1.0);
       //material_sand = vec3(color_sand);
 
-   // icy parts of mountain
+   // ---------- Color MIXING ------------
+   // ---------- Snow Peak Area ------------
    if(vPositionW.y > iceAltitude){
-      float snowHeightFactor = clamp(vPositionW.y - iceAltitude,0.0,1.0);
-
-      // flat, amount of snow depending of height
-      if(slope <= 1.0) {
-          finalColor = mix(material_rock, material_snow, snowHeightFactor);
-          diffuseLight = diffuseLight * 0.8;
-      }
-      // not that steep, has some
-      //if(slope >= 0.3) {
-        //float blendAmount = clamp(slope * 2.0,0.0,1.0) * snowHeightFactor; //snowHeightFactor;
-        //finalColor = mix(material_rock, material_snow, blendAmount);
-         //finalColor = vec3(1.0,0.0,0.0);
-         //finalColor = material_rock;
-      //}
+      finalColor = material_snow;
+      // dim the light a n^bit
+      diffuseLight = diffuseLight * 0.8;
     }
 
-    // Mountain Rocky part
-    if(vPositionW.y > mountainAltitude && vPositionW.y < iceAltitude){
-        finalColor = material_rock;
-    }
+   // ---------- Rock Area ------------
+   if(vPositionW.y > rockAltitude && vPositionW.y < iceAltitude){
+      // the area between rock and snow should not be a hard edge
+      float snowRockTransitionHeight = 5.0;
+      // if position is closer (more up) to the iceAltitude the factor gets smaller -> less rock
+      float rockAmount = clamp((iceAltitude - vPositionW.y) / snowRockTransitionHeight,0.0,1.0);
 
+      // blend between rock & snow depending on rock amount
+      finalColor = mix(material_snow, material_rock, rockAmount);
+   }
 
+   // ---------- Grass Area ------------
+   if(vPositionW.y < rockAltitude && vPositionW.y >= grassAltitude ){
+      // area between rock and grass, there should not be a hard edge
+      float grassRockTransitionHeight = 10.0; // 10meter of transition area
+      // if position is closer (more up) to the rockHeight the factor gets smaller -> less grass
+      float grassAmount = clamp((rockAltitude - vPositionW.y) / grassRockTransitionHeight,0.0,1.0);
 
-    if(vPositionW.y < mountainAltitude&& vPositionW.y > sandAltitude ){
-      if(slope < 0.2) {
-        float grassHeightFactor = clamp(mountainAltitude - vPositionW.y,0.0,1.0);
-        float blendAmount = clamp(slope / 0.2 / grassHeightFactor,0.,1.);
+      // not that steep, show grass and rock
+      if(slope < 0.3) {
+        // blend between grass & rock depending on slope and grass Amount Factor
+        float blendAmount = clamp((slope * 2.0) / grassAmount,0.0,1.0);
+
         finalColor = mix(material_grass, material_rock, blendAmount);
-        diffuseLight = ndl_grass;
+        diffuseLight = mix(ndl_grass,diffuseLight,blendAmount);
       }
-      if(slope >= 0.2) {
+      // very steep, rock only
+      if(slope >= 0.3) {
         finalColor = material_rock;
       }
    }
 
-   if(vPositionW.y <= sandAltitude){
+   // ---------- Sand Area ------------
+   if(vPositionW.y >= sandAltitude && vPositionW.y < grassAltitude){
       finalColor = material_sand;
    }
 
+   // ---------- Grass LIGHT ------------
+   float ambientStrength = 0.2;
+   vec3 ambientColor = ambientStrength * lightColor;
 
-    gl_FragColor = fragCol; //vec4(finalColor, 1.0 );
+   float lightStrength = 1.5;
+   diffuseLight = diffuseLight * lightStrength;
 
-    //   if(vNormalW.y >= 0.9){
-    //     gl_FragColor = vec4(1.0,1.0,1.0, 1.0 );
-    //   }
-
-    float ambientStrength = 0.2;
-    vec3 ambient = ambientStrength * lightColor;
-
-    // show light
-    float lightStrength = 1.7;
-    diffuseLight = diffuseLight * lightStrength;
-
-    gl_FragColor = vec4(vec3((diffuseLight + ambient) * finalColor), 1.0); //vec4(light,light,light,1.0);
-    //gl_FragColor = vec4(ndl_grass,ndl_grass,ndl_grass,1.0);
-
-     //gl_FragColor = fragCol;
+   // ---------- Final Color ------------
+   gl_FragColor = vec4(vec3((diffuseLight + ambientColor) * finalColor), 1.0);
 }
