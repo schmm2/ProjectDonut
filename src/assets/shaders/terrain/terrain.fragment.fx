@@ -111,7 +111,6 @@ void main(void) {
     if(positionWorld.y > iceAltitude){
       finalColor = material_snow;
       // dim the light a n^bit
-      diffuseLight = diffuseLight * 0.8;
     }
 
     // ---------- Rock Area ------------

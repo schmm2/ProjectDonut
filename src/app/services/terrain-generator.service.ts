@@ -111,6 +111,7 @@ export class TerrainGeneratorService {
     sphere.position = lightPosition;
     terrainMaterial.setVector3('lightPosition', lightPosition);
     terrainMaterial.setVector3('lightColor', lightColor);
+    terrainMaterial.setFloat('steepnessFactor', 6.5);
     terrainMaterial.setVector2('resolution', new BABYLON.Vector2(1024, 1024));
     //terrainMaterial.wireframe = true;
 
