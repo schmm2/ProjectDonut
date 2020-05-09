@@ -105,10 +105,12 @@ export class TerrainGeneratorService {
     terrainMaterial.setVector3('cameraPosition', scene.activeCamera.position);
 
     terrainMaterial.setFloat('mountainHeight', 30.0);
-    let lightPosition = new BABYLON.Vector3(-150, 350, -50);
+    let lightPosition = new BABYLON.Vector3(-150, 500, -50);
+    let lightColor =  new BABYLON.Vector3(220 / 255, 220 / 255, 139 / 255);
     var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 10, segments: 32}, scene);
     sphere.position = lightPosition;
     terrainMaterial.setVector3('lightPosition', lightPosition);
+    terrainMaterial.setVector3('lightColor', lightColor);
     terrainMaterial.setVector2('resolution', new BABYLON.Vector2(1024, 1024));
     //terrainMaterial.wireframe = true;
 
