@@ -114,7 +114,7 @@ float fbm3d(vec3 x, const in int octaves, int shiftValue) {
 }
 
 void main(void) {
-   int octaves = 11;
+   int octaves = 24;
    float whaaat = 10.0;
    int shiftValue = 1200;
 

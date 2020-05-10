@@ -19,9 +19,9 @@ varying vec2 vUv;
 
 float getVertexHeight(vec2 uvParameter){
    // calculate new position
-   float heightValueBase = texture2D(heightMap, uvParameter).x;
+   float heightValueBase = texture2D(heightMap, uvParameter).x + 1.0;
    // move 0.0-1.0 up to 1.0-2.0 so pow works, pow make lower parts flat, higher parts more step
-   float heightValueScaled = pow(heightValueBase + 1.0, steepnessFactor);
+   float heightValueScaled = pow(pow(heightValueBase, 4.0 ), heightValueBase );
    return heightValueScaled;
 }
 
@@ -54,8 +54,8 @@ void main() {
 
     // calculate position
     float heightValueScaled = getVertexHeight(uv);
-    float offSetX = 0.02;
-    float offSetZ = 0.04;
+    float offSetX = 0.0;
+    float offSetZ = 0.0;
     vec4 newPosition = vec4(position.x + offSetX , heightValueScaled, position.z + offSetZ, 1.0);
     vPosition = newPosition.xyz;
 
