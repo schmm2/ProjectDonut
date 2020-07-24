@@ -19,6 +19,10 @@ export class GameStateService {
 
   }
 
+  public getScene(){
+    return this.scene;
+  }
+
   public setSelectedObject(id, mesh) {
     this.selectedGameObject = {
       id,

@@ -9,27 +9,7 @@ export class GameBoardTile {
   set evelation(value) {
     this._evelation = value;
   }
-  get mountainAreaSize() {
-    return this._mountainAreaSize;
-  }
-
-  set mountainAreaSize(value) {
-    this._mountainAreaSize = value;
-  }
-  get isMountainCenter() {
-    return this._isMountainCenter;
-  }
-
-  set isMountainCenter(value) {
-    this._isMountainCenter = value;
-  }
-  get coastStyleCode() {
-    return this._coastStyleCode;
-  }
-
-  set coastStyleCode(value) {
-    this._coastStyleCode = value;
-  }
+  
   get surroundingTiles(): GameBoardTile[] {
     return this._surroundingTiles;
   }
@@ -55,25 +35,61 @@ export class GameBoardTile {
     this._mapCoordinates = value;
   }
 
-  get yPositionShifted(): boolean {
-    return this._yPositionShifted;
+  get xPositionShifted(): boolean {
+    return this._xPositionShifted;
   }
 
-  set yPositionShifted(value: boolean) {
-    this._yPositionShifted = value;
+  set xPositionShifted(value: boolean) {
+    this._xPositionShifted = value;
   }
 
   get name() {
     return ('tile' + this._mapCoordinates.x + '-' + this._mapCoordinates.y);
   }
 
+  public get hex() {
+    return this._hex;
+  }
+  public set hex(value) {
+    this._hex = value;
+  }
+
+  public get heights() {
+    return this._heights;
+  }
+  public set heights(value) {
+    this._heights = value;
+  }
+
   private _type: GameBoardTileType;
   private _mapCoordinates: Vector2;
-  private _yPositionShifted = false;
+  private _xPositionShifted = false;
   private _surroundingTiles: GameBoardTile[];
-  private _coastStyleCode;
-  private _name;
-  private _isMountainCenter = false;
-  private _mountainAreaSize;
   private _evelation;
+  private _hex;
+  private _heights;
+  private _maxHeight;
+  private _minHeight;
+  private _tileType;
+  public get tileType() {
+    return this._tileType;
+  }
+  public set tileType(value) {
+    this._tileType = value;
+  }
+
+  public get minHeight() {
+    return this._minHeight;
+  }
+  public set minHeight(value) {
+    this._minHeight = value;
+  }
+  
+  public get maxHeight() {
+    return this._maxHeight;
+  }
+  public set maxHeight(value) {
+    this._maxHeight = value;
+  }
+  
 }
