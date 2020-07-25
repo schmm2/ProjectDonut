@@ -18,7 +18,8 @@ export class InteractionManagerService {
     const keyUpperCase = key.toUpperCase();
     switch (keyUpperCase) {
       case 'B':
-        console.log('Toggle Building System');
+        //console.log('Toggle Building System');
+        this.gameStateService.toggleBuildingSystem();
         break;
       case 'C':
         this.gameStateService.centerCameraToSelectedObject();

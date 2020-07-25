@@ -3,7 +3,6 @@ import {Injectable} from '@angular/core';
 import {
   MeshBuilder,
   ShaderMaterial,
-  Color3,
   Vector2,
   RenderTargetTexture,
   Matrix,
@@ -11,9 +10,7 @@ import {
   Camera,
   Vector3,
   Color4,
-  Vector4,
   Plane,
-  Nullable,
   Texture
 } from 'babylonjs';
 
@@ -24,110 +21,83 @@ export class WaterGeneratorService {
   private scene: any;
   private camera: any;
   private renderer: any;
-  private light: any;
-  private reflectionRTT: any;
-  private refractionRTT: any;
-  private waterPlane: any;
+ 
   private reflectionTransform: Matrix = Matrix.Zero();
   private showRTTPlane = false;
-  private time = 0;
-  private waveLength = 10.0;
-  private waveHeight = 50.0;
+  
+  public constructor() {}
+  
+  private buildRefractionRTT(waterPlane: any, renderTargetSize: Vector2){
+    // create refraction RTT
+    let refractionRTT = new RenderTargetTexture('refraction',
+      { width: renderTargetSize.x, height: renderTargetSize.y }, this.scene, false, true);
+    refractionRTT.wrapU = Constants.TEXTURE_MIRROR_ADDRESSMODE;
+    refractionRTT.wrapV = Constants.TEXTURE_MIRROR_ADDRESSMODE;
+    refractionRTT.ignoreCameraViewport = true;
+    this.scene.customRenderTargets.push( refractionRTT);
 
-  public constructor() {
+    refractionRTT.onBeforeRender = () => {
+      const planePositionY = waterPlane ? waterPlane.position.y : 0.0;
+      // y +1.0 to avoid wierd refraction if wave gets high
+      this.scene.clipPlane = Plane.FromPositionAndNormal(new Vector3(0, planePositionY + 1.00, 0), new Vector3(0, 1, 0));
+    };
 
+    refractionRTT.onAfterRender = () => {
+      this.scene.clipPlane = null;
+    };
 
+    return refractionRTT;
   }
 
-  public setScene(scene: any, camera: any, renderer: any, light: any) {
-    this.light = light;
+  private buildReflectionRTT(waterPlane: any, renderTargetSize: Vector2){
+    const mirrorMatrix = Matrix.Zero();
+    let savedViewMatrix: Matrix;
+
+    // create reflection RTT
+    let reflectionRTT = new RenderTargetTexture('reflection',
+      { width: renderTargetSize.x, height: renderTargetSize.y }, this.scene, false, true);
+    reflectionRTT.wrapU = Constants.TEXTURE_MIRROR_ADDRESSMODE;
+    reflectionRTT.wrapV = Constants.TEXTURE_MIRROR_ADDRESSMODE;
+    reflectionRTT.ignoreCameraViewport = true;
+    reflectionRTT.refreshRate = 1;
+    this.scene.customRenderTargets.push( reflectionRTT);
+
+    reflectionRTT.onBeforeRender = () => {
+      // get plane water mesh position
+      const planePositionY = waterPlane ? waterPlane.position.y : 0.0;
+
+      // position reflection slightly below object
+      this.scene.clipPlane = Plane.FromPositionAndNormal(new Vector3(0, planePositionY , 0), new Vector3(0, -1.0, 0));
+      // clip plane will be flipped
+      Matrix.ReflectionToRef(this.scene.clipPlane, mirrorMatrix);
+
+      // Transform
+      savedViewMatrix = this.scene.getViewMatrix();
+      mirrorMatrix.multiplyToRef(savedViewMatrix, this.reflectionTransform);
+      this.scene.setTransformMatrix(this.reflectionTransform, this.scene.getProjectionMatrix());
+      // only render visible faces
+      //scene.getEngine().cullBackFaces = false;
+      this.scene._mirroredCameraPosition = Vector3.TransformCoordinates((this.scene.activeCamera as Camera).position, mirrorMatrix);
+    };
+
+    reflectionRTT.onAfterRender = () => {
+      // reset plane
+      this.scene.clipPlane = null;
+
+      // Transform
+      this.scene.setTransformMatrix(savedViewMatrix, this.scene.getProjectionMatrix());
+      this.scene.getEngine().cullBackFaces = true;
+      this.scene._mirroredCameraPosition = null;
+    };
+
+    return reflectionRTT
+  }
+
+  public buildWaterPlane(worldSize: any, scene: any, camera: any, renderer: any, light: any) {
     this.scene = scene;
     this.camera = camera;
     this.renderer = renderer;
-  }
 
-  public addToReflectionRenderList(mesh) {
-    this.reflectionRTT.renderList.push(mesh);
-  }
-
-  public addToRefractionRenderList(mesh) {
-    this.refractionRTT.renderList.push(mesh);
-  }
-
-  public buildRenderTargetTexture(scene: any, renderTargetSize: Vector2) {
-    let savedViewMatrix: Matrix;
-    const mirrorMatrix = Matrix.Zero();
-
-    // create reflection RTT
-    this.reflectionRTT = new RenderTargetTexture('reflection',
-      { width: renderTargetSize.x, height: renderTargetSize.y }, scene, false, true);
-    this.reflectionRTT.wrapU = Constants.TEXTURE_MIRROR_ADDRESSMODE;
-    this.reflectionRTT.wrapV = Constants.TEXTURE_MIRROR_ADDRESSMODE;
-    this.reflectionRTT.ignoreCameraViewport = true;
-    this.reflectionRTT.refreshRate = 1;
-    scene.customRenderTargets.push( this.reflectionRTT);
-
-    // create refraction RTT
-    this.refractionRTT = new RenderTargetTexture('refraction',
-      { width: renderTargetSize.x, height: renderTargetSize.y }, scene, false, true);
-    this.reflectionRTT.wrapU = Constants.TEXTURE_MIRROR_ADDRESSMODE;
-    this.reflectionRTT.wrapV = Constants.TEXTURE_MIRROR_ADDRESSMODE;
-    this.refractionRTT.ignoreCameraViewport = true;
-    scene.customRenderTargets.push( this.refractionRTT);
-
-    this.refractionRTT.onBeforeRender = () => {
-      const planePositionY = this.waterPlane ? this.waterPlane.position.y : 0.0;
-      // y +1.0 to avoid wierd refraction if wave gets high
-      scene.clipPlane = Plane.FromPositionAndNormal(new Vector3(0, planePositionY + 1.00, 0), new Vector3(0, 1, 0));
-    };
-
-    this.refractionRTT.onAfterRender = () => {
-      scene.clipPlane = null;
-    };
-
-    this.reflectionRTT.onBeforeRender = () => {
-      // get plane water mesh position
-      const planePositionY = this.waterPlane ? this.waterPlane.position.y : 0.0;
-
-      // position reflection slightly below object
-      scene.clipPlane = Plane.FromPositionAndNormal(new Vector3(0, planePositionY , 0), new Vector3(0, -1.0, 0));
-      // clip plane will be flipped
-      Matrix.ReflectionToRef(scene.clipPlane, mirrorMatrix);
-
-      // Transform
-      savedViewMatrix = scene.getViewMatrix();
-      mirrorMatrix.multiplyToRef(savedViewMatrix, this.reflectionTransform);
-      scene.setTransformMatrix(this.reflectionTransform, scene.getProjectionMatrix());
-      // only render visible faces
-      //scene.getEngine().cullBackFaces = false;
-      scene._mirroredCameraPosition = Vector3.TransformCoordinates((scene.activeCamera as Camera).position, mirrorMatrix);
-    };
-
-    this.reflectionRTT.onAfterRender = () => {
-      // reset plane
-      scene.clipPlane = null;
-
-      // Transform
-      scene.setTransformMatrix(savedViewMatrix, scene.getProjectionMatrix());
-      scene.getEngine().cullBackFaces = true;
-      scene._mirroredCameraPosition = null;
-    };
-  }
-
-  public buildWaterPlane(worldSize: BABYLON.Vector2) {
-    // more resolution means better quality in reflection / refraction
-    this.buildRenderTargetTexture(this.scene, new Vector2(512, 512));
-
-    if (this.showRTTPlane) {
-      // create new plane to render Reflection
-      const planeRTT = BABYLON.MeshBuilder.CreatePlane('rttPlane', {width: 50, height: 50}, this.scene);
-      planeRTT.setPositionWithLocalVector(new BABYLON.Vector3(100, 50, 0));
-
-      const rttMaterial = new BABYLON.StandardMaterial('RTT material', this.scene);
-      rttMaterial.emissiveTexture = this.refractionRTT;
-      rttMaterial.disableLighting = true;
-      planeRTT.material = rttMaterial;
-    }
     // create material
     const waterMaterial = new ShaderMaterial('waterMaterial', this.scene, {
         vertexElement: './assets/shaders/water',
@@ -145,10 +115,15 @@ export class WaterGeneratorService {
     const foamShoreTexture = new Texture('assets/textures/material/water/water_foam_shore.png', this.scene);
     const foamTexture = new Texture('assets/textures/material/water/water_foam.png', this.scene);
 
-
     // create plane
-    this.waterPlane = MeshBuilder.CreateGround('water', {width: worldSize.x, height: worldSize.y, subdivisions: 250}, this.scene, );
-    this.waterPlane.position.y = 1.5;
+    let waterPlane = MeshBuilder.CreateGround('water', {width: worldSize.x, height: worldSize.y, subdivisions: 250}, this.scene, );
+    waterPlane.position.y = 1.5;
+
+    let reflectionRTT = this.buildReflectionRTT(waterPlane, new Vector2(512, 512));
+    let refractionRTT = this.buildRefractionRTT(waterPlane, new Vector2(512, 512));
+
+    // more resolution means better quality in reflection / refraction
+    //this.buildRenderTargetTexture(new Vector2(512, 512));
 
     const shallowWaterColor = new Color4(0.3, 0.4, 0.7, 1.0);
     const deepWaterColor = new Color4(0, 0.25, 0.283, 1.0);
@@ -160,8 +135,8 @@ export class WaterGeneratorService {
     waterMaterial.setTexture('foamShoreTexture', foamShoreTexture);
     waterMaterial.setTexture('foamTexture', foamTexture);
     waterMaterial.setTexture('depthTexture', this.renderer.getDepthMap());
-    waterMaterial.setTexture('reflectionTexture', this.reflectionRTT);
-    waterMaterial.setTexture('refractionTexture', this.refractionRTT);
+    waterMaterial.setTexture('reflectionTexture', reflectionRTT);
+    waterMaterial.setTexture('refractionTexture', refractionRTT);
 
     // colors
     waterMaterial.setColor4('shallowWaterColor', shallowWaterColor);
@@ -176,16 +151,28 @@ export class WaterGeneratorService {
     waterMaterial.setFloat('waterDistortionStrength', 0.03);
 
     // set material
-    this.waterPlane.material = waterMaterial;
+    waterPlane.material = waterMaterial;
 
-    // tslint:disable-next-line:only-arrow-functions
-    this.scene.registerBeforeRender(() => {
-      // @ts-ignore
-      this.waterPlane.material.setFloat('time', this.time);
-      this.waterPlane.material.setVector3('cameraPosition', this.camera.position);
-      this.time += 0.01;
-    });
+    // add properties
+    waterPlane.receiveShadows = true;
 
-    return this.waterPlane;
+    let waterPlaneObject = {
+      reflectionRTT: reflectionRTT,
+      refractionRTT: refractionRTT,
+      waterPlane: waterPlane
+    };
+
+    if (this.showRTTPlane) {
+      // create new plane to render Reflection
+      const planeRTT = BABYLON.MeshBuilder.CreatePlane('rttPlane', {width: 50, height: 50}, this.scene);
+      planeRTT.setPositionWithLocalVector(new BABYLON.Vector3(100, 50, 0));
+
+      const rttMaterial = new BABYLON.StandardMaterial('RTT material', this.scene);
+      //rttMaterial.emissiveTexture = refractionRTT;
+      rttMaterial.disableLighting = true;
+      planeRTT.material = rttMaterial;
+    }
+    
+    return waterPlaneObject;
   }
 }

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -8,6 +9,9 @@ export class GameStateService {
   private scene;
   private activeCamera;
 
+  private buildingModeValue = false;
+  private buildingMode: BehaviorSubject<Boolean> = new BehaviorSubject(this.buildingModeValue);
+  
   public constructor() { }
 
   public init(scene) {
@@ -17,6 +21,10 @@ export class GameStateService {
     this.activeCamera.inputs.remove(this.activeCamera.inputs.attached.mouse);
     this.activeCamera.inputs.remove(this.activeCamera.inputs.attached.gamepad);
 
+  }
+
+  public subscribeToBuildingMode(){
+    return this.buildingMode;
   }
 
   public getScene(){
@@ -37,6 +45,11 @@ export class GameStateService {
 
   public removeSelectedObject() {
     this.selectedGameObject = null;
+  }
+
+  public toggleBuildingSystem(){
+    this.buildingModeValue = !this.buildingModeValue;
+    this.buildingMode.next(this.buildingModeValue);
   }
 
   public toggleFreeMovingCamera() {

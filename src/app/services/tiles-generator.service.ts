@@ -4,6 +4,7 @@ import {GameBoardTile} from '../classes/game-board-tile';
 import {GameBoardTileType} from '../enums/game-board-tile-type.enum';
 import {BehaviorSubject} from 'rxjs';
 import {TerrainGeneratorService} from './terrain-generator.service';
+import {GameStateService} from './game-state.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +13,8 @@ export class TilesGeneratorService {
 
   public constructor(
     private assetLoaderService: AssetLoaderService,
-    private terrainGeneratorService: TerrainGeneratorService
+    private terrainGeneratorService: TerrainGeneratorService,
+    private gameStateService: GameStateService
   ) {
 
     this.assetLoaderService.subscribeToAssetsLoadState().subscribe((isLoaded) => {
@@ -21,19 +23,20 @@ export class TilesGeneratorService {
       }
     });
 
+    this.gameStateService.subscribeToBuildingMode().subscribe((buildingMode) =>{
+      console.log(buildingMode);
+      if(this.buildingMode != buildingMode){
+        this.toggleTileVisibility(buildingMode);
+      }
+      this.buildingMode = buildingMode;
+    })
   }
 
-  private mountainsOccurrenceFactor = 0.05;
+  private buildingMode;
 
   private resolution: BABYLON.Vector2;
-  private assetPrefix = 'terrain-';
   private tilesArray: any[];
-  private landTilesArray: GameBoardTile[] = [];
-  // land + coast tiles, no water, mountains
   private gameBoardTilesArray: GameBoardTile[] = [];
-
-  private generatedGameBoardTiles: BehaviorSubject<GameBoardTile[]> = new BehaviorSubject(this.gameBoardTilesArray);
-  private generatedLandTiles: BehaviorSubject<GameBoardTile[]> = new BehaviorSubject(this.landTilesArray);
 
   // surrounding tiles vertices
   private aUp = new BABYLON.Vector2(-1, 1);
@@ -66,6 +69,7 @@ export class TilesGeneratorService {
     }
   }
 
+  /*
   // input
   // tile: tile to check surrounding
   // range: how many levels away from the center we will search
@@ -98,32 +102,27 @@ export class TilesGeneratorService {
       // console.log('not suitable tile detected');
       return true;
     }
+  }*/
+
+  private toggleTileVisibility(visibility){
+    this.gameBoardTilesArray.forEach(tile =>{
+      tile.mesh.visibility = visibility;
+    });
   }
 
-  public subscribeToGeneratedGameBoardTiles() {
-    return this.generatedGameBoardTiles;
-  }
-
-  public subscribeToGeneratedLandTiles() {
-    return this.generatedLandTiles;
-  }
-
-  public init(heightMapTexture, scene) {
-    console.log("dsdsdsd");
+  public generateTiles(scene, heightMapTexture) {
     this.scene = scene;
+    
     this.heightMapTextures = [];
+    this.tilesArray = [];
+
     this.heightMapTextures.push(heightMapTexture);
     this.resolution = new BABYLON.Vector2(1024, 1024);
-    const time1 = performance.now();
-    this.tilesArray = [];
-    // const textures = this.assetLoaderService.loadTexturesOfCategory(this.assetPrefix);
-    // defines all tiles
-    console.log(this.heightMapTextures);
-    this.buildTilesArray();
 
-    // checks which tile is a coast tile
-    this.defineTileTypes();
+    const time1 = performance.now();
     
+    this.buildTilesArray();
+    this.defineTileTypes();
     this.buildGameBoard();
 
     const time2 = performance.now();
@@ -134,71 +133,52 @@ export class TilesGeneratorService {
     this.tilesArray.forEach(tile =>{
       let heightDif = tile.maxHeight - tile.minHeight;
 
-      console.log(tile);
+      // coast
       if(tile.minHeight <= 1.5){
         // one vertice is connected to water
         tile.type = GameBoardTileType.coast;
       } else{
+        // mountain
         if(heightDif >= 2.5){
           tile.type = GameBoardTileType.mountain;
-          console.log("MOUNTAAAAAAIIN");
-        }else{
+        }
+        // land
+        else{
           tile.type = GameBoardTileType.land;
         }
       }
     })
   }
 
-  private calcHeightAtPosition(pixels, point, rowLength){
-    //console.log(point);
+  private calcHeightAtPosition(pixels, point, rowLength){ 
     const pixelPosition = (point.y * rowLength + point.x) * 4;
+
+    // every pixel contains 4 values, rgba
+    // we ignore alpha
     const red = pixels[pixelPosition];
     const green = pixels[pixelPosition + 1];
     const blue = pixels[pixelPosition + 2];
-    // we ignore alpha
-    //console.log(pixelPosition);
+    
+    // calc average for greyscale image
     let colorValue = (red + green + blue) / 3;
     
-    //console.log(colorValue);
-
-    // calculate height, same calculation as in terrain vertex shader
-    //colorValue = colorValue * 3.0;
-
-    // calculate new position
-    //console.log(colorValue);
+    // we transform the value, this function is the same in the terrain vertex shader
     let heightValueBase = (colorValue / 255) + 1;
-   // move 0.0-1.0 up to 1.0-2.0 so pow works, pow make lower parts flat, higher parts more step
+    // move 0.0-1.0 up to 1.0-2.0 so pow works, pow make lower parts flat, higher parts more step
     let heightValueScaled = Math.pow(Math.pow(heightValueBase, 4.0 ), heightValueBase );
 
-    //console.log(heightValueScaled);
     return heightValueScaled;
   }
 
   private buildTilesArray() {
-    console.log(this.heightMapTextures);
-
-    this.heightMapTextures.forEach(terrainTexture => {
-      //console.log(terrainTexture.isReady());
+    this.heightMapTextures.forEach(texture => {
       
       const rowLength = this.resolution.x;
       const rows = this.resolution.y;
-      console.log(rowLength);
-      console.log(rows);
 
+      const texturePixels = texture.readPixels();      
 
-      /*const planeRTT = BABYLON.MeshBuilder.CreatePlane('rttPlane', {width: 50, height: 50}, this.scene);
-      planeRTT.setPositionWithLocalVector(new BABYLON.Vector3(100, 50, 0));
-
-      const rttMaterial = new BABYLON.StandardMaterial('RTT material', this.scene);
-      rttMaterial.emissiveTexture = terrainTexture;
-      rttMaterial.disableLighting = true;
-      planeRTT.material = rttMaterial;
-
-      const texturePixels = rttMaterial.emissiveTexture.readPixels();*/
-      const texturePixels = terrainTexture.readPixels();      
-
-      console.log(this.tileSizeMultiplicator);
-
+      // tile size calculation
       let tileWidthHalf = 4 * this.tileSizeMultiplicator;
       let tileHeightHalf = 3 * this.tileSizeMultiplicator;
       let tileWidth = tileWidthHalf * 2.0;
@@ -210,11 +190,11 @@ export class TilesGeneratorService {
       // loop through pixels, jump from hex center to hex center
       for (let r = tileHeightHalf; r < rows; r += tileHeightHalf) {
         for (let i = tileWidthHalf; i < rowLength; i += tilesDistanceX ) {
+          const newTile = new GameBoardTile();
+
           // define hex center
           let centerX = i;
           const centerY = r;
-          const newTile = new GameBoardTile();
-          newTile.heights = [];
 
           // shift x position if the row is an even number
           if (r % 2 === 0) {
@@ -222,12 +202,7 @@ export class TilesGeneratorService {
             newTile.xPositionShifted = true;
           }
 
-          // find all points of this center point
-          const hex = {
-            center: new BABYLON.Vector3(centerX, centerY, 0),
-            positions: [],
-            neighbors: []
-          };
+          newTile.worldPosition = new BABYLON.Vector3(centerX, centerY, 0);
 
           let hexPositions = [
               new BABYLON.Vector3(centerX - tileWidthHalf, centerY, 0),
@@ -240,9 +215,12 @@ export class TilesGeneratorService {
           ]
 
           // calculate real world heights of points
+          // we lookup every point of the hex on the texture to find the lowest and heightest point
+
           let heightSum = 0;
           let heightMax = 0;
           let heightMin = 999;
+
           hexPositions.forEach(position => {
             let height = this.calcHeightAtPosition(texturePixels, position, this.resolution.x);
             heightSum += height;
@@ -253,45 +231,54 @@ export class TilesGeneratorService {
           let heightDif = heightMax - heightMin;
           
           if(heightSum >= 10 && heightDif < 3.0){
-            //console.log(newTile.heights);
-            newTile.hex = hex;
             newTile.maxHeight = heightMax;
             newTile.minHeight = heightMin;
             this.tilesArray.push(newTile);
           }
         }
       }
-      console.log(this.tilesArray);
     });
   }
+
 
 
   // builds the actual game board
   // loop through all landTiles, adds non Mountain Tiles
   private buildGameBoard() {
     let worldSize = 400;
-    let index = 0;
+  
+    let oceanTilematerial = new BABYLON.StandardMaterial("oceanTilematerial", this.scene);
+    oceanTilematerial.diffuseColor = new BABYLON.Color3(0, 0, 1);
+
+    let mounainTilematerial = new BABYLON.StandardMaterial("mountainTilematerial", this.scene);
+    mounainTilematerial.diffuseColor = new BABYLON.Color3(1, 0, 0);
+
     for(const tile of this.tilesArray){
-      let discTemplate = BABYLON.MeshBuilder.CreateDisc("disc-template", {radius: (4.0 * this.tileSizeMultiplicator / 1024 * worldSize) , tessellation: 6, updatable: true}, this.scene);
+      let tileName = "gameBoardTile-" + tile.worldPosition.x + "-" + tile.worldPosition.y;
+      let newHexTile = BABYLON.MeshBuilder.CreateDisc(tileName, {radius: (4.0 * this.tileSizeMultiplicator / 1024 * worldSize) , tessellation: 6, updatable: true}, this.scene);
       
-      discTemplate.material = new BABYLON.StandardMaterial("mat1",this.scene); 
-      discTemplate.rotate(BABYLON.Axis.X, Math.PI / 2, BABYLON.Space.WORLD);
+      newHexTile.material = new BABYLON.StandardMaterial("mat1",this.scene); 
+      newHexTile.rotate(BABYLON.Axis.X, Math.PI / 2, BABYLON.Space.WORLD);
 
-      discTemplate.position.x = (tile.hex.center.x/1024*worldSize )- (worldSize /2);
-      discTemplate.position.z = (tile.hex.center.y/1024*worldSize )- (worldSize /2 );
-      discTemplate.position.y = tile.maxHeight + 1.0;
+      newHexTile.position.x = (tile.worldPosition.x / 1024 * worldSize) - (worldSize / 2);
+      newHexTile.position.z = (tile.worldPosition.y / 1024 * worldSize) - (worldSize / 2);
 
-      if(tile.type == GameBoardTileType.coast){
-        let oceanTilematerial = new BABYLON.StandardMaterial("oceanTilematerial", this.scene);
-        oceanTilematerial.diffuseColor = new BABYLON.Color3(0, 0, 1);
-        discTemplate.material = oceanTilematerial;
+      newHexTile.position.y = tile.maxHeight + 1.0;
+      newHexTile.visibility = 0;
+
+      switch(tile.type){
+        case GameBoardTileType.coast: 
+          newHexTile.material = oceanTilematerial;
+          break;
+        case GameBoardTileType.mountain:
+          newHexTile.material = mounainTilematerial;
+          break;
+        default:
+          break;  
       }
 
-      if(tile.type == GameBoardTileType.mountain){
-        let mounainTilematerial = new BABYLON.StandardMaterial("mountainTilematerial", this.scene);
-        mounainTilematerial.diffuseColor = new BABYLON.Color3(1, 0, 0);
-        discTemplate.material = mounainTilematerial;
-      }
+      tile.mesh = newHexTile;
+      this.gameBoardTilesArray.push(tile);
     }
   }
 
@@ -309,7 +296,7 @@ export class TilesGeneratorService {
     // calculate position of surrounding tiles
     for (const vector of vectorArray) {
       // calculate surrounding tile position, vector + vector
-      const surroundingTilePosition = tile.mapCoordinates.add(vector);
+      const surroundingTilePosition = tile.worldPosition.add(vector);
       // check if tile exists
       if (this.tilesArray[surroundingTilePosition.x] && this.tilesArray[surroundingTilePosition.x][surroundingTilePosition.y]) {
         const surroundingTile = this.tilesArray[surroundingTilePosition.x][surroundingTilePosition.y];

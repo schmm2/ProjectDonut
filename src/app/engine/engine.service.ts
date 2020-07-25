@@ -8,7 +8,6 @@ import {
   Vector3,
   HemisphericLight,
   MeshBuilder,
-  Vector2,
   CannonJSPlugin,
 } from 'babylonjs';
 import 'babylonjs-materials';
@@ -32,6 +31,7 @@ export class EngineService {
   private camera: BABYLON.UniversalCamera;
   private scene: Scene;
   private light: Light;
+  private renderer;
 
   // objects
   private shipList: Ship[] = [];
@@ -44,7 +44,7 @@ export class EngineService {
     private shipGeneratorService: ShipGeneratorService,
     private assetLoaderService: AssetLoaderService,
     private tilesGeneratorService: TilesGeneratorService,
-    private actionManagerService: InteractionManagerService,
+    private interactionManagerService: InteractionManagerService,
     private gameStateService: GameStateService,
   ) {
    window.CANNON = CANNON;
@@ -117,7 +117,7 @@ export class EngineService {
     this.camera.attachControl(this.canvas, true);
 
     // enable depth buffer
-    const renderer = this.scene.enableDepthRenderer();
+    this.renderer = this.scene.enableDepthRenderer();
 
     // ***** Lights *****
     // create a basic light, aiming 0,1,0 - meaning, to the sky
@@ -134,54 +134,62 @@ export class EngineService {
     // init injector services
     this.shipGeneratorService.init(this.scene);
     this.gameStateService.init(this.scene);
+    this.interactionManagerService.init(this.scene);
 
     // ***** AssetLoader *****
     this.assetLoaderService.subscribeToAssetsLoadState().subscribe(isLoaded => {
       if (isLoaded) {
+        // todo: island factory
         const heightMapResolution = 1024;
         const heightMapTexture = new BABYLON.CustomProceduralTexture('textureX', './assets/shaders/terrainNoise', heightMapResolution, this.scene);
-        console.log(heightMapTexture.isReady());
 
+        // todo: find better way, maybe observable?
         let stateCheck = setInterval(() => {
           if (heightMapTexture.isReady() == true) {
             console.log("all loaded");
             clearInterval(stateCheck);
 
-            this.terrainGeneratorService.init(this.scene, heightMapTexture, heightMapResolution);
+            // generare terrain
+            this.terrainGeneratorService.generateTerrain(this.scene, heightMapTexture, heightMapResolution);
+            // generate tiles
+            this.tilesGeneratorService.generateTiles(this.scene, heightMapTexture);
           }else{
             console.log("waiting for texture")
           }
         }, 500);
 
-        // build ships
+        // water plane
+        const worldSize = new BABYLON.Vector2(500, 500);
+        let waterPlaneObject = this.waterGeneratorService.buildWaterPlane(worldSize, this.scene, this.camera, this.renderer, this.light);
+
+        let time = 0.0;
+        this.scene.registerBeforeRender(() => {
+          // @ts-ignore
+          waterPlaneObject.waterPlane.material.setFloat('time', time);
+          // @ts-ignore
+          waterPlaneObject.waterPlane.material.setVector3('cameraPosition', this.camera.position);
+          time += 0.01;
+        });
+    
+        //this.waterGeneratorService.addToReflectionRenderList(skyBox);
+
+        // demo: build ships
         // @ts-ignore
-        this.shipList.push(this.shipGeneratorService.buildShip(new Vector2(0, -60), 'fluyt'));
-        this.shipGeneratorService.buildShip(new Vector2(20, -60), 'fluyt');
-        this.shipGeneratorService.buildShip(new Vector2(-20, -60), 'fluyt');
+        this.shipGeneratorService.buildShip(new BABYLON.Vector2(0, -60), 'fluyt');
+        this.shipGeneratorService.buildShip(new BABYLON.Vector2(20, -60), 'fluyt');
+        this.shipGeneratorService.buildShip(new BABYLON.Vector2(-20, -60), 'fluyt');
 
-        this.terrainGeneratorService.subscribeToGeneratedTerrain().subscribe((terrainMesh) => {
-          if (terrainMesh) {
-            console.log('terrain loaded');
-            const terrain = terrainMesh;
-            terrain.receiveShadows = true;
-            console.log(terrainMesh);
+        this.terrainGeneratorService.subscribeToGeneratedTerrain().subscribe((generatedTerrain) => {
 
+          if (generatedTerrain) {
+            console.log('new terrain created');
+            waterPlaneObject.reflectionRTT.renderList.push(generatedTerrain);
+            waterPlaneObject.refractionRTT.renderList.push(generatedTerrain);
+            this.renderer.getDepthMap().renderList = [generatedTerrain];
+          }
+        });
 
-            this.tilesGeneratorService.init(heightMapTexture, this.scene);
-            // renderer.getDepthMap().renderList = [terrain];
-
-            // add water plane
-            this.waterGeneratorService.setScene(this.scene, this.camera, renderer, this.light);
-            const worldSize = new BABYLON.Vector2(500, 500);
-
-            //const waterPlane = this.waterGeneratorService.buildWaterPlane(worldSize);
-            // waterPlane.receiveShadows = true;
-            // this.waterGeneratorService.addToReflectionRenderList(terrain);
-            // this.waterGeneratorService.addToRefractionRenderList(terrain);
-            // add mesh to renderList of water
-            //this.waterGeneratorService.addToReflectionRenderList(skyBox);
-
-            // navigation
+        // navigation
             // navigationPlugin.createNavMesh([waterPlane], navigationParameters);
 
             /*let navmeshdebug = navigationPlugin.createDebugNavMesh(this.scene);
@@ -198,11 +206,8 @@ export class EngineService {
                 // shadowGenerator.getShadowMap().renderList.push(mesh);
               });
             });*/
-          }
-        });
-
-        this.actionManagerService.init(this.scene);
-        this.showWorldAxis(200);
+        
+        //this.showWorldAxis(200);
         // HELPER
         // this.showWorldAxis(150);
       }
