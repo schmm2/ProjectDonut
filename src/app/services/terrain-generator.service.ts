@@ -14,8 +14,7 @@ export class TerrainGeneratorService {
   private generatedTerrainSubject : BehaviorSubject<any> = new BehaviorSubject(null);
 
   public generateTerrain(scene, heightMapTexture, heightmapResolution) {
-    scene = scene;
-
+    
     const lightPosition = new BABYLON.Vector3(-250, 500, -250);
     const lightColor =  new BABYLON.Vector3(220 / 255, 220 / 255, 240 / 255);
 
@@ -83,9 +82,6 @@ export class TerrainGeneratorService {
     // debug
     // const sphereSun = BABYLON.MeshBuilder.CreateSphere('sphereSun', {diameter: 10, segments: 32}, scene);
     // sphereSun.position = lightPosition;
-    console.log(ground);
-    console.log(ground.isReady());
-
 
     this.generatedTerrainSubject.next(ground);
   } 

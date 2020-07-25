@@ -11,27 +11,21 @@ import {GameStateService} from './game-state.service';
   providedIn: 'root'
 })
 export class ShipGeneratorService {
-  private scene;
-  private shipList: BehaviorSubject<Ship[]> = new BehaviorSubject([]);
+  private generatedShipSubject: BehaviorSubject<Ship> = new BehaviorSubject(null);
   private modelPrefix = 'ships-';
   private initialShipPositionY = 0.55;
 
   public constructor(
     private assetLoaderService: AssetLoaderService,
-    private gameStateService: GameStateService
   ) {}
 
-  public subscribeToShipList() {
-    return this.shipList;
-  }
-
-
-  public init(scene) {
-    this.scene = scene;
+  public subscribeToGeneratedShip() {
+    return this.generatedShipSubject;
   }
 
   public buildShip(location, type) {
     const shipModel = this.assetLoaderService.getModel(this.modelPrefix + type);
+
     if ( shipModel) {
       // console.log(shipModel);
       const shipMeshes = [];
@@ -42,17 +36,6 @@ export class ShipGeneratorService {
         shipMeshes.push(newMesh);
       });
       const mergedShipMesh = BABYLON.Mesh.MergeMeshes(shipMeshes, true, false, null , false, true);
-
-      // add action manager to first 'main' mesh
-      mergedShipMesh.actionManager = new BABYLON.ActionManager(this.scene);
-      mergedShipMesh.actionManager.registerAction(
-        new BABYLON.ExecuteCodeAction(
-          BABYLON.ActionManager.OnPickTrigger, (pickEvent) => {
-            // set ship as selected
-            this.gameStateService.setSelectedObject(pickEvent.source.shipId, pickEvent.source);
-          }
-        )
-      );
 
       mergedShipMesh.position = new Vector3(location.x, this.initialShipPositionY, location.y);
       mergedShipMesh.rotation.y = 0.6;
@@ -66,9 +49,7 @@ export class ShipGeneratorService {
 
       // create new ship game object and add it to the list
       const ship = new Ship(shipId, shipModel.name, shipModel.type, mergedShipMesh);
-      const currentValue = this.shipList.value;
-      const updatedValue = [...currentValue, ship];
-      this.shipList.next(updatedValue);
+      this.generatedShipSubject.next(ship);
 
     } else {
       console.log('asset not found: ' + this.modelPrefix + type);

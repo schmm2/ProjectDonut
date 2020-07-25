@@ -11,32 +11,10 @@ import {GameStateService} from './game-state.service';
 })
 export class TilesGeneratorService {
 
-  public constructor(
-    private assetLoaderService: AssetLoaderService,
-    private terrainGeneratorService: TerrainGeneratorService,
-    private gameStateService: GameStateService
-  ) {
-
-    this.assetLoaderService.subscribeToAssetsLoadState().subscribe((isLoaded) => {
-      if (isLoaded) {
-        //this.init();
-      }
-    });
-
-    this.gameStateService.subscribeToBuildingMode().subscribe((buildingMode) =>{
-      console.log(buildingMode);
-      if(this.buildingMode != buildingMode){
-        this.toggleTileVisibility(buildingMode);
-      }
-      this.buildingMode = buildingMode;
-    })
-  }
-
-  private buildingMode;
+  public constructor() {}
 
   private resolution: BABYLON.Vector2;
-  private tilesArray: any[];
-  private gameBoardTilesArray: GameBoardTile[] = [];
+  private generatedGameBoardTilesSubject : BehaviorSubject<any> = new BehaviorSubject(null);
 
   // surrounding tiles vertices
   private aUp = new BABYLON.Vector2(-1, 1);
@@ -57,7 +35,6 @@ export class TilesGeneratorService {
 
   private surroundingTileNames = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-  private heightMapTextures;
 
   private scene;
 
@@ -104,50 +81,36 @@ export class TilesGeneratorService {
     }
   }*/
 
-  private toggleTileVisibility(visibility){
-    this.gameBoardTilesArray.forEach(tile =>{
-      tile.mesh.visibility = visibility;
-    });
-  }
-
   public generateTiles(scene, heightMapTexture) {
     this.scene = scene;
-    
-    this.heightMapTextures = [];
-    this.tilesArray = [];
-
-    this.heightMapTextures.push(heightMapTexture);
     this.resolution = new BABYLON.Vector2(1024, 1024);
 
     const time1 = performance.now();
     
-    this.buildTilesArray();
-    this.defineTileTypes();
-    this.buildGameBoard();
+    let tilesArray = this.buildTilesArray(heightMapTexture);
+    this.buildGameBoard(tilesArray);
 
     const time2 = performance.now();
     console.log('Tiles Generator: Creating Tiles took ' + (time2 - time1) + ' milliseconds.');
   }
 
-  private defineTileTypes(){
-    this.tilesArray.forEach(tile =>{
-      let heightDif = tile.maxHeight - tile.minHeight;
+  private defineTileTyp(tile){
+    let heightDif = tile.maxHeight - tile.minHeight;
 
-      // coast
-      if(tile.minHeight <= 1.5){
-        // one vertice is connected to water
-        tile.type = GameBoardTileType.coast;
-      } else{
-        // mountain
-        if(heightDif >= 2.5){
-          tile.type = GameBoardTileType.mountain;
-        }
-        // land
-        else{
-          tile.type = GameBoardTileType.land;
-        }
+    // coast
+    if(tile.minHeight <= 1.5){
+      // one vertice is connected to water
+      tile.type = GameBoardTileType.coast;
+    } else{
+      // mountain
+      if(heightDif >= 2.5){
+        tile.type = GameBoardTileType.mountain;
       }
-    })
+      // land
+      else{
+        tile.type = GameBoardTileType.land;
+      }
+    }
   }
 
   private calcHeightAtPosition(pixels, point, rowLength){ 
@@ -170,90 +133,92 @@ export class TilesGeneratorService {
     return heightValueScaled;
   }
 
-  private buildTilesArray() {
-    this.heightMapTextures.forEach(texture => {
-      
-      const rowLength = this.resolution.x;
-      const rows = this.resolution.y;
+  private buildTilesArray(heightMapTexture) {
+    let tilesArray = [];
 
-      const texturePixels = texture.readPixels();      
+    const rowLength = this.resolution.x;
+    const rows = this.resolution.y;
 
-      // tile size calculation
-      let tileWidthHalf = 4 * this.tileSizeMultiplicator;
-      let tileHeightHalf = 3 * this.tileSizeMultiplicator;
-      let tileWidth = tileWidthHalf * 2.0;
-      let tileHeight = tileHeightHalf * 2.0;
-      let tilesDistanceX = 3 * tileWidthHalf; 
-      
+    const texturePixels = heightMapTexture.readPixels();      
 
-      // build tiles
-      // loop through pixels, jump from hex center to hex center
-      for (let r = tileHeightHalf; r < rows; r += tileHeightHalf) {
-        for (let i = tileWidthHalf; i < rowLength; i += tilesDistanceX ) {
-          const newTile = new GameBoardTile();
+    // tile size calculation
+    let tileWidthHalf = 4 * this.tileSizeMultiplicator;
+    let tileHeightHalf = 3 * this.tileSizeMultiplicator;
+    let tileWidth = tileWidthHalf * 2.0;
+    let tileHeight = tileHeightHalf * 2.0;
+    let tilesDistanceX = 3 * tileWidthHalf; 
+    
 
-          // define hex center
-          let centerX = i;
-          const centerY = r;
+    // build tiles
+    // loop through pixels, jump from hex center to hex center
+    for (let r = tileHeightHalf; r < rows; r += tileHeightHalf) {
+      for (let i = tileWidthHalf; i < rowLength; i += tilesDistanceX ) {
+        const newTile = new GameBoardTile();
 
-          // shift x position if the row is an even number
-          if (r % 2 === 0) {
-            centerX +=  tilesDistanceX / 2.0;
-            newTile.xPositionShifted = true;
-          }
+        // define hex center
+        let centerX = i;
+        const centerY = r;
 
-          newTile.worldPosition = new BABYLON.Vector3(centerX, centerY, 0);
+        // shift x position if the row is an even number
+        if (r % 2 === 0) {
+          centerX +=  tilesDistanceX / 2.0;
+          newTile.xPositionShifted = true;
+        }
 
-          let hexPositions = [
-              new BABYLON.Vector3(centerX - tileWidthHalf, centerY, 0),
-              new BABYLON.Vector3(centerX, centerY),
-              new BABYLON.Vector3(centerX - tileWidthHalf / 2.0, centerY + tileHeightHalf, 0),
-              new BABYLON.Vector3(centerX + tileWidthHalf / 2.0, centerY + tileHeightHalf, 0),
-              new BABYLON.Vector3(centerX + tileWidthHalf, centerY, 0),
-              new BABYLON.Vector3(centerX + tileWidthHalf / 2.0, centerY - tileHeightHalf, 0),
-              new BABYLON.Vector3(centerX - tileWidthHalf / 2.0, centerY - tileHeightHalf, 0)
-          ]
+        newTile.worldPosition = new BABYLON.Vector3(centerX, centerY, 0);
 
-          // calculate real world heights of points
-          // we lookup every point of the hex on the texture to find the lowest and heightest point
+        let hexPositions = [
+            new BABYLON.Vector3(centerX - tileWidthHalf, centerY, 0),
+            new BABYLON.Vector3(centerX, centerY),
+            new BABYLON.Vector3(centerX - tileWidthHalf / 2.0, centerY + tileHeightHalf, 0),
+            new BABYLON.Vector3(centerX + tileWidthHalf / 2.0, centerY + tileHeightHalf, 0),
+            new BABYLON.Vector3(centerX + tileWidthHalf, centerY, 0),
+            new BABYLON.Vector3(centerX + tileWidthHalf / 2.0, centerY - tileHeightHalf, 0),
+            new BABYLON.Vector3(centerX - tileWidthHalf / 2.0, centerY - tileHeightHalf, 0)
+        ]
 
-          let heightSum = 0;
-          let heightMax = 0;
-          let heightMin = 999;
+        // calculate real world heights of points
+        // we lookup every point of the hex on the texture to find the lowest and heightest point
 
-          hexPositions.forEach(position => {
-            let height = this.calcHeightAtPosition(texturePixels, position, this.resolution.x);
-            heightSum += height;
-            if(height > heightMax){ heightMax = height};
-            if(height < heightMin) { heightMin = height};
-          });
+        let heightSum = 0;
+        let heightMax = 0;
+        let heightMin = 999;
 
-          let heightDif = heightMax - heightMin;
-          
-          if(heightSum >= 10 && heightDif < 3.0){
-            newTile.maxHeight = heightMax;
-            newTile.minHeight = heightMin;
-            this.tilesArray.push(newTile);
-          }
+        hexPositions.forEach(position => {
+          let height = this.calcHeightAtPosition(texturePixels, position, this.resolution.x);
+          heightSum += height;
+          if(height > heightMax){ heightMax = height};
+          if(height < heightMin) { heightMin = height};
+        });
+
+        let heightDif = heightMax - heightMin;
+        
+        if(heightSum >= 10 && heightDif < 3.0){
+          newTile.maxHeight = heightMax;
+          newTile.minHeight = heightMin;
+          this.defineTileTyp(newTile);
+          tilesArray.push(newTile);
         }
       }
-    });
-  }
+    }
 
+    return tilesArray;
+  }
 
 
   // builds the actual game board
   // loop through all landTiles, adds non Mountain Tiles
-  private buildGameBoard() {
+  private buildGameBoard(tilesArray) {
     let worldSize = 400;
-  
+    let gameBoardTilesArray = [];
+    
     let oceanTilematerial = new BABYLON.StandardMaterial("oceanTilematerial", this.scene);
     oceanTilematerial.diffuseColor = new BABYLON.Color3(0, 0, 1);
 
     let mounainTilematerial = new BABYLON.StandardMaterial("mountainTilematerial", this.scene);
     mounainTilematerial.diffuseColor = new BABYLON.Color3(1, 0, 0);
 
-    for(const tile of this.tilesArray){
+    for(const tile of tilesArray){
       let tileName = "gameBoardTile-" + tile.worldPosition.x + "-" + tile.worldPosition.y;
       let newHexTile = BABYLON.MeshBuilder.CreateDisc(tileName, {radius: (4.0 * this.tileSizeMultiplicator / 1024 * worldSize) , tessellation: 6, updatable: true}, this.scene);
       
@@ -278,11 +243,16 @@ export class TilesGeneratorService {
       }
 
       tile.mesh = newHexTile;
-      this.gameBoardTilesArray.push(tile);
+      gameBoardTilesArray.push(tile);
     }
+    this.generatedGameBoardTilesSubject.next(gameBoardTilesArray);
   }
 
-  private findSurroundingTiles(tile: GameBoardTile) {
+  public subscribeToGeneratedTiles(){
+    return this.generatedGameBoardTilesSubject;
+  }
+
+  /*private findSurroundingTiles(tile: GameBoardTile) {
     let vectorArray = [];
     const surroundingTiles = [];
     const surroundingTilesCoordinates = [];
@@ -308,5 +278,5 @@ export class TilesGeneratorService {
       surroundingTiles,
       surroundingTilesCoordinates
     };
-  }
+  }*/
 }

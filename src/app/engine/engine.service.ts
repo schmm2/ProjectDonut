@@ -33,8 +33,13 @@ export class EngineService {
   private light: Light;
   private renderer;
 
-  // objects
-  private shipList: Ship[] = [];
+  // game-objects
+  private terrains: any[] = [];
+  private waterPlaneObject: any = null;
+  private ships: Ship[] = [];
+  private gameBoardTiles: any[] = [];
+
+  private gameBoardTilesVisibility = false;
 
   public constructor(
     private ngZone: NgZone,
@@ -132,13 +137,56 @@ export class EngineService {
     // let shadowGenerator = new BABYLON.ShadowGenerator(1024, light2);
 
     // init injector services
-    this.shipGeneratorService.init(this.scene);
     this.gameStateService.init(this.scene);
     this.interactionManagerService.init(this.scene);
 
     // ***** AssetLoader *****
     this.assetLoaderService.subscribeToAssetsLoadState().subscribe(isLoaded => {
       if (isLoaded) {
+        // ***** Water-Plane *****
+        const worldSize = new BABYLON.Vector2(500, 500);
+        this.waterPlaneObject = this.waterGeneratorService.buildWaterPlane(worldSize, this.scene, this.camera, this.renderer, this.light);
+ 
+        let time = 0.0;
+        this.scene.registerBeforeRender(() => {
+          // @ts-ignore
+          this.waterPlaneObject.waterPlane.material.setFloat('time', time);
+          // @ts-ignore
+          this.waterPlaneObject.waterPlane.material.setVector3('cameraPosition', this.camera.position);
+          time += 0.01;
+        });
+
+        //this.waterGeneratorService.addToReflectionRenderList(skyBox);
+    
+        // ***** GameBoard Tiles *****
+        this.tilesGeneratorService.subscribeToGeneratedTiles().subscribe((generatedTiles)=>{
+          if(generatedTiles){
+            this.gameBoardTiles = this.gameBoardTiles.concat(generatedTiles);
+          }
+        })
+        
+        // hide gameboard tiles if not in build mode
+        this.gameStateService.subscribeToBuildingMode().subscribe((buildingMode) =>{
+          if(this.gameBoardTilesVisibility != buildingMode){
+            this.gameBoardTiles.forEach(tile =>{
+              tile.mesh.visibility = buildingMode;
+            })
+          }
+          this.gameBoardTilesVisibility = buildingMode;
+        })  
+        
+        // ***** Terrain *****
+        // subscribe terrain generation
+        this.terrainGeneratorService.subscribeToGeneratedTerrain().subscribe((generatedTerrain) => {
+          if (generatedTerrain) {
+            console.log('new terrain created');
+            this.waterPlaneObject.reflectionRTT.renderList.push(generatedTerrain);
+            this.waterPlaneObject.refractionRTT.renderList.push(generatedTerrain);
+            this.renderer.getDepthMap().renderList = [generatedTerrain];
+            this.terrains.push(generatedTerrain);
+          }
+        });
+
         // todo: island factory
         const heightMapResolution = 1024;
         const heightMapTexture = new BABYLON.CustomProceduralTexture('textureX', './assets/shaders/terrainNoise', heightMapResolution, this.scene);
@@ -158,36 +206,37 @@ export class EngineService {
           }
         }, 500);
 
-        // water plane
-        const worldSize = new BABYLON.Vector2(500, 500);
-        let waterPlaneObject = this.waterGeneratorService.buildWaterPlane(worldSize, this.scene, this.camera, this.renderer, this.light);
+      
+        // ***** Ships *****
+        // subscribe to generated ships
+        this.shipGeneratorService.subscribeToGeneratedShip().subscribe(ship => {
+          if(ship){
+            console.log(ship);
+            const shipMesh = ship.getMesh();
+            this.waterPlaneObject.reflectionRTT.renderList.push(shipMesh);
 
-        let time = 0.0;
-        this.scene.registerBeforeRender(() => {
-          // @ts-ignore
-          waterPlaneObject.waterPlane.material.setFloat('time', time);
-          // @ts-ignore
-          waterPlaneObject.waterPlane.material.setVector3('cameraPosition', this.camera.position);
-          time += 0.01;
+            // add action manager to first 'main' mesh
+            shipMesh.actionManager = new BABYLON.ActionManager(this.scene);
+            shipMesh.actionManager.registerAction(
+              new BABYLON.ExecuteCodeAction(
+                BABYLON.ActionManager.OnPickTrigger, (pickEvent) => {
+                  // set ship as selected
+                  this.gameStateService.setSelectedObject(pickEvent.source.shipId, pickEvent.source);
+                }
+              )
+            );
+
+            this.ships.push(ship);
+            // shadowGenerator.getShadowMap().renderList.push(mesh);
+          }
         });
-    
-        //this.waterGeneratorService.addToReflectionRenderList(skyBox);
-
+        
         // demo: build ships
-        // @ts-ignore
         this.shipGeneratorService.buildShip(new BABYLON.Vector2(0, -60), 'fluyt');
         this.shipGeneratorService.buildShip(new BABYLON.Vector2(20, -60), 'fluyt');
         this.shipGeneratorService.buildShip(new BABYLON.Vector2(-20, -60), 'fluyt');
 
-        this.terrainGeneratorService.subscribeToGeneratedTerrain().subscribe((generatedTerrain) => {
-
-          if (generatedTerrain) {
-            console.log('new terrain created');
-            waterPlaneObject.reflectionRTT.renderList.push(generatedTerrain);
-            waterPlaneObject.refractionRTT.renderList.push(generatedTerrain);
-            this.renderer.getDepthMap().renderList = [generatedTerrain];
-          }
-        });
+        
 
         // navigation
             // navigationPlugin.createNavMesh([waterPlane], navigationParameters);
@@ -198,13 +247,7 @@ export class EngineService {
             matdebug.alpha = 0.2;
             navmeshdebug.material = matdebug;*/
 
-            /*this.shipGeneratorService.subscribeToShipList().subscribe(shipList => {
-              console.log(shipList);
-              shipList.forEach(ship => {
-                const mesh = ship.getMesh();
-                //this.waterGeneratorService.addToReflectionRenderList(mesh);
-                // shadowGenerator.getShadowMap().renderList.push(mesh);
-              });
+            /*t
             });*/
         
         //this.showWorldAxis(200);
