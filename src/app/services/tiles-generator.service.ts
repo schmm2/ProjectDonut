@@ -98,7 +98,7 @@ export class TilesGeneratorService {
     let heightDif = tile.maxHeight - tile.minHeight;
 
     // coast
-    if(tile.minHeight <= 1.5){
+    if(tile.minHeight <= 1.0){
       // one vertice is connected to water
       tile.type = GameBoardTileType.coast;
     } else{
@@ -124,11 +124,11 @@ export class TilesGeneratorService {
     
     // calc average for greyscale image
     let colorValue = (red + green + blue) / 3;
-    
+
     // we transform the value, this function is the same in the terrain vertex shader
     let heightValueBase = (colorValue / 255) + 1;
     // move 0.0-1.0 up to 1.0-2.0 so pow works, pow make lower parts flat, higher parts more step
-    let heightValueScaled = Math.pow(Math.pow(heightValueBase, 4.0 ), heightValueBase );
+    let heightValueScaled = (Math.pow(heightValueBase, heightValueBase) * 2.5 ) - 1.0;
 
     return heightValueScaled;
   }

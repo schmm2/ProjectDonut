@@ -153,7 +153,7 @@ export class EngineService {
           this.waterPlaneObject.waterPlane.material.setFloat('time', time);
           // @ts-ignore
           this.waterPlaneObject.waterPlane.material.setVector3('cameraPosition', this.camera.position);
-          time += 0.01;
+          time += 0.004;
         });
 
         //this.waterGeneratorService.addToReflectionRenderList(skyBox);
@@ -266,7 +266,9 @@ export class EngineService {
       let plane = BABYLON.Mesh.CreatePlane('TextPlane', size, this.scene, true);
       plane.material = new BABYLON.StandardMaterial('TextPlaneMaterial', this.scene);
       plane.material.backFaceCulling = false;
+      // @ts-ignore
       plane.material.specularColor = new BABYLON.Color3(0, 0, 0);
+      // @ts-ignore
       plane.material.diffuseTexture = dynamicTexture;
       return plane;
     };

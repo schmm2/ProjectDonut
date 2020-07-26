@@ -18,11 +18,20 @@ varying vec3 vNormal;
 varying vec2 vUv;
 
 float getVertexHeight(vec2 uvParameter){
-   // calculate new position
-   float heightValueBase = texture2D(heightMap, uvParameter).x + 1.0;
-   // move 0.0-1.0 up to 1.0-2.0 so pow works, pow make lower parts flat, higher parts more step
-   float heightValueScaled = pow(pow(heightValueBase, 4.0 ), heightValueBase );
-   return heightValueScaled;
+  // calculate new position
+  // move 0.0-1.0 up to 1.0-2.0
+  float heightValueBase = texture2D(heightMap, uvParameter).x + 1.0;
+  
+  // max value start: 2. pax exponent 5, pow(2,5) = 32 
+  // shift down -1 so the plane edge is located at y=0
+  float heightValueScaled = pow(heightValueBase, heightValueBase * 2.5) - 1.0;
+  
+  if(heightValueScaled < 0.05){
+    heightValueScaled = -10.0;
+  }
+
+  //return heightValueBase;
+  return heightValueScaled;
 }
 
 // https://www.alanzucconi.com/2019/07/03/interactive-map-shader-terrain-shading/
@@ -54,9 +63,7 @@ void main() {
 
     // calculate position
     float heightValueScaled = getVertexHeight(uv);
-    float offSetX = 0.0;
-    float offSetZ = 0.0;
-    vec4 newPosition = vec4(position.x + offSetX , heightValueScaled, position.z + offSetZ, 1.0);
+    vec4 newPosition = vec4(position.x, heightValueScaled, position.z, 1.0);
     vPosition = newPosition.xyz;
 
     // calculate normal

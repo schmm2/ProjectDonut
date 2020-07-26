@@ -67,7 +67,7 @@ export class WaterGeneratorService {
       const planePositionY = waterPlane ? waterPlane.position.y : 0.0;
 
       // position reflection slightly below object
-      this.scene.clipPlane = Plane.FromPositionAndNormal(new Vector3(0, planePositionY , 0), new Vector3(0, -1.0, 0));
+      this.scene.clipPlane = Plane.FromPositionAndNormal(new Vector3(0, (planePositionY - 0.1) , 0), new Vector3(0, -1.0, 0));
       // clip plane will be flipped
       Matrix.ReflectionToRef(this.scene.clipPlane, mirrorMatrix);
 
@@ -117,7 +117,7 @@ export class WaterGeneratorService {
 
     // create plane
     let waterPlane = MeshBuilder.CreateGround('water', {width: worldSize.x, height: worldSize.y, subdivisions: 250}, this.scene, );
-    waterPlane.position.y = 1.5;
+    waterPlane.position.y = 1.0;
 
     let reflectionRTT = this.buildReflectionRTT(waterPlane, new Vector2(512, 512));
     let refractionRTT = this.buildRefractionRTT(waterPlane, new Vector2(512, 512));

@@ -4,16 +4,16 @@ precision mediump float;
 varying vec2 vUv;
 varying vec4 vClipSpace;
 varying vec2 textureCoords;
-varying vec3 vPositionW; // world position
 varying vec3 vNormalW; // normal world
 varying vec3 vNewNormal;
-varying vec3 vPositionM;
+varying vec3 vPosition;
 
 // uniform
 // camera
 uniform float camera_near;
 uniform float camera_far;
 uniform vec3 cameraPosition;
+uniform mat4 world;
 
 // textures
 uniform sampler2D depthTexture;
@@ -35,7 +35,8 @@ uniform float waterDistortionStrength;
 uniform float time;
 
 vec3 sunlightColor = vec3(1.0, 1.0, 1.0);
-vec3 sunlightDir = normalize(vec3(-1.0, -1.0, 0.5));
+vec3 sunlightPosition = vec3(0., 500.0, 100.0);
+
 const float shineDamper = 20.0;
 const float waterReflectivity = 0.1;
 
@@ -55,6 +56,7 @@ void main(void)
 {
     float dudvOffsetOverTime = dudvOffset * time * 0.5;
     float fresnelStrength = 0.15;
+    vec3 vPositionW = vec3(world * vec4(vPosition, 1.0));
 
     // ***** Texture Coords *****
     // source: https://www.youtube.com/watch?v=GADTasvDOX4
@@ -75,7 +77,7 @@ void main(void)
 
     // calculate water depth
     float waterDepth = depthOfObjectBehindWater - linearWaterDepth;
-    float beachAreaWaterDepth = clamp(waterDepth * 3000., 0.0, 1.0);
+    float beachAreaWaterDepth = clamp(waterDepth * 4000., 0.0, 1.0);
     float foamAreaWaterDepth = clamp(waterDepth * 80000., 0.0, 1.0);
 
     // ***** DISTORTION *****
@@ -98,7 +100,6 @@ void main(void)
     reflectionTexCoords.y = clamp(reflectionTexCoords.y, -0.999, -0.001);
 
 
-
     vec3 normal = getNormal(distortedTexCoords);
     vec3 viewDirectionW = normalize(cameraPosition - vPositionW);
     float refractiveFactor = dot(viewDirectionW, normal);
@@ -112,8 +113,18 @@ void main(void)
     // foam texture, add bit of tiling
     vec4 foamShoreColor = texture2D(foamShoreTexture, textureCoords * 2.0);
 
+    // normal test
+    
+    vec3 vLightPosition = vec3(0,200,100);
+    vec3 lightVectorW = normalize(sunlightPosition - vPositionW);
+    vec3 vNormalW = normalize(vec3(world * vec4(vNewNormal, 0.0)));
+
+    // diffuse
+    float ndl = max(0., dot(vNormalW, lightVectorW));
+    
     // WATER Light Reflection
-    vec3 reflectedLight = reflect(normalize(sunlightDir), normal);
+    // calculate specular
+    vec3 reflectedLight = reflect(normalize(lightVectorW), normal);
     float specular = max(dot(reflectedLight, viewDirectionW), 0.0);
     specular = pow(specular, shineDamper);
     vec3 specularHighlights = sunlightColor * specular * waterReflectivity;
@@ -122,22 +133,27 @@ void main(void)
     // The deeper the water the darker the color
     refractionColor = mix(refractionColor, deepWaterColor, beachAreaWaterDepth);
     // add reflection & refraction
-    vec4 waterColor = mix(reflectionColor,refractionColor, refractiveFactor);
+    vec4 waterColor = mix(reflectionColor, refractionColor, refractiveFactor);
 
     // add foam structure on wave
     vec4 foamColor = texture2D(foamTexture, textureCoords) ;
 
+    /*
     // define were foam can show up
-    float heightToStartWaveFoam = 0.15;
-    float foamArea = clamp((vPositionM.y  - heightToStartWaveFoam),0.0,1.0);
+    float heightToStartWaveFoam = 0.95;
+    float foamArea = clamp((vPosition.y  - heightToStartWaveFoam),0.0,1.0);
     // multiply normal with y up normal, so only the area where the normal is up will get the texture
     float foamAngleExponent =  dot(vNewNormal, vec3(0.0, 1.0, 0.0));
     float foamSaturation = foamArea * foamAngleExponent;
-    waterColor +=  foamColor.r * foamSaturation; // add to watercolor
+    waterColor +=  foamColor.r * foamSaturation; // add to watercolor*/
 
     // add some blue and light reflections
-    gl_FragColor = mix(waterColor,shallowWaterColor,0.2) + vec4(specularHighlights, 0.0);
+    gl_FragColor = mix(waterColor,shallowWaterColor,1.0) + vec4(specularHighlights, 0.0);
     // add foam to the water edges
     gl_FragColor = mix(gl_FragColor,foamShoreColor,(1.0-foamAreaWaterDepth));
+
+    // test
+    vec3 testWater = vec3(0.,0.,1.);
+    gl_FragColor = vec4(testWater * ndl, 1.0);
 }
 

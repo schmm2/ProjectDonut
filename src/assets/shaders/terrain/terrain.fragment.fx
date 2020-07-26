@@ -45,7 +45,7 @@ vec3 calculateNormal(vec3 normalMapValue, vec3 normalWorldN){
 
 void main(void) {
     // Variables
-    float iceAltitude = 28.0;
+    float iceAltitude = 25.0;
     float rockAltitude = 10.0;
     float grassAltitude = 2.0;
     float sandAltitude = 0.0;
@@ -153,13 +153,13 @@ void main(void) {
       // very steep, rock only
       if(slope >= 0.3) {
         finalColor = material_rock;
-
       }
     }
 
     // ---------- Sand Area ------------
     if(positionWorld.y >= sandAltitude && positionWorld.y < grassAltitude){
       finalColor = material_sand;
+      diffuseLight = ndl_sand;
     }
 
     //finalColor = clamp(finalColor,0.4,0.8);
