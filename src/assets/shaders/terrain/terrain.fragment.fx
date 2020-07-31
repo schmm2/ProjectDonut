@@ -45,10 +45,9 @@ vec3 calculateNormal(vec3 normalMapValue, vec3 normalWorldN){
 
 void main(void) {
     // Variables
-    float iceAltitude = 25.0;
-    float rockAltitude = 10.0;
-    float grassAltitude = 2.0;
-    float sandAltitude = 0.0;
+    float iceAltitude = 20.0;
+    float rockAltitude = 8.0;
+    float grassAltitude = 1.0;
 
     float ambientStrength = 1.0;
     float lightStrength = 0.9;
@@ -157,7 +156,7 @@ void main(void) {
     }
 
     // ---------- Sand Area ------------
-    if(positionWorld.y >= sandAltitude && positionWorld.y < grassAltitude){
+    if(positionWorld.y < grassAltitude){
       finalColor = material_sand;
       diffuseLight = ndl_sand;
     }
@@ -174,5 +173,4 @@ void main(void) {
 
     // ---------- Final Color ------------
     gl_FragColor = vec4(vec3((diffuseLight + ambientColor) * finalColor), 1.0);
-
 }

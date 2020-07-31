@@ -75,6 +75,9 @@ export class TerrainGeneratorService {
     terrainMaterial.setVector2('resolution', new BABYLON.Vector2(1024, 1024));
     // terrainMaterial.wireframe = true;
 
+    //terrainMaterial.needDepthPrePass = true
+    //terrainMaterial.disableDepthWrite = false;
+
     // create ground
     const ground = BABYLON.Mesh.CreateGround('terrainX', 400, 400, 400, scene, true );
     ground.material = terrainMaterial;

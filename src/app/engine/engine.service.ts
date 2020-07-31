@@ -56,7 +56,6 @@ export class EngineService {
   }
 
 
-
   public createScene(canvas: ElementRef<HTMLCanvasElement>): void {
 
     const navigationPlugin = new BABYLON.RecastJSPlugin();
@@ -122,12 +121,35 @@ export class EngineService {
     this.camera.attachControl(this.canvas, true);
 
     // enable depth buffer
-    this.renderer = this.scene.enableDepthRenderer();
+    this.renderer = this.scene.enableDepthRenderer(this.camera,false);
 
     // ***** Lights *****
     // create a basic light, aiming 0,1,0 - meaning, to the sky
     this.light = new HemisphericLight('lightHemisphere', new Vector3(0, 1, 0), this.scene);
     this.light.intensity = 1.0;
+
+    // Our built-in 'sphere' shape.
+    var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 100, segments: 32}, this.scene);
+
+    // Move the sphere upward 1/2 its height
+    sphere.position.y = 0;
+
+    // ***** Water-Plane *****
+    const worldSize = new BABYLON.Vector2(500, 500);
+       
+    this.waterPlaneObject = this.waterGeneratorService.buildWaterPlane(worldSize, this.scene, this.camera, this.renderer, this.light);         
+    
+    let time = 0.0;
+    this.scene.registerBeforeRender(() => {
+      // @ts-ignore
+      this.waterPlaneObject.waterPlane.material.setFloat('time', time);
+      // @ts-ignore
+      this.waterPlaneObject.waterPlane.material.setVector3('cameraPosition', this.camera.position);
+      time += 0.004;
+    });
+
+    this.renderer.getDepthMap().renderList = [sphere];
+
 
     // Adding a light
     // @ts-ignore
@@ -143,19 +165,7 @@ export class EngineService {
     // ***** AssetLoader *****
     this.assetLoaderService.subscribeToAssetsLoadState().subscribe(isLoaded => {
       if (isLoaded) {
-        // ***** Water-Plane *****
-        const worldSize = new BABYLON.Vector2(500, 500);
-        this.waterPlaneObject = this.waterGeneratorService.buildWaterPlane(worldSize, this.scene, this.camera, this.renderer, this.light);
- 
-        let time = 0.0;
-        this.scene.registerBeforeRender(() => {
-          // @ts-ignore
-          this.waterPlaneObject.waterPlane.material.setFloat('time', time);
-          // @ts-ignore
-          this.waterPlaneObject.waterPlane.material.setVector3('cameraPosition', this.camera.position);
-          time += 0.004;
-        });
-
+        
         //this.waterGeneratorService.addToReflectionRenderList(skyBox);
     
         // ***** GameBoard Tiles *****
@@ -179,9 +189,8 @@ export class EngineService {
         // subscribe terrain generation
         this.terrainGeneratorService.subscribeToGeneratedTerrain().subscribe((generatedTerrain) => {
           if (generatedTerrain) {
+            //console.log(generatedTerrain);
             console.log('new terrain created');
-            this.waterPlaneObject.reflectionRTT.renderList.push(generatedTerrain);
-            this.waterPlaneObject.refractionRTT.renderList.push(generatedTerrain);
             this.renderer.getDepthMap().renderList = [generatedTerrain];
             this.terrains.push(generatedTerrain);
           }
@@ -198,9 +207,9 @@ export class EngineService {
             clearInterval(stateCheck);
 
             // generare terrain
-            this.terrainGeneratorService.generateTerrain(this.scene, heightMapTexture, heightMapResolution);
+            //this.terrainGeneratorService.generateTerrain(this.scene, heightMapTexture, heightMapResolution);
             // generate tiles
-            this.tilesGeneratorService.generateTiles(this.scene, heightMapTexture);
+            //this.tilesGeneratorService.generateTiles(this.scene, heightMapTexture);
           }else{
             console.log("waiting for texture")
           }
@@ -232,9 +241,9 @@ export class EngineService {
         });
         
         // demo: build ships
-        this.shipGeneratorService.buildShip(new BABYLON.Vector2(0, -60), 'fluyt');
-        this.shipGeneratorService.buildShip(new BABYLON.Vector2(20, -60), 'fluyt');
-        this.shipGeneratorService.buildShip(new BABYLON.Vector2(-20, -60), 'fluyt');
+        //this.shipGeneratorService.buildShip(new BABYLON.Vector2(0, -60), 'fluyt');
+        //this.shipGeneratorService.buildShip(new BABYLON.Vector2(20, -60), 'fluyt');
+        //this.shipGeneratorService.buildShip(new BABYLON.Vector2(-20, -60), 'fluyt');
 
         
 

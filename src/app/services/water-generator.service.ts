@@ -20,10 +20,9 @@ import {
 export class WaterGeneratorService {
   private scene: any;
   private camera: any;
-  private renderer: any;
  
   private reflectionTransform: Matrix = Matrix.Zero();
-  private showRTTPlane = false;
+  private showRTTPlane = true;
   
   public constructor() {}
   
@@ -38,8 +37,8 @@ export class WaterGeneratorService {
 
     refractionRTT.onBeforeRender = () => {
       const planePositionY = waterPlane ? waterPlane.position.y : 0.0;
-      // y +1.0 to avoid wierd refraction if wave gets high
-      this.scene.clipPlane = Plane.FromPositionAndNormal(new Vector3(0, planePositionY + 1.00, 0), new Vector3(0, 1, 0));
+      // y +0.5 to avoid wierd refraction if wave gets high
+      this.scene.clipPlane = Plane.FromPositionAndNormal(new Vector3(0, planePositionY + 0.5, 0), new Vector3(0, 1, 0));
     };
 
     refractionRTT.onAfterRender = () => {
@@ -67,7 +66,7 @@ export class WaterGeneratorService {
       const planePositionY = waterPlane ? waterPlane.position.y : 0.0;
 
       // position reflection slightly below object
-      this.scene.clipPlane = Plane.FromPositionAndNormal(new Vector3(0, (planePositionY - 0.1) , 0), new Vector3(0, -1.0, 0));
+      this.scene.clipPlane = Plane.FromPositionAndNormal(new Vector3(0, (planePositionY) , 0), new Vector3(0, -1.0, 0));
       // clip plane will be flipped
       Matrix.ReflectionToRef(this.scene.clipPlane, mirrorMatrix);
 
@@ -95,8 +94,6 @@ export class WaterGeneratorService {
 
   public buildWaterPlane(worldSize: any, scene: any, camera: any, renderer: any, light: any) {
     this.scene = scene;
-    this.camera = camera;
-    this.renderer = renderer;
 
     // create material
     const waterMaterial = new ShaderMaterial('waterMaterial', this.scene, {
@@ -116,8 +113,8 @@ export class WaterGeneratorService {
     const foamTexture = new Texture('assets/textures/material/water/water_foam.png', this.scene);
 
     // create plane
-    let waterPlane = MeshBuilder.CreateGround('water', {width: worldSize.x, height: worldSize.y, subdivisions: 250}, this.scene, );
-    waterPlane.position.y = 1.0;
+    let waterPlane = MeshBuilder.CreateGround('water', {width: worldSize.x, height: worldSize.y, subdivisions: 400}, this.scene, );
+    waterPlane.position.y = 0.0;
 
     let reflectionRTT = this.buildReflectionRTT(waterPlane, new Vector2(512, 512));
     let refractionRTT = this.buildRefractionRTT(waterPlane, new Vector2(512, 512));
@@ -134,7 +131,7 @@ export class WaterGeneratorService {
     waterMaterial.setTexture('dudvTexture', dudvTexture);
     waterMaterial.setTexture('foamShoreTexture', foamShoreTexture);
     waterMaterial.setTexture('foamTexture', foamTexture);
-    waterMaterial.setTexture('depthTexture', this.renderer.getDepthMap());
+    waterMaterial.setTexture('depthTexture', renderer.getDepthMap());
     waterMaterial.setTexture('reflectionTexture', reflectionRTT);
     waterMaterial.setTexture('refractionTexture', refractionRTT);
 
@@ -143,8 +140,8 @@ export class WaterGeneratorService {
     waterMaterial.setColor4('deepWaterColor', deepWaterColor);
 
     // camera
-    waterMaterial.setFloat('camera_near', this.camera.minZ);
-    waterMaterial.setFloat('camera_far', this.camera.maxZ);
+    waterMaterial.setFloat('camera_near', camera.minZ);
+    waterMaterial.setFloat('camera_far', camera.maxZ);
     // others
     waterMaterial.setFloat('bumpHeight', 0.4);
     waterMaterial.setFloat('dudvOffset', 0.4);
@@ -154,7 +151,7 @@ export class WaterGeneratorService {
     waterPlane.material = waterMaterial;
 
     // add properties
-    waterPlane.receiveShadows = true;
+    //waterPlane.receiveShadows = true;
 
     let waterPlaneObject = {
       reflectionRTT: reflectionRTT,
@@ -168,7 +165,8 @@ export class WaterGeneratorService {
       planeRTT.setPositionWithLocalVector(new BABYLON.Vector3(100, 50, 0));
 
       const rttMaterial = new BABYLON.StandardMaterial('RTT material', this.scene);
-      //rttMaterial.emissiveTexture = refractionRTT;
+      // @ts-ignore
+      rttMaterial.emissiveTexture = refractionRTT;
       rttMaterial.disableLighting = true;
       planeRTT.material = rttMaterial;
     }
