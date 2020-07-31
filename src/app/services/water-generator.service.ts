@@ -111,6 +111,7 @@ export class WaterGeneratorService {
     const dudvTexture = new Texture('assets/textures/material/water/water_dudv.png', this.scene);
     const foamShoreTexture = new Texture('assets/textures/material/water/water_foam_shore.png', this.scene);
     const foamTexture = new Texture('assets/textures/material/water/water_foam.png', this.scene);
+    const foamMaskTexture = new Texture('assets/textures/material/water/water_foam_mask.png', this.scene);
 
     // create plane
     let waterPlane = MeshBuilder.CreateGround('water', {width: worldSize.x, height: worldSize.y, subdivisions: 400}, this.scene, );
@@ -134,6 +135,7 @@ export class WaterGeneratorService {
     waterMaterial.setTexture('depthTexture', renderer.getDepthMap());
     waterMaterial.setTexture('reflectionTexture', reflectionRTT);
     waterMaterial.setTexture('refractionTexture', refractionRTT);
+    waterMaterial.setTexture('foamMaskTexture', foamMaskTexture);
 
     // colors
     waterMaterial.setColor4('shallowWaterColor', shallowWaterColor);
@@ -166,7 +168,7 @@ export class WaterGeneratorService {
 
       const rttMaterial = new BABYLON.StandardMaterial('RTT material', this.scene);
       // @ts-ignore
-      rttMaterial.emissiveTexture = refractionRTT;
+      rttMaterial.emissiveTexture = reflectionRTT;
       rttMaterial.disableLighting = true;
       planeRTT.material = rttMaterial;
     }

@@ -8,9 +8,9 @@ import {
   Vector3,
   HemisphericLight,
   MeshBuilder,
-  CannonJSPlugin,
+  CannonJSPlugin
 } from 'babylonjs';
-import 'babylonjs-materials';
+import * as BABYLONMATERIAL from 'babylonjs-materials';
 
 import CANNON from 'cannon';
 
@@ -93,21 +93,13 @@ export class EngineService {
     const physicsPlugin = new CannonJSPlugin();
     this.scene.enablePhysics(gravityVector, physicsPlugin);
 
-    // ***** SkyBox ******
-    const skyBox = MeshBuilder.CreateBox('skyBox', {size: 2000.0}, this.scene);
-    /*const skyBoxMaterial = new StandardMaterial('skyBox', this.scene);
-    skyBoxMaterial.backFaceCulling = false;
-    skyBoxMaterial.reflectionTexture = new CubeTexture('/assets/textures/material/TropicalSunnyDay', this.scene);
-    skyBoxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-    skyBoxMaterial.diffuseColor = new Color3(0, 0, 0);
-    skyBoxMaterial.specularColor = new Color3(0, 0, 0);
-    //skyBoxMaterial.turbidity = 20.0;*/
-    // @ts-ignore
-
-   /* const skyMaterial = new BABYLON.SkyMaterial('skyMaterial', this.scene);
+    // ***** Sky ****** 
+    const skyBox = MeshBuilder.CreateBox('skyBox', {size: 2000.0}, this.scene); 
+    //@ts-ignore
+    const skyMaterial = new BABYLONMATERIAL.SkyMaterial('skyMaterial', this.scene);
     skyMaterial.backFaceCulling = false;
-    skyMaterial.inclination = 0;
-    skyBox.material = skyMaterial; */
+    skyMaterial.inclination = 0;  
+    skyBox.material = skyMaterial;
 
     // ****** CAMERA ******
     // create a FreeCamera, and set its position to (x:5, y:10, z:-20 )
@@ -128,11 +120,19 @@ export class EngineService {
     this.light = new HemisphericLight('lightHemisphere', new Vector3(0, 1, 0), this.scene);
     this.light.intensity = 1.0;
 
+    // ***** Test-Objects ***** 
     // Our built-in 'sphere' shape.
     var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 100, segments: 32}, this.scene);
 
     // Move the sphere upward 1/2 its height
     sphere.position.y = 0;
+
+    // Our built-in 'sphere' shape.
+    var sphere2= BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 50, segments: 32}, this.scene);
+
+    // Move the sphere upward 1/2 its height
+    sphere2.position.y = -0
+    sphere2.position.x = -100;
 
     // ***** Water-Plane *****
     const worldSize = new BABYLON.Vector2(500, 500);
@@ -147,7 +147,13 @@ export class EngineService {
       this.waterPlaneObject.waterPlane.material.setVector3('cameraPosition', this.camera.position);
       time += 0.004;
     });
-
+    
+    // Reflection
+    this.waterPlaneObject.reflectionRTT.renderList.push(sphere);
+    this.waterPlaneObject.reflectionRTT.renderList.push(skyBox);
+     // Refraction
+    this.waterPlaneObject.refractionRTT.renderList.push(sphere);
+    
     this.renderer.getDepthMap().renderList = [sphere];
 
 
