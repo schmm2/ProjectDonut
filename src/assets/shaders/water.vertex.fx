@@ -66,12 +66,12 @@ void main(void){
     // y: y direction
     // z: z steepness
     // w: waveLength -> occurence
-    vec4 waveA = vec4(1.0,1.,0.05,10.0);
-    vec4 waveB = vec4(1.0,0.6,0.05,8.);
-    vec4 waveC = vec4(0.8,1.3,0.05,10.);
-    vec4 waveD = vec4(1.0,.5,0.05,6.0);
-    vec4 waveE = vec4(0.5,0.6,0.05,10.0);
-    vec4 waveF = vec4(0.5,0.4,0.05,2.0);
+    vec4 waveA = vec4(1.0,1.,0.01,10.0);
+    vec4 waveB = vec4(1.0,0.6,0.01,8.);
+    vec4 waveC = vec4(0.8,1.3,0.01,10.);
+    vec4 waveD = vec4(1.0,.5,0.01,6.0);
+    vec4 waveE = vec4(0.5,0.6,0.01,10.0);
+    vec4 waveF = vec4(0.5,0.4,0.005,8.0);
 
 
     vec3 newPosition = position;

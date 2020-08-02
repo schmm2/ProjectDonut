@@ -22,17 +22,18 @@ export class WaterGeneratorService {
   private camera: any;
  
   private reflectionTransform: Matrix = Matrix.Zero();
-  private showRTTPlane = true;
+  private showRTTPlane = false;
   
   public constructor() {}
   
   private buildRefractionRTT(waterPlane: any, renderTargetSize: Vector2){
     // create refraction RTT
-    let refractionRTT = new RenderTargetTexture('refraction',
-      { width: renderTargetSize.x, height: renderTargetSize.y }, this.scene, false, true);
+    let refractionRTT = new RenderTargetTexture('refraction', { width: renderTargetSize.x, height: renderTargetSize.y }, this.scene, false, true);
+    
     refractionRTT.wrapU = Constants.TEXTURE_MIRROR_ADDRESSMODE;
     refractionRTT.wrapV = Constants.TEXTURE_MIRROR_ADDRESSMODE;
     refractionRTT.ignoreCameraViewport = true;
+
     this.scene.customRenderTargets.push( refractionRTT);
 
     refractionRTT.onBeforeRender = () => {

@@ -16,6 +16,8 @@ export class TilesGeneratorService {
   private resolution: BABYLON.Vector2;
   private generatedGameBoardTilesSubject : BehaviorSubject<any> = new BehaviorSubject(null);
 
+  private showRTTPlane = false;
+
   // surrounding tiles vertices
   private aUp = new BABYLON.Vector2(-1, 1);
   private cUp = new BABYLON.Vector2(1, 1);
@@ -123,14 +125,15 @@ export class TilesGeneratorService {
     const blue = pixels[pixelPosition + 2];
     
     // calc average for greyscale image
-    let colorValue = (red + green + blue) / 3;
-
+    return ((red + green + blue) / 3);
+    
+    // calculate new position
     // we transform the value, this function is the same in the terrain vertex shader
-    let heightValueBase = (colorValue / 255) + 1;
+    //let heightValueBase = colorValue - 20;
     // move 0.0-1.0 up to 1.0-2.0 so pow works, pow make lower parts flat, higher parts more step
-    let heightValueScaled = (Math.pow(heightValueBase, heightValueBase) * 2.5 ) - 1.0;
+    //let heightValueScaled = (Math.pow(heightValueBase, 3.0) * 0.000005);
 
-    return heightValueScaled;
+    //return colorValue;
   }
 
   private buildTilesArray(heightMapTexture) {
@@ -192,13 +195,11 @@ export class TilesGeneratorService {
         });
 
         let heightDif = heightMax - heightMin;
-        
-        if(heightSum >= 10 && heightDif < 3.0){
-          newTile.maxHeight = heightMax;
-          newTile.minHeight = heightMin;
-          this.defineTileTyp(newTile);
-          tilesArray.push(newTile);
-        }
+          
+        newTile.maxHeight = heightMax;
+        newTile.minHeight = heightMin;
+        this.defineTileTyp(newTile);
+        tilesArray.push(newTile);
       }
     }
 
@@ -211,7 +212,20 @@ export class TilesGeneratorService {
   private buildGameBoard(tilesArray) {
     let worldSize = 400;
     let gameBoardTilesArray = [];
-    
+    let meshArray= [];
+
+    let renderTargetGameBoard = new BABYLON.RenderTargetTexture(
+      'gameBoard', // name 
+      worldSize, // texture size
+      this.scene, // the scene
+      false,
+      true
+    );
+
+    //renderTargetGameBoard.wrapU = BABYLON.Constants.TEXTURE_MIRROR_ADDRESSMODE;
+    //renderTargetGameBoard.wrapV = BABYLON.Constants.TEXTURE_MIRROR_ADDRESSMODE;
+    renderTargetGameBoard.ignoreCameraViewport = true;
+
     let oceanTilematerial = new BABYLON.StandardMaterial("oceanTilematerial", this.scene);
     oceanTilematerial.diffuseColor = new BABYLON.Color3(0, 0, 1);
 
@@ -219,22 +233,24 @@ export class TilesGeneratorService {
     mounainTilematerial.diffuseColor = new BABYLON.Color3(1, 0, 0);
 
     for(const tile of tilesArray){
+      // no needd to render the ocean tiles
+      if(tile.type == GameBoardTileType.coast){
+        continue;
+      }
+
       let tileName = "gameBoardTile-" + tile.worldPosition.x + "-" + tile.worldPosition.y;
       let newHexTile = BABYLON.MeshBuilder.CreateDisc(tileName, {radius: (4.0 * this.tileSizeMultiplicator / 1024 * worldSize) , tessellation: 6, updatable: true}, this.scene);
       
       newHexTile.material = new BABYLON.StandardMaterial("mat1",this.scene); 
-      newHexTile.rotate(BABYLON.Axis.X, Math.PI / 2, BABYLON.Space.WORLD);
+      //newHexTile.rotate(BABYLON.Axis.X, Math.PI / 2, BABYLON.Space.WORLD);
 
       newHexTile.position.x = (tile.worldPosition.x / 1024 * worldSize) - (worldSize / 2);
-      newHexTile.position.z = (tile.worldPosition.y / 1024 * worldSize) - (worldSize / 2);
-
-      newHexTile.position.y = tile.maxHeight + 1.0;
-      newHexTile.visibility = 0;
+      newHexTile.position.y = (tile.worldPosition.y / 1024 * worldSize) - (worldSize / 2);
+      newHexTile.position.z = 0.0;
+      newHexTile.visibility = 1;
+      //newHexTile.layerMask = 2;
 
       switch(tile.type){
-        case GameBoardTileType.coast: 
-          newHexTile.material = oceanTilematerial;
-          break;
         case GameBoardTileType.mountain:
           newHexTile.material = mounainTilematerial;
           break;
@@ -242,10 +258,33 @@ export class TilesGeneratorService {
           break;  
       }
 
-      tile.mesh = newHexTile;
+      tile.mesh = newHexTile;  
+      //renderTargetGameBoard.renderList.push(tile.mesh);
+      //meshArray.push(newHexTile);
       gameBoardTilesArray.push(tile);
     }
+    
+    //var mergedMesh = BABYLON.Mesh.MergeMeshes(meshArray,true,true, undefined,false,true);
+    //renderTargetGameBoard.renderList.push(mergedMesh);
+    //this.scene.customRenderTargets.push(renderTargetGameBoard);
+
     this.generatedGameBoardTilesSubject.next(gameBoardTilesArray);
+
+    if (this.showRTTPlane) {
+      // create new plane to render Reflection
+      const planeRTT = BABYLON.MeshBuilder.CreatePlane('rttPlane', {width: 50, height: 50}, this.scene);
+      planeRTT.setPositionWithLocalVector(new BABYLON.Vector3(100, 50, -50));
+
+      const rttMaterial = new BABYLON.StandardMaterial('RTT material', this.scene);
+      // @ts-ignore
+      rttMaterial.emissiveTexture = renderTargetGameBoard;
+      rttMaterial.disableLighting = true;
+      planeRTT.material = rttMaterial;
+    }
+  }
+
+  public subscribeToGeneratedTilesMap(){
+    //return this.generatedTilesMapSubject;
   }
 
   public subscribeToGeneratedTiles(){

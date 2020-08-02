@@ -111,6 +111,7 @@ export class EngineService {
     this.camera.setTarget(BABYLON.Vector3.Zero());
     // attach the camera to the canvas
     this.camera.attachControl(this.canvas, true);
+    this.camera.layerMask = 1;
 
     // enable depth buffer
     this.renderer = this.scene.enableDepthRenderer(this.camera,false);
@@ -126,6 +127,8 @@ export class EngineService {
 
     // Move the sphere upward 1/2 its height
     sphere.position.y = 0;
+    sphere.visibility = 0;
+
 
     // Our built-in 'sphere' shape.
     var sphere2= BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 50, segments: 32}, this.scene);
@@ -133,6 +136,7 @@ export class EngineService {
     // Move the sphere upward 1/2 its height
     sphere2.position.y = -0
     sphere2.position.x = -100;
+    sphere2.visibility = 0;
 
     // ***** Water-Plane *****
     const worldSize = new BABYLON.Vector2(500, 500);
@@ -157,13 +161,6 @@ export class EngineService {
     this.renderer.getDepthMap().renderList = [sphere];
 
 
-    // Adding a light
-    // @ts-ignore
-    // const light2 = new BABYLON.PointLight('Omni', new BABYLON.Vector3(-800, 200, -400), this.scene);
-    // light2.intensity = 1;
-    // light2.diffuse = new BABYLON.Color3(220 / 255, 220 / 255, 139 / 255);
-    // let shadowGenerator = new BABYLON.ShadowGenerator(1024, light2);
-
     // init injector services
     this.gameStateService.init(this.scene);
     this.interactionManagerService.init(this.scene);
@@ -171,9 +168,6 @@ export class EngineService {
     // ***** AssetLoader *****
     this.assetLoaderService.subscribeToAssetsLoadState().subscribe(isLoaded => {
       if (isLoaded) {
-        
-        //this.waterGeneratorService.addToReflectionRenderList(skyBox);
-    
         // ***** GameBoard Tiles *****
         this.tilesGeneratorService.subscribeToGeneratedTiles().subscribe((generatedTiles)=>{
           if(generatedTiles){
@@ -197,7 +191,7 @@ export class EngineService {
           if (generatedTerrain) {
             //console.log(generatedTerrain);
             console.log('new terrain created');
-            this.renderer.getDepthMap().renderList = [generatedTerrain];
+            //this.renderer.getDepthMap().renderList = [generatedTerrain];
             this.terrains.push(generatedTerrain);
           }
         });
@@ -207,13 +201,36 @@ export class EngineService {
         const heightMapTexture = new BABYLON.CustomProceduralTexture('textureX', './assets/shaders/terrainNoise', heightMapResolution, this.scene);
 
         // todo: find better way, maybe observable?
-        let stateCheck = setInterval(() => {
+        let stateCheckHeightMap = setInterval(() => {
           if (heightMapTexture.isReady() == true) {
             console.log("all loaded");
-            clearInterval(stateCheck);
+            clearInterval(stateCheckHeightMap);
+            
+            let hexGridTexture = new BABYLON.CustomProceduralTexture('hexGridTexture', './assets/shaders/hexgrid', heightMapResolution, this.scene);
+            hexGridTexture.setTexture('terrainTexture',heightMapTexture);
 
-            // generare terrain
-            //this.terrainGeneratorService.generateTerrain(this.scene, heightMapTexture, heightMapResolution);
+            let renderHexTexture = true;
+            if(renderHexTexture){
+              const planeRTT = BABYLON.MeshBuilder.CreatePlane('rttPlane', {width: 50, height: 50}, this.scene);
+              planeRTT.setPositionWithLocalVector(new BABYLON.Vector3(100, 50, -50));
+
+              const rttMaterial = new BABYLON.StandardMaterial('RTT material', this.scene);
+              // @ts-ignore
+              rttMaterial.emissiveTexture = hexGridTexture;
+              rttMaterial.disableLighting = true;
+              planeRTT.material = rttMaterial;
+            }
+            
+            let stateCheckGrid = setInterval(() => {
+              if(hexGridTexture.isReady() == true){
+                clearInterval(stateCheckGrid);
+                  // generare terrain
+                  this.terrainGeneratorService.generateTerrain(this.scene, hexGridTexture, heightMapTexture, heightMapResolution);
+              }else{
+                console.log("waiting for texture")
+              }
+            }, 500);
+
             // generate tiles
             //this.tilesGeneratorService.generateTiles(this.scene, heightMapTexture);
           }else{

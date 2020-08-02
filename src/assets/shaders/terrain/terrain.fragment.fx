@@ -47,7 +47,7 @@ void main(void) {
     // Variables
     float iceAltitude = 20.0;
     float rockAltitude = 8.0;
-    float grassAltitude = 1.0;
+    float grassAltitude = 2.0;
 
     float ambientStrength = 1.0;
     float lightStrength = 0.9;

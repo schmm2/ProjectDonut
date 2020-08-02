@@ -120,11 +120,11 @@ void main(void) {
   int octaves = 24;
 
   // map seed number/shiftValue
-  float shiftValue = 50.0;
+  float shiftValue = 10.0;
 
   // good values: 10,50,
 
-  float gradientStrength = 1.7;
+  float gradientStrength = 1.4;
   float noiseValue = fbm3d(vec3(vUV, shiftValue), octaves);
   float gradientValue = texture2D(gradient, vUV).x;
 

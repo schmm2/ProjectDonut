@@ -13,7 +13,7 @@ export class TerrainGeneratorService {
 
   private generatedTerrainSubject : BehaviorSubject<any> = new BehaviorSubject(null);
 
-  public generateTerrain(scene, heightMapTexture, heightmapResolution) {
+  public generateTerrain(scene, hexGridTexture, heightMapTexture, heightmapResolution) {
     
     const lightPosition = new BABYLON.Vector3(-250, 500, -250);
     const lightColor =  new BABYLON.Vector3(220 / 255, 220 / 255, 240 / 255);
@@ -49,6 +49,8 @@ export class TerrainGeneratorService {
     // set variables of terrain material
     terrainMaterial.setTexture('heightMap', heightMapTexture);
 
+    terrainMaterial.setTexture('hexMap', hexGridTexture);
+
     // console.log(this.heightMapTexture.readPixels()); 
 
     // terrain textures
@@ -79,7 +81,7 @@ export class TerrainGeneratorService {
     //terrainMaterial.disableDepthWrite = false;
 
     // create ground
-    const ground = BABYLON.Mesh.CreateGround('terrainX', 400, 400, 400, scene, true );
+    const ground = BABYLON.Mesh.CreateGround('terrainX', 400, 400, 800, scene, true );
     ground.material = terrainMaterial;
 
     // debug

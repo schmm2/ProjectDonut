@@ -9,6 +9,7 @@ attribute vec2 uv;
 uniform mat4 worldViewProjection;
 uniform mat4 worldView;
 uniform sampler2D heightMap;
+uniform sampler2D hexMap;
 uniform vec2 resolution;
 uniform float steepnessFactor;
 
@@ -17,28 +18,18 @@ varying vec3 vPosition;
 varying vec3 vNormal;
 varying vec2 vUv;
 
+float terrainHeight = 4.0;
+
 float getVertexHeight(vec2 uvParameter){
-  // calculate new position
-  // move 0.0-1.0 up to 1.0-2.0
-  // move 0.0-1.0 up to -1.0-1.0
-  //float heightValueBase = texture2D(heightMap, uvParameter).x + 1.0;
-  // -2 - 2.0
-  float heightValueBase = (texture2D(heightMap, uvParameter).x * 256.0) - 100.0;
-  //heightValueBase = (texture2D(heightMap, uvParameter).x * 256.0) - 128.0;
-  
+  float hexValueBase = texture2D(hexMap, uvParameter).x;
+  float heightValueBase = texture2D(heightMap, uvParameter).x; 
 
-  //max value start: 2. pax exponent 5, pow(2,5) = 32 
-  // shift down -1 so the plane edge is located at y=0
-  //float heightValueScaled = pow(heightValueBase, heightValueBase * 2.5) - 1.0;
-  // -16 - 16
-  // 128^3*0.00001 = 21 max height
-  float heightValueScaled = pow(heightValueBase, 3.0) * 0.0000075 ;
-
-  // move up a bit
-  heightValueScaled = heightValueScaled + 2.0;
-
-  //return heightValueBase;
-  return heightValueScaled;
+  //float heightValueScaled = 0.0;
+  // 0-256
+  float heightValueScaled = heightValueBase * 2.0 - 1.0;
+  heightValueScaled = pow(heightValueScaled, 3.0);
+ 
+  return heightValueScaled * 15.0 + terrainHeight;
 }
 
 // https://www.alanzucconi.com/2019/07/03/interactive-map-shader-terrain-shading/
@@ -80,5 +71,4 @@ void main() {
     vNormal = calculateNormalFromDepth(newPosition);
 
     gl_Position =  worldViewProjection * newPosition;
-   
 }
