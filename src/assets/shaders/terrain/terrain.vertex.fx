@@ -24,11 +24,12 @@ float getVertexHeight(vec2 uvParameter){
   float hexValueBase = texture2D(hexMap, uvParameter).x;
   float heightValueBase = texture2D(heightMap, uvParameter).x; 
 
-  //float heightValueScaled = 0.0;
-  // 0-256
+  // move to -1.0-1.0
   float heightValueScaled = heightValueBase * 2.0 - 1.0;
+  // make steep
   heightValueScaled = pow(heightValueScaled, 3.0);
  
+  // scale and move hole terrain up
   return heightValueScaled * 15.0 + terrainHeight;
 }
 
