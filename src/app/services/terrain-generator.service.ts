@@ -82,6 +82,13 @@ export class TerrainGeneratorService {
 
     // create ground
     const ground = BABYLON.Mesh.CreateGround('terrainX', 400, 400, 800, scene, true );
+
+    // vertices displacement
+    var positions = ground.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+    var indices = ground.getIndices();
+    console.log(positions);
+
+
     ground.material = terrainMaterial;
 
     // debug

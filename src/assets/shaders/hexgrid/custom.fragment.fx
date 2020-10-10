@@ -22,11 +22,6 @@ vec4 calcHexInfo(vec2 uv)
     return dot(offset.xy, offset.xy) < dot(offset.zw, offset.zw) ? vec4(offset.xy, hexCenter.xy) : vec4(offset.zw, hexCenter.zw);
 }
 
-// generate random numbers between 0.0 and 1.0
-float random (vec2 st) {
-    return fract(sin(dot( st.xy, vec2(12.9898,78.233))) *43758.5453123);
-}
-
 void main(void) {
     // bigger numbers -> more tiles
     const float tileAmount = 32.0;

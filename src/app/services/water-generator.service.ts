@@ -116,7 +116,7 @@ export class WaterGeneratorService {
 
     // create plane
     let waterPlane = MeshBuilder.CreateGround('water', {width: worldSize.x, height: worldSize.y, subdivisions: 400}, this.scene, );
-    waterPlane.position.y = 0.0;
+    waterPlane.position.y = -15.0;
 
     let reflectionRTT = this.buildReflectionRTT(waterPlane, new Vector2(512, 512));
     let refractionRTT = this.buildRefractionRTT(waterPlane, new Vector2(512, 512));

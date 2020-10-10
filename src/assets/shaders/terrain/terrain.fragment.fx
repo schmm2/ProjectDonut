@@ -22,10 +22,14 @@ uniform vec3 lightPosition;
 uniform vec3 lightColor;
 uniform vec3 cameraPosition;
 
+varying vec2 vUv;
+varying float vEdgeDistance;
+varying float vHexValueBase;
+
 // Varying
 varying vec3 vPosition;
 varying vec3 vNormal;
-varying vec2 vUv;
+
 
 // Declare empty Variables
 vec3 finalColor;
@@ -42,6 +46,8 @@ vec3 calculateNormal(vec3 normalMapValue, vec3 normalWorldN){
   vec3 combinedNormal = vec3(red,green,blue);
   return normalize(combinedNormal);
 }
+
+
 
 void main(void) {
     // Variables
@@ -171,6 +177,29 @@ void main(void) {
        diffuseLight += 0.1;
     }
 
-    // ---------- Final Color ------------
+     // ---------- Final Color ------------
     gl_FragColor = vec4(vec3((diffuseLight + ambientColor) * finalColor), 1.0);
+
+    // ----------- Grid -----
+    
+    // float eDist = 0.0; // Edge distance
+    // float e = 0.0;
+    
+    // eDist = hex(hexInfo.xy); // Edge distance
+      
+    // Putting in some dark borders.
+
+
+   
+    if(vHexValueBase >= 0.3 && vHexValueBase <= 0.7){
+       gl_FragColor = mix(gl_FragColor, vec4(1.0,1.0,1.0,0.1), smoothstep(0., .01, vEdgeDistance - .52 + .045));
+
+      // gl_FragColor.rgb = vec3(1.0); //mix(gl_FragColor, vec4(1.0,1.0,1.0,0.1), smoothstep(0., .01, vEdgeDistance - .53 + .045));
+      // float factor = (1.0 - vHexValueBase);
+      // 
+    } 
+    //gl_FragColor.rgb = vec3(0.5 - vEdgeDistance);
+    //gl_FragColor.rgb = vec3(vHexValueBase);
+  
+  
 }
