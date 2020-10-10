@@ -47,7 +47,7 @@ export class HexMetrics {
 
   public static elevationStep = 5.0;
 
-  public static solidFactor = 0.75;
+  public static solidFactor = 0.65;
   public static blendFactor = 1.0 - HexMetrics.solidFactor;
 
   public static getFirstSolidCorner(direction: HexDirection) {

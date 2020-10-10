@@ -196,7 +196,7 @@ export class EngineService {
             generatedTerrain.position.x =  - terrainSize.x;
             generatedTerrain.position.z =  - terrainSize.z;
 
-            //this.renderer.getDepthMap().renderList = [generatedTerrain];
+            this.renderer.getDepthMap().renderList = [generatedTerrain];
             this.terrains.push(generatedTerrain);
           }
         });
