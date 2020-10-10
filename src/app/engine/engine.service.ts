@@ -189,8 +189,13 @@ export class EngineService {
         // subscribe terrain generation
         this.terrainGeneratorService.subscribeToGeneratedTerrain().subscribe((generatedTerrain) => {
           if (generatedTerrain) {
-            //console.log(generatedTerrain);
+            console.log(generatedTerrain);
             console.log('new terrain created');
+
+            let terrainSize = generatedTerrain.getBoundingInfo().boundingBox.extendSize;
+            generatedTerrain.position.x =  - terrainSize.x;
+            generatedTerrain.position.z =  - terrainSize.z;
+
             //this.renderer.getDepthMap().renderList = [generatedTerrain];
             this.terrains.push(generatedTerrain);
           }
@@ -203,11 +208,11 @@ export class EngineService {
         // todo: find better way, maybe observable?
         let stateCheckHeightMap = setInterval(() => {
           if (heightMapTexture.isReady() == true) {
-            console.log("all loaded");
+            console.log("heightmap loaded");
             clearInterval(stateCheckHeightMap);
             
-            let hexGridTexture = new BABYLON.CustomProceduralTexture('hexGridTexture', './assets/shaders/hexgrid', heightMapResolution, this.scene);
-            hexGridTexture.setTexture('terrainTexture',heightMapTexture);
+            //let hexGridTexture = new BABYLON.CustomProceduralTexture('hexGridTexture', './assets/shaders/hexgrid', heightMapResolution, this.scene);
+            //hexGridTexture.setTexture('terrainTexture',heightMapTexture);
 
             let renderHexTexture = true;
             if(renderHexTexture){
@@ -216,12 +221,12 @@ export class EngineService {
 
               const rttMaterial = new BABYLON.StandardMaterial('RTT material', this.scene);
               // @ts-ignore
-              rttMaterial.emissiveTexture = hexGridTexture;
+              rttMaterial.emissiveTexture = heightMapTexture;
               rttMaterial.disableLighting = true;
               planeRTT.material = rttMaterial;
             }
             
-            let stateCheckGrid = setInterval(() => {
+            /*let stateCheckGrid = setInterval(() => {
               if(hexGridTexture.isReady() == true){
                 clearInterval(stateCheckGrid);
                   // generare terrain
@@ -229,7 +234,10 @@ export class EngineService {
               }else{
                 console.log("waiting for texture")
               }
-            }, 500);
+            }, 500);*/
+            
+            this.terrainGeneratorService.generateTerrain(this.scene, heightMapTexture, heightMapResolution);
+             
 
             // generate tiles
             //this.tilesGeneratorService.generateTiles(this.scene, heightMapTexture);
