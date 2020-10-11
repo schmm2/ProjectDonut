@@ -16,7 +16,7 @@ export class TerrainGeneratorService {
 
   public generateTerrain(scene, heightMapTexture, heightmapResolution) {
     
-    let hexGrid = new HexGrid(15,15,heightMapTexture, scene);
+    let hexGrid = new HexGrid(25,25,heightMapTexture, scene);
     hexGrid.subscribe().subscribe((terrain)=>{
       
 

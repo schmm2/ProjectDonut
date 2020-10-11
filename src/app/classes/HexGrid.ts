@@ -47,19 +47,24 @@ export class HexGrid {
       // i, index, ongoing number
       for (let z = 0, i = 0; z < gridHeight; z++) {
         for (let x = 0; x < gridWidth; x++) {
-          // find the 
-          //let pixelIndex = ((z * (gridWidth * HexMetrics.innerRadius)) * 4 );//(x * Math.floor(HexMetrics.innerRadius * heightMapResolution))) * 4;
+          // find the index
           let heightMapPixelIndex = ((z * heightMapStepsHeight * heightMapResolution.height) + (x * heightMapStepsWidth)) * 4;
-          let heightBase = (heightMapPixels[heightMapPixelIndex] + heightMapPixels[heightMapPixelIndex + 1] + heightMapPixels[heightMapPixelIndex + 2]) / 3.0 / 255.0;
-          console.log(heightBase);
-          heightBase = heightBase * 2.0 - 1.0;
-          console.log(heightBase);
-          let height = Math.pow(heightBase, 3.0) * 20.0;
-          //console.log(height);
-          //console.log(pixelIndex);
-          // create cell
-          //console.log("create cell");
           
+          // get color of pixels, add them up and calc. average
+          // color value 0-255, so we divide by 255 to get the values between 0-1.0
+          let heightBase = (heightMapPixels[heightMapPixelIndex] + heightMapPixels[heightMapPixelIndex + 1] + heightMapPixels[heightMapPixelIndex + 2]) / 3.0 / 255.0;
+          
+          // Height calculation 
+          let height = heightBase * 2.0 - 1.0;
+          height = Math.pow(height, 3.0) * 20.0;
+          
+          // create stepps in 3points
+          
+          console.log(height);
+          height = Math.ceil(height/4) * 4;
+          console.log(height)
+
+          // create cell
           this.createCell(x, z, i++, height);
           
         }

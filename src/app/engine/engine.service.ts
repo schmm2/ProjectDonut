@@ -149,7 +149,7 @@ export class EngineService {
       this.waterPlaneObject.waterPlane.material.setFloat('time', time);
       // @ts-ignore
       this.waterPlaneObject.waterPlane.material.setVector3('cameraPosition', this.camera.position);
-      time += 0.004;
+      time += 0.008;
     });
     
     // Reflection
@@ -195,6 +195,7 @@ export class EngineService {
             let terrainSize = generatedTerrain.getBoundingInfo().boundingBox.extendSize;
             generatedTerrain.position.x =  - terrainSize.x;
             generatedTerrain.position.z =  - terrainSize.z;
+            generatedTerrain.position.y = 5.0;
 
             this.renderer.getDepthMap().renderList = [generatedTerrain];
             this.terrains.push(generatedTerrain);

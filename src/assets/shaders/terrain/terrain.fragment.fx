@@ -51,9 +51,9 @@ vec3 calculateNormal(vec3 normalMapValue, vec3 normalWorldN){
 
 void main(void) {
     // Variables
-    float iceAltitude = 14.0;
-    float rockAltitude = 2.0;
-    float grassAltitude = -14.0;
+    float iceAltitude = 16.0;
+    float rockAltitude = 8.0;
+    float grassAltitude = 3.0;
 
     float ambientStrength = 1.0;
     float lightStrength = 0.9;

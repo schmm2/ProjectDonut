@@ -2,7 +2,7 @@ import { HexDirection } from '../enums/HexDirection.enum';
 
 export class HexMetrics {
 
-  public static outerRadius = 20.0;
+  public static outerRadius = 10.0;
   public static innerRadius = HexMetrics.outerRadius * 0.866025404;
 
   public static noiseTextureSize;
