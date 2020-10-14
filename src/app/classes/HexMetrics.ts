@@ -4,11 +4,15 @@ export class HexMetrics {
 
   public static outerRadius = 10.0;
   public static innerRadius = HexMetrics.outerRadius * 0.866025404;
-
-  public static noiseTextureSize;
-  public static noiseTexturePixels;
-
   public static cellPerturbStrength = 4.0;
+
+  private static noiseTextureSize;
+  private static noiseTexturePixels;
+
+  public static setNoise(noiseTexture){
+    this.noiseTextureSize = noiseTexture.getSize();
+    this.noiseTexturePixels = noiseTexture.readPixels();
+  }
 
   public static sampleNoise(position) {
     // wrap if hexgrid is bigger than noise sample image
@@ -24,7 +28,7 @@ export class HexMetrics {
       uvY = 0;
     }
 
-    // find pixel array position 
+    // find pixel array position
     let pixelArrayPosition = (uvY * this.noiseTextureSize.width + uvX) * 4;
 
     return new BABYLON.Vector4(
@@ -46,7 +50,6 @@ export class HexMetrics {
   ];
 
   public static elevationStep = 5.0;
-
   public static solidFactor = 0.65;
   public static blendFactor = 1.0 - HexMetrics.solidFactor;
 

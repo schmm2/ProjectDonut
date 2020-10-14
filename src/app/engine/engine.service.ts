@@ -19,7 +19,6 @@ import { TerrainGeneratorService } from '../services/terrain-generator.service';
 import { ShipGeneratorService } from '../services/ship-generator.service';
 import { AssetLoaderService } from '../services/asset-loader.service';
 import {Ship} from '../classes/ship';
-import {TilesGeneratorService} from '../services/tiles-generator.service';
 import {InteractionManagerService} from '../services/interactionManager.service';
 import {GameStateService} from '../services/game-state.service';
 import * as BABYLON from "babylonjs";
@@ -48,7 +47,6 @@ export class EngineService {
     private terrainGeneratorService: TerrainGeneratorService,
     private shipGeneratorService: ShipGeneratorService,
     private assetLoaderService: AssetLoaderService,
-    private tilesGeneratorService: TilesGeneratorService,
     private interactionManagerService: InteractionManagerService,
     private gameStateService: GameStateService,
   ) {
@@ -168,13 +166,7 @@ export class EngineService {
     // ***** AssetLoader *****
     this.assetLoaderService.subscribeToAssetsLoadState().subscribe(isLoaded => {
       if (isLoaded) {
-        // ***** GameBoard Tiles *****
-        this.tilesGeneratorService.subscribeToGeneratedTiles().subscribe((generatedTiles)=>{
-          if(generatedTiles){
-            this.gameBoardTiles = this.gameBoardTiles.concat(generatedTiles);
-          }
-        })
-        
+       
         // hide gameboard tiles if not in build mode
         this.gameStateService.subscribeToBuildingMode().subscribe((buildingMode) =>{
           if(this.gameBoardTilesVisibility != buildingMode){
@@ -201,6 +193,7 @@ export class EngineService {
             this.terrains.push(generatedTerrain);
 
             this.waterPlaneObject.refractionRTT.renderList.push(generatedTerrain);
+
             //this.waterPlaneObject.reflectionRTT.renderList.push(generatedTerrain);
           }
         });
@@ -215,36 +208,7 @@ export class EngineService {
             console.log("heightmap loaded");
             clearInterval(stateCheckHeightMap);
             
-            //let hexGridTexture = new BABYLON.CustomProceduralTexture('hexGridTexture', './assets/shaders/hexgrid', heightMapResolution, this.scene);
-            //hexGridTexture.setTexture('terrainTexture',heightMapTexture);
-
-            let renderHexTexture = true;
-            if(renderHexTexture){
-              const planeRTT = BABYLON.MeshBuilder.CreatePlane('rttPlane', {width: 50, height: 50}, this.scene);
-              planeRTT.setPositionWithLocalVector(new BABYLON.Vector3(100, 50, -50));
-
-              const rttMaterial = new BABYLON.StandardMaterial('RTT material', this.scene);
-              // @ts-ignore
-              rttMaterial.emissiveTexture = heightMapTexture;
-              rttMaterial.disableLighting = true;
-              planeRTT.material = rttMaterial;
-            }
-            
-            /*let stateCheckGrid = setInterval(() => {
-              if(hexGridTexture.isReady() == true){
-                clearInterval(stateCheckGrid);
-                  // generare terrain
-                  this.terrainGeneratorService.generateTerrain(this.scene, hexGridTexture, heightMapTexture, heightMapResolution);
-              }else{
-                console.log("waiting for texture")
-              }
-            }, 500);*/
-            
-            this.terrainGeneratorService.generateTerrain(this.scene, heightMapTexture, heightMapResolution);
-             
-
-            // generate tiles
-            //this.tilesGeneratorService.generateTiles(this.scene, heightMapTexture);
+            this.terrainGeneratorService.generateTerrain(this.scene, heightMapTexture);
           }else{
             console.log("waiting for texture")
           }

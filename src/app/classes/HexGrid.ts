@@ -1,8 +1,8 @@
-import { HexCell } from '../classes/HexCell';
-import { HexMetrics } from '../classes/HexMetrics';
-import { HexDirection } from '../enums/HexDirection.enum';
-import { Subject } from 'rxjs';
-import {  AssetLoaderService } from '../services/asset-loader.service'
+import { HexCell } from "../classes/HexCell";
+import { HexMetrics } from "../classes/HexMetrics";
+import { HexDirection } from "../enums/HexDirection.enum";
+import { Subject } from "rxjs";
+import { AssetLoaderService } from "../services/asset-loader.service";
 
 export class HexGrid {
   private cells: HexCell[];
@@ -11,133 +11,94 @@ export class HexGrid {
   private width;
   private height;
   private mergedMesh;
+  private heightMapResolution;
+  private heightMapStepsWidth;
+  private heightMapStepsHeight;
+  private heightMapPixels;
 
-  private generatedTerrainSubject : Subject<any> = new Subject();
+  private enableRTT = false;
   
   private stepHeight = 4.0;
 
-  getMergedMesh(){
+  getMergedMesh() {
     return this.mergedMesh;
   }
 
+  private build(){
+    // i, index, ongoing number
+    for (let z = 0, i = 0; z < this.height; z++) {
+      for (let x = 0; x < this.width; x++) {
+        // find the index
+        let heightMapPixelIndex =
+          (z * this.heightMapStepsHeight * this.heightMapResolution.height +
+            x * this.heightMapStepsWidth) *
+          4;
+
+        // get color of pixels, add them up and calc. average
+        // color value 0-255, so we divide by 255 to get the values between 0-1.0
+        let heightBase =
+          (this.heightMapPixels[heightMapPixelIndex] +
+            this.heightMapPixels[heightMapPixelIndex + 1] +
+            this.heightMapPixels[heightMapPixelIndex + 2]) /
+          3.0 /
+          255.0;
+
+        // Height calculation
+        let height = heightBase * 2.0 - 1.0;
+        height = Math.pow(height, 3.0) * 20.0;
+
+        // create steps
+        height = Math.ceil(height / this.stepHeight) * this.stepHeight;
+
+        // create cell
+        this.createCell(x, z, i++, height);
+      }
+    }
+
+    let tmpMeshes = [];
+    // triangulate
+    this.cells.forEach((cell) => {
+      // console.log("TRIANGULATE CELL: " + cell.name);
+      // console.log(cell);
+
+      cell.triangulate();
+      tmpMeshes.push(cell.mesh);
+    });
+
+    this.mergedMesh = BABYLON.Mesh.MergeMeshes(tmpMeshes, true);
+  }
+
   constructor(gridWidth, gridHeight, heightMapTexture, scene) {
-    //console.log(heightMapResolution);
-    //console.log(HexMetrics.outerRadius);
-    let heightMapResolution = heightMapTexture.getSize();
-    let heightMapStepsWidth = Math.floor(heightMapResolution.width / gridWidth);
-    let heightMapStepsHeight = Math.floor(heightMapResolution.height / gridHeight);
-    
 
-    let heightMapPixels = heightMapTexture.readPixels();
-    console.log(heightMapPixels);
-    //let gridHeight = Math.floor(heightMapResolution / HexMetrics.outerRadius);
-    //let gridWidth = Math.floor(heightMapResolution / HexMetrics.innerRadius);
+    this.heightMapResolution = heightMapTexture.getSize();
+    this.heightMapStepsWidth = Math.floor(this.heightMapResolution.width / gridWidth);
+    this.heightMapStepsHeight = Math.floor(
+      this.heightMapResolution.height / gridHeight
+    );
 
-    console.log(gridWidth);
-    console.log(gridHeight);
+    this.heightMapPixels = heightMapTexture.readPixels();
 
     this.scene = scene;
     this.cells = new Array(gridHeight * gridWidth);
     this.width = gridWidth;
     this.height = gridHeight;
 
-    
-    var texture = new BABYLON.Texture("assets/terrain/textures/terrainNoise.png", scene);
-    texture.onLoadObservable.add(() => {
-      HexMetrics.noiseTexturePixels = texture.readPixels();
-      HexMetrics.noiseTextureSize = texture.getSize();
+    this.build();
 
-      // i, index, ongoing number
-      for (let z = 0, i = 0; z < gridHeight; z++) {
-        for (let x = 0; x < gridWidth; x++) {
-          // find the index
-          let heightMapPixelIndex = ((z * heightMapStepsHeight * heightMapResolution.height) + (x * heightMapStepsWidth)) * 4;
-          
-          // get color of pixels, add them up and calc. average
-          // color value 0-255, so we divide by 255 to get the values between 0-1.0
-          let heightBase = (heightMapPixels[heightMapPixelIndex] + heightMapPixels[heightMapPixelIndex + 1] + heightMapPixels[heightMapPixelIndex + 2]) / 3.0 / 255.0;
-          
-          // Height calculation 
-          let height = heightBase * 2.0 - 1.0;
-          height = Math.pow(height, 3.0) * 20.0;
-          
-          // create steps
-          height = Math.ceil(height / this.stepHeight) * this.stepHeight;
-          
+    if(this.enableRTT){
+      const planeRTT = BABYLON.MeshBuilder.CreatePlane('rttPlane', {width: 50, height: 50}, this.scene);
+      planeRTT.setPositionWithLocalVector(new BABYLON.Vector3(100, 50, -50));
 
-          // create cell
-          this.createCell(x, z, i++, height);
-          
-        }
-      }
-
-      let tmpMeshes = [];
-      // triangulate
-      this.cells.forEach(cell => {
-        // console.log("TRIANGULATE CELL: " + cell.name);
-        // console.log(cell);
-
-        cell.triangulate();
-        tmpMeshes.push(cell.mesh);
-
-        /*let mat = new BABYLON.StandardMaterial('mat', this.scene);
-        mat.diffuseColor = new BABYLON.Color3(1, 0, 1);
-        mat.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);
-        mat.emissiveColor = new BABYLON.Color3(1, 1, 1);
-        mat.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);
-        mat.wireframe = true;
-
-        let numberOfNeighbors = Object.keys(cell.neighbors).length;
-        //numberOfNeighbors = 7;
-
-        switch (numberOfNeighbors.toString()) {
-          case '1': {
-            mat.emissiveColor = new BABYLON.Color3(1, 0, 1);
-            break;
-          }
-          case '2': {
-            mat.emissiveColor = new BABYLON.Color3(0, 0.5, 0.96);
-            break;
-          }
-          case '3': {
-            mat.emissiveColor = new BABYLON.Color3(1, 0.5, 0);
-            break;
-          }
-          case '4': {
-            mat.emissiveColor = new BABYLON.Color3(0, 0, 1);
-            break;
-          }
-          case '5': {
-            mat.emissiveColor = new BABYLON.Color3(0, 1, 0);
-            break;
-          }
-          case '6': {
-            mat.emissiveColor = new BABYLON.Color3(1, 0, 0);
-            break;
-          }
-          default: {
-            break;
-          }
-        }
-
-
-        cell.mesh.material = mat;*/
-      })
-       
-      
-      this.mergedMesh = BABYLON.Mesh.MergeMeshes(tmpMeshes, true);
-      console.log("MERGED");
-      this.generatedTerrainSubject.next(this.mergedMesh)
-
-    });
-  }
-
-  subscribe(){
-    return this.generatedTerrainSubject;
+      const rttMaterial = new BABYLON.StandardMaterial('RTT material', this.scene);
+      // @ts-ignore
+      rttMaterial.emissiveTexture = heightMapTexture;
+      rttMaterial.disableLighting = true;
+      planeRTT.material = rttMaterial;
+    }
   }
 
   createCell(x, z, i, elevation) {
-    let position = new BABYLON.Vector3;
+    let position = new BABYLON.Vector3();
 
     // offset odd rows
     if (z % 2.0 != 0) {
@@ -149,7 +110,7 @@ export class HexGrid {
     position.y = elevation; //* HexMetrics.elevationStep;
     position.z = z * HexMetrics.outerRadius * 0.75;
 
-    let cell = this.cells[i] = new HexCell(position);
+    let cell = (this.cells[i] = new HexCell(position));
 
     // set hex object world position
     // x & z only -> we will mess uf y
@@ -166,17 +127,13 @@ export class HexGrid {
         if (x > 0) {
           cell.setNeighbor(HexDirection.SW, this.cells[i - this.width - 1]);
         }
-      }
-      else {
+      } else {
         cell.setNeighbor(HexDirection.SW, this.cells[i - this.width]);
         if (x < this.width - 1) {
           cell.setNeighbor(HexDirection.SE, this.cells[i - this.width + 1]);
         }
       }
     }
-
-    //console.log(cell.neighbors);
-
-    this.scene.meshes.push(cell.mesh);
+    //this.scene.meshes.push(cell.mesh);
   }
 }
