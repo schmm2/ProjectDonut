@@ -199,6 +199,9 @@ export class EngineService {
 
             this.renderer.getDepthMap().renderList = [generatedTerrain];
             this.terrains.push(generatedTerrain);
+
+            this.waterPlaneObject.refractionRTT.renderList.push(generatedTerrain);
+            //this.waterPlaneObject.reflectionRTT.renderList.push(generatedTerrain);
           }
         });
 

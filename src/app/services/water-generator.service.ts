@@ -124,7 +124,7 @@ export class WaterGeneratorService {
     // more resolution means better quality in reflection / refraction
     //this.buildRenderTargetTexture(new Vector2(512, 512));
 
-    const shallowWaterColor = new Color4(0.3, 0.4, 0.7, 1.0);
+    const shallowWaterColor = new Color4(1.0, 1.0, 0.7, 1.0);
     const deepWaterColor = new Color4(0, 0.35, 0.383, 1.0);
 
     // set shader uniforms
@@ -137,6 +137,8 @@ export class WaterGeneratorService {
     waterMaterial.setTexture('reflectionTexture', reflectionRTT);
     waterMaterial.setTexture('refractionTexture', refractionRTT);
     waterMaterial.setTexture('foamMaskTexture', foamMaskTexture);
+
+    waterMaterial.setVector3('sunlightPosition', new Vector3(-200., 500.0, -200.0));
 
     // colors
     waterMaterial.setColor4('shallowWaterColor', shallowWaterColor);

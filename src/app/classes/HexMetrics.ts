@@ -8,7 +8,7 @@ export class HexMetrics {
   public static noiseTextureSize;
   public static noiseTexturePixels;
 
-  public static cellPerturbStrength = 5.0;
+  public static cellPerturbStrength = 4.0;
 
   public static sampleNoise(position) {
     // wrap if hexgrid is bigger than noise sample image

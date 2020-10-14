@@ -1,7 +1,8 @@
 import { HexCell } from '../classes/HexCell';
 import { HexMetrics } from '../classes/HexMetrics';
 import { HexDirection } from '../enums/HexDirection.enum';
-import {Subject} from 'rxjs';
+import { Subject } from 'rxjs';
+import {  AssetLoaderService } from '../services/asset-loader.service'
 
 export class HexGrid {
   private cells: HexCell[];
@@ -13,6 +14,7 @@ export class HexGrid {
 
   private generatedTerrainSubject : Subject<any> = new Subject();
   
+  private stepHeight = 4.0;
 
   getMergedMesh(){
     return this.mergedMesh;
@@ -39,7 +41,8 @@ export class HexGrid {
     this.width = gridWidth;
     this.height = gridHeight;
 
-    var texture = new BABYLON.Texture("https://catlikecoding.com/unity/tutorials/hex-map/part-4/noise/noise.png", scene);
+    
+    var texture = new BABYLON.Texture("assets/terrain/textures/terrainNoise.png", scene);
     texture.onLoadObservable.add(() => {
       HexMetrics.noiseTexturePixels = texture.readPixels();
       HexMetrics.noiseTextureSize = texture.getSize();
@@ -58,11 +61,9 @@ export class HexGrid {
           let height = heightBase * 2.0 - 1.0;
           height = Math.pow(height, 3.0) * 20.0;
           
-          // create stepps in 3points
+          // create steps
+          height = Math.ceil(height / this.stepHeight) * this.stepHeight;
           
-          console.log(height);
-          height = Math.ceil(height/4) * 4;
-          console.log(height)
 
           // create cell
           this.createCell(x, z, i++, height);

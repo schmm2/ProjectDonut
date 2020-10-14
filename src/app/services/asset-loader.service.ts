@@ -115,6 +115,7 @@ export class AssetLoaderService {
               meshsOfModel.push(mesh);
               // console.log(meshsOfModel);
             });
+
             const model = {
               name: assetModel.name,
               type: assetCategory.name,

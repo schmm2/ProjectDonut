@@ -35,6 +35,10 @@
       {
         "name": "borneo",
         "fileName": "borneo_high.png"
+      },
+      {
+        "name": "terrainNoise",
+        "fileName": "terrainNoise.png"
       }
     ]
   },

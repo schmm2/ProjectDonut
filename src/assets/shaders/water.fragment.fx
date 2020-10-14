@@ -24,6 +24,7 @@ uniform sampler2D refractionTexture;
 uniform sampler2D foamShoreTexture;
 uniform sampler2D foamTexture;
 uniform sampler2D foamMaskTexture;
+uniform vec3 sunlightPosition;
 
 // colors
 uniform vec4 shallowWaterColor;
@@ -36,8 +37,8 @@ uniform float waterDistortionStrength;
 uniform float time;
 
 vec3 sunlightColor = vec3(1.0, 1.0, 1.0);
-vec3 sunlightPosition = vec3(-200., 500.0, -200.0);
-float fresnelStrength = 0.15;
+
+float fresnelStrength = 0.5;
 
 const float shineDamper = 20.0;
 const float waterReflectivity = 2.0;
@@ -93,7 +94,7 @@ void main(void)
 
     //refractTexCoords += totalDistortion;
     reflectionTexCoords += totalDistortion;
-    refractionTexCoords += totalDistortion;
+    //refractionTexCoords += totalDistortion;
 
     // Prevent out distortions from sampling from the opposite side of the texture
     // NOTE: This will still cause artifacts towards the edges of the water. You can fix this by
@@ -106,8 +107,7 @@ void main(void)
     // ***** FRESNEL ****
     vec3 viewDirectionW = normalize(cameraPosition - positionW);
     float refractiveFactor = dot(viewDirectionW, vNormalW);
-    // A higher fresnelStrength makes the water more reflective
-    // refractive factor will decrease
+    // A higher fresnelStrength makes the water more reflective -> refractive factor will decrease
     refractiveFactor = pow(refractiveFactor, fresnelStrength);
 
     // get texture color
@@ -129,7 +129,7 @@ void main(void)
     // mix colors
     // The deeper the water the darker the color
     // higher numbers -> smaller area
-    float beachAreaWaterDepth = clamp(waterDepth * 800., 0.0, 1.0);
+    float beachAreaWaterDepth = clamp(waterDepth * 1200., 0.0, 1.0);
     
     refractionColor = mix(refractionColor, deepWaterColor, beachAreaWaterDepth);
     // mix reflection & refraction
