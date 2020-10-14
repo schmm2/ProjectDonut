@@ -34,7 +34,7 @@ varying vec3 vNormal;
 // Declare empty Variables
 vec3 finalColor;
 
-vec3 calculateNormal(vec3 normalMapValue, vec3 normalWorldN){
+/*vec3 calculateNormal(vec3 normalMapValue, vec3 normalWorldN){
   // translate normals to 0-1.0
   vec3 normalMapValueCalc = normalMapValue * 2.0 - 1.0;
   vec3 normalMapValueCalcN = normalize(normalMapValueCalc);
@@ -45,7 +45,7 @@ vec3 calculateNormal(vec3 normalMapValue, vec3 normalWorldN){
 
   vec3 combinedNormal = vec3(red,green,blue);
   return normalize(combinedNormal);
-}
+}*/
 
 
 
@@ -91,16 +91,16 @@ void main(void) {
     // snow
     vec3 color_snow = texture2D(snowTexture, vUv * 40.0).rgb;
     vec3 normalMapValue_snow = texture2D(snowNormalMap,vUv * 40.0).rgb;
-    vec3 normalMapValueN_snow = calculateNormal(normalMapValue_snow, normalWorldN);
-    float ndl_snow = max(0.0,dot(lightVectorReversedN, normalMapValueN_snow));
+    //vec3 normalMapValueN_snow = calculateNormal(normalMapValue_snow, normalWorldN);
+    float ndl_snow = max(0.0,dot(lightVectorReversedN, vNormal));
     vec3 material_snow = clamp(color_snow * ndl_snow,0.0,1.0);
     material_snow = vec3(color_snow);
 
     // grass
     vec3 color_grass = texture2D(grassTexture, vUv * 80.0).rgb;
     vec3 normalMapValue_grass = texture2D(grassNormalMap,vUv * 80.0).rgb;
-    vec3 normalMapValueN_grass = calculateNormal(normalMapValue_grass, normalWorldN);
-    float ndl_grass = max(0.0,dot(lightVectorReversedN,normalMapValueN_grass));
+    //vec3 normalMapValueN_grass = calculateNormal(normalMapValue_grass, normalWorldN);
+    float ndl_grass = max(0.0,dot(lightVectorReversedN,vNormal));
     //vec3 material_grass = clamp(color_grass * ndl_grass,0.0,1.0);
     vec3 material_grass = vec3(color_grass);
 
@@ -117,8 +117,8 @@ void main(void) {
      // sand
     vec3 color_sand = texture2D(sandTexture, vUv * 24.0).rgb;
     vec3 normalMapValue_sand = texture2D(sandNormalMap,vUv * 24.0).rgb;
-    vec3 normalMapValueN_sand = calculateNormal(normalMapValue_sand, normalWorldN);
-    float ndl_sand = max(0.0,dot(lightVectorReversedN,normalMapValueN_sand));
+    //vec3 normalMapValueN_sand = calculateNormal(normalMapValue_sand, normalWorldN);
+    float ndl_sand = max(0.0,dot(lightVectorReversedN,vNormal));
     vec3 material_sand = clamp(color_sand * ndl_sand, 0.0, 1.0);
     material_sand = vec3(color_sand);
 
