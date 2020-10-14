@@ -12,7 +12,7 @@ pool:
 steps:
 - task: NodeTool@0
   inputs:
-    versionSpec: '10.x'
+    versionSpec: '12.x'
   displayName: 'Install Node.js'
 
 - script: |
@@ -20,3 +20,12 @@ steps:
     npm install
     ng build --prod
   displayName: 'npm install and build'
+
+- task: AzureRmWebAppDeployment@4
+  inputs:
+    ConnectionType: 'AzureRM'
+    azureSubscription: 'Visual Studio Enterprise Subscription – MPN(094610f2-f850-4203-9b9a-c5b889fde9d1)'
+    appType: 'webAppLinux'
+    WebAppName: 'flux-webapp-euwe-zea-dev'
+    packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    RuntimeStack: 'NODE|12-lts'
