@@ -51,9 +51,9 @@ vec3 calculateNormal(vec3 normalMapValue, vec3 normalWorldN){
 
 void main(void) {
     // Variables
-    float iceAltitude = 20.0;
+    float iceAltitude = 16.0;
     float rockAltitude = 8.0;
-    float grassAltitude = 2.0;
+    float grassAltitude = 3.0;
 
     float ambientStrength = 1.0;
     float lightStrength = 0.9;
@@ -63,7 +63,7 @@ void main(void) {
     // World values
     vec3 positionWorld = vec3(world * vec4(vPosition, 1.0));
     vec3 normalWorldN = normalize(vec3(world * vec4(vNormal, 0.0)));
-    //vec3 viewDirectionW = normalize(cameraPosition - vPositionW);
+    vec3 viewDirectionWorldN = normalize(cameraPosition - positionWorld);
 
     // slope
     float slope = 1.0 - normalWorldN.y;
@@ -84,7 +84,8 @@ void main(void) {
     vec3 lightVectorReversedN = normalize(lightPosition - positionWorld);
 
     // set diffuse light to flat shading
-    float diffuseLight = max(0.0, dot( faceNormal, lightVectorN));
+    //float diffuseLight = max(0.0, dot( faceNormal, lightVectorN));
+    float diffuseLight = max(0.0, dot( vNormal, lightVectorN));
 
 
     // snow
@@ -104,7 +105,6 @@ void main(void) {
     vec3 material_grass = vec3(color_grass);
 
     // rock
-
     //vec3 normalMapValue_rock = texture2D(rockNormalMap,vUv * 24.0).rgb;
     //vec3 normalMapValueN_rock = faceNormal; //calculateNormal(normalMapValue_rock, faceNormal);
     //float ndl_rock = max(0.0,dot(faceNormal, lightVectorWN)) * lightStrength;
@@ -119,7 +119,7 @@ void main(void) {
     vec3 normalMapValue_sand = texture2D(sandNormalMap,vUv * 24.0).rgb;
     vec3 normalMapValueN_sand = calculateNormal(normalMapValue_sand, normalWorldN);
     float ndl_sand = max(0.0,dot(lightVectorReversedN,normalMapValueN_sand));
-    vec3 material_sand = clamp(color_sand * ndl_sand,0.0,1.0);
+    vec3 material_sand = clamp(color_sand * ndl_sand, 0.0, 1.0);
     material_sand = vec3(color_sand);
 
     // ---------- Color MIXING ------------
@@ -147,24 +147,13 @@ void main(void) {
       // if position is closer (more up) to the rockHeight the factor gets smaller -> less grass
       float grassAmount = clamp((rockAltitude - positionWorld.y) / grassRockTransitionHeight,0.0,1.0);
 
-      // not that steep, show grass and rock
-      if(slope < 0.3) {
-        // blend between grass & rock depending on slope and grass Amount Factor
-        float blendAmount = clamp((slope * 2.0) / grassAmount,0.0,1.0);
-
-        finalColor = mix(material_grass, material_rock, blendAmount);
-        diffuseLight = mix(ndl_grass,diffuseLight,blendAmount);
-      }
-      // very steep, rock only
-      if(slope >= 0.3) {
-        finalColor = material_rock;
-      }
+      finalColor = material_grass; //mix(material_grass, material_rock, grassAmount);
     }
 
     // ---------- Sand Area ------------
     if(positionWorld.y < grassAltitude){
       finalColor = material_sand;
-      diffuseLight = ndl_sand;
+      //diffuseLight = ndl_sand;
     }
 
     //finalColor = clamp(finalColor,0.4,0.8);
@@ -180,26 +169,5 @@ void main(void) {
      // ---------- Final Color ------------
     gl_FragColor = vec4(vec3((diffuseLight + ambientColor) * finalColor), 1.0);
 
-    // ----------- Grid -----
-    
-    // float eDist = 0.0; // Edge distance
-    // float e = 0.0;
-    
-    // eDist = hex(hexInfo.xy); // Edge distance
-      
-    // Putting in some dark borders.
-
-
-   
-    if(vHexValueBase >= 0.3 && vHexValueBase <= 0.7){
-       gl_FragColor = mix(gl_FragColor, vec4(1.0,1.0,1.0,0.1), smoothstep(0., .01, vEdgeDistance - .52 + .045));
-
-      // gl_FragColor.rgb = vec3(1.0); //mix(gl_FragColor, vec4(1.0,1.0,1.0,0.1), smoothstep(0., .01, vEdgeDistance - .53 + .045));
-      // float factor = (1.0 - vHexValueBase);
-      // 
-    } 
-    //gl_FragColor.rgb = vec3(0.5 - vEdgeDistance);
-    //gl_FragColor.rgb = vec3(vHexValueBase);
-  
-  
+    //gl_FragColor = vec4(vec3(slope),1.0);
 }

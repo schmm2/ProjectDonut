@@ -116,7 +116,7 @@ export class WaterGeneratorService {
 
     // create plane
     let waterPlane = MeshBuilder.CreateGround('water', {width: worldSize.x, height: worldSize.y, subdivisions: 400}, this.scene, );
-    waterPlane.position.y = -15.0;
+    waterPlane.position.y = 0.0;
 
     let reflectionRTT = this.buildReflectionRTT(waterPlane, new Vector2(512, 512));
     let refractionRTT = this.buildRefractionRTT(waterPlane, new Vector2(512, 512));
@@ -125,7 +125,7 @@ export class WaterGeneratorService {
     //this.buildRenderTargetTexture(new Vector2(512, 512));
 
     const shallowWaterColor = new Color4(0.3, 0.4, 0.7, 1.0);
-    const deepWaterColor = new Color4(0, 0.25, 0.283, 1.0);
+    const deepWaterColor = new Color4(0, 0.35, 0.383, 1.0);
 
     // set shader uniforms
     // texture

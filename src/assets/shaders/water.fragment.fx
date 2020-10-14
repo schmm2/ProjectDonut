@@ -129,7 +129,7 @@ void main(void)
     // mix colors
     // The deeper the water the darker the color
     // higher numbers -> smaller area
-    float beachAreaWaterDepth = clamp(waterDepth * 400., 0.0, 1.0);
+    float beachAreaWaterDepth = clamp(waterDepth * 800., 0.0, 1.0);
     
     refractionColor = mix(refractionColor, deepWaterColor, beachAreaWaterDepth);
     // mix reflection & refraction
