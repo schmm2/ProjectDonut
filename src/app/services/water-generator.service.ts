@@ -125,7 +125,7 @@ export class WaterGeneratorService {
     //this.buildRenderTargetTexture(new Vector2(512, 512));
 
     const shallowWaterColor = new Color4(0.3, 0.4, 0.7, 1.0);
-    const deepWaterColor = new Color4(0, 0.25, 0.283, 1.0);
+    const deepWaterColor = new Color4(0, 0.35, 0.383, 1.0);
 
     // set shader uniforms
     // texture

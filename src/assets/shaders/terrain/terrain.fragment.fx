@@ -84,7 +84,8 @@ void main(void) {
     vec3 lightVectorReversedN = normalize(lightPosition - positionWorld);
 
     // set diffuse light to flat shading
-    float diffuseLight = max(0.0, dot( faceNormal, lightVectorN));
+    //float diffuseLight = max(0.0, dot( faceNormal, lightVectorN));
+    float diffuseLight = max(0.0, dot( vNormal, lightVectorN));
 
 
     // snow
