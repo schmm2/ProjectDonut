@@ -24,6 +24,7 @@ import {GameStateService} from '../services/game-state.service';
 import * as BABYLON from "babylonjs";
 
 @Injectable({ providedIn: 'root' })
+
 export class EngineService {
   private canvas: HTMLCanvasElement;
   private engine: Engine;
@@ -31,6 +32,7 @@ export class EngineService {
   private scene: Scene;
   private light: Light;
   private renderer;
+  private fpsCounter: HTMLDivElement;
 
   // game-objects
   private terrains: any[] = [];
@@ -53,9 +55,11 @@ export class EngineService {
    window.CANNON = CANNON;
   }
 
+  public addFpsCounter(fpsCounter: ElementRef<HTMLDivElement>): void{
+    this.fpsCounter = fpsCounter.nativeElement;
+  }
 
   public createScene(canvas: ElementRef<HTMLCanvasElement>): void {
-
     const navigationPlugin = new BABYLON.RecastJSPlugin();
     // tslint:disable-next-line:prefer-const
     let navigationParameters = {
@@ -303,11 +307,16 @@ export class EngineService {
     zChar.position = new BABYLON.Vector3(0, 0.05 * size, 0.9 * size);
   }
 
+  
   public animate(): void {
     // We have to run this outside angular zones,
     // because it could trigger heavy changeDetection cycles.
     this.ngZone.runOutsideAngular(() => {
       const rendererLoopCallback = () => {
+
+        if(this.fpsCounter){
+          this.fpsCounter.innerHTML = this.engine.getFps().toFixed() + " fps";
+        }  
         this.scene.render();
       };
 
