@@ -129,7 +129,7 @@ void main(void)
     // mix colors
     // The deeper the water the darker the color
     // higher numbers -> smaller area
-    float beachAreaWaterDepth = clamp(waterDepth * 1200., 0.0, 1.0);
+    float beachAreaWaterDepth = clamp(waterDepth * 1400., 0.0, 1.0);
     
     refractionColor = mix(refractionColor, deepWaterColor, beachAreaWaterDepth);
     // mix reflection & refraction
@@ -142,7 +142,7 @@ void main(void)
     float foamAreaWaterDepth = clamp(waterDepth * 5000., 0.0, 1.0);
 
     // bigger number -> smaller foam
-    float foamScale = 2.0;
+    float foamScale = 3.0;
     vec2 scaledFoamUV = textureCoords * foamScale;
    
     /// Sample the foam mask, red and blue channel

@@ -102,7 +102,6 @@ export class HexCell {
       this.triangulateInner(i, this);
     }
 
-
     // merge verticedata to one single flat array
     this.vertices.forEach(verticeArray => {
       let verticeArrayRaw = [verticeArray.x, verticeArray.y, verticeArray.z];
@@ -120,9 +119,7 @@ export class HexCell {
     vertexData.indices = this.indices;
     vertexData.normals = normals;
 
-    // (normals);
-
-    vertexData.applyToMesh(this.mesh);
+    vertexData.applyToMesh(this.mesh, true);
   }
 
   triangulateInner(direction: HexDirection, cell: HexCell) {

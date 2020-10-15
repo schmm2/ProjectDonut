@@ -103,8 +103,6 @@ export class TerrainGeneratorService {
       terrainMaterial.setVector3("lightPosition", lightPosition);
       terrainMaterial.setVector3("lightColor", lightColor);
 
-      terrainMaterial.backFaceCulling = false;
-
       //console.log(generateTerrain);
       generateTerrain.material = terrainMaterial;
 

@@ -62,10 +62,15 @@ export class HexGrid {
       // console.log(cell);
 
       cell.triangulate();
+      console.log(cell.mesh);
+      //let cellMesh = cell.mesh.increaseVertices(2);
       tmpMeshes.push(cell.mesh);
     });
 
     this.mergedMesh = BABYLON.Mesh.MergeMeshes(tmpMeshes, true);
+    
+    // todo: find out why the faces point downwards
+    this.mergedMesh.flipFaces(true);
   }
 
   constructor(gridWidth, gridHeight, heightMapTexture, scene) {
@@ -134,6 +139,5 @@ export class HexGrid {
         }
       }
     }
-    //this.scene.meshes.push(cell.mesh);
   }
 }
