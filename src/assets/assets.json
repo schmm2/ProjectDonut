@@ -20,22 +20,8 @@
     "name": "terrain",
     "url": "./assets/terrain/",
     "models": [
-      {
-        "name": "island1a",
-        "fileName": "island1A.obj",
-        "scale": 20.0
-      },
-      {
-        "name": "island5a",
-        "fileName": "island5a.obj",
-        "scale": 1.5
-      }
     ],
     "textures": [
-      {
-        "name": "borneo",
-        "fileName": "borneo_high.png"
-      },
       {
         "name": "terrainNoise",
         "fileName": "terrainNoise.png"
@@ -49,36 +35,6 @@
       {
         "name": "gradient",
         "fileName": "gradient.png"
-      }
-    ]
-  },
-  {
-    "name": "mountains",
-    "url": "./assets/mountains/",
-    "textures": [
-      {
-        "name": "601D1",
-        "fileName": "601D1.png"
-      },
-      {
-        "name": "601D2",
-        "fileName": "601D2.png"
-      },
-      {
-        "name": "601D3",
-        "fileName": "601D3.png"
-      },
-      {
-        "name": "301B1",
-        "fileName": "301B1.png"
-      },
-      {
-        "name": "301B2",
-        "fileName": "301B2.png"
-      },
-      {
-        "name": "301B3",
-        "fileName": "301B3.png"
       }
     ]
   }
