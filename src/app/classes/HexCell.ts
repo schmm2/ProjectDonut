@@ -218,7 +218,7 @@ export class HexCell {
 
     let center = new BABYLON.Vector3(xCenter, yCenter, zCenter);
 
-    this.triangulateCornerTerraces(
+    this.triangulateCornerTerraces2(
       lowest, bottomCell, middle, leftCell, highest, rightCell, center
     )
   }
@@ -247,7 +247,7 @@ export class HexCell {
       v4 = HexMetrics.TerraceLerp(lowest, middle, i);
       v5 = HexMetrics.TerraceLerp(middle, higest, i);
       v6 = HexMetrics.TerraceLerp(higest, lowest, i);
-      
+
 
       this.addTriangle(center, v1, v4);
       this.addTriangle(center, v2, v5);
@@ -258,6 +258,78 @@ export class HexCell {
     this.addTriangle(middle, center, v4);
     this.addTriangle(higest, center, v5);
     this.addTriangle(lowest, center, v6);
+  }
+
+  triangulateCornerTerraces2(
+    lowest: BABYLON.Vector3, lowestCell: HexCell,
+    middle: BABYLON.Vector3, middleCell_: HexCell,
+    higest: BABYLON.Vector3, higestCell: HexCell,
+    center: BABYLON.Vector3
+  ) {
+
+    let v3 = HexMetrics.TerraceLerp(lowest, middle, 1.0);
+    let v4 = HexMetrics.TerraceLerp(lowest, higest, 1.0);
+    let v5 = null;
+    let v6 = null;
+    let v7 = null;
+    let v8 = null;
+
+    // start triangle
+    this.addTriangle(lowest, v3, v4);
+
+    for (let q = 2.0; q <= HexMetrics.terraceSteps; q++) {
+      let v1 = new BABYLON.Vector3(v3.x, v3.y, v3.z);
+      let v2 = new BABYLON.Vector3(v4.x, v4.y, v4.z);
+
+      v3 = HexMetrics.TerraceLerp(lowest, middle, q);
+      v4 = HexMetrics.TerraceLerp(lowest, higest, q);
+
+      // add Quad Rows
+      // all up to the last 3 rows
+      if (q <= HexMetrics.terraceSteps - 3) {
+        this.addQuad(v1, v2, v3, v4);
+      }
+      // add third last row, all triangles
+      if (q == HexMetrics.terraceSteps - 2) {
+        // get horizontal point
+        v5 = HexMetrics.TerraceLerp(v3, v4, 3.0);
+
+        this.addTriangle(v1, v3, v5); // left
+        this.addTriangle(v5, v2, v1); // middle
+        this.addTriangle(v2, v5, v4); // right
+      }
+      // second last row
+      if (q == HexMetrics.terraceSteps - 1) {
+        // get horizontal point
+        v6 = HexMetrics.TerraceLerp(v3, v4, 2.0); // left
+        v7 = HexMetrics.TerraceLerp(v3, v4, 3.0);
+        v8 = HexMetrics.TerraceLerp(v3, v4, 4.0);
+
+        this.addTriangle(v1, v3, v6); // left
+        this.addTriangle(v8, v4, v2); // right
+
+        // middle quads
+        this.addQuad(v1, v5, v6, v7);
+        this.addQuad(v5, v2, v7, v8);
+        
+      }
+      if (q == HexMetrics.terraceSteps) {
+        let v9 = HexMetrics.TerraceLerp(v3, v4, 1.0);
+        let v10 = HexMetrics.TerraceLerp(v3, v4, 2.0);
+        let v11 = HexMetrics.TerraceLerp(v3, v4, 3.0);
+        let v12 = HexMetrics.TerraceLerp(v3, v4, 4.0);
+        let v13 = HexMetrics.TerraceLerp(v3, v4, 5.0);
+
+
+        this.addTriangle(v1, v3, v9); // left
+        this.addTriangle(v2, v13, v4); // right
+
+        this.addQuad(v8, v2, v12, v13);
+        this.addQuad(v7, v8, v11, v12);
+        this.addQuad(v6, v7, v10, v11);
+        this.addQuad(v1, v6, v9, v10);
+      }
+    }
   }
 
   triangulate() {
