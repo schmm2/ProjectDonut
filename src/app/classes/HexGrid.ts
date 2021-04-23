@@ -8,122 +8,7 @@ import MeshWriter from "meshwriter";
 import * as earcut from "earcut";
 (window as any).earcut = earcut;
 
-function increaseFacets(mesh, pps) { //pps points per side        
-  var _gaps = pps + 1;
-  var _n = _gaps + 1;
-  var _fvs = [];
-  for (var _i = 0; _i < _n; _i++) {
-    _fvs[_i] = [];
-  }
-  var _A, _B;
-  var _d = { x: 0, y: 0, z: 0 };
-  var _u = { x: 0, y: 0 };
-  var _indices = [];
-  var _vertexIndex = [];
-  var _side = [];
-  var _l; //holds lengths
-  var _uvs = mesh.getVerticesData(BABYLON.VertexBuffer.UVKind);
-  var _meshIndices = mesh.getIndices();
-  var _positions = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-  var _normals = [];
 
-  for (var _i = 0; _i < _meshIndices.length; _i += 3) {
-    _vertexIndex[0] = _meshIndices[_i];
-    _vertexIndex[1] = _meshIndices[_i + 1];
-    _vertexIndex[2] = _meshIndices[_i + 2];
-    for (var _j = 0; _j < 3; _j++) {
-      _A = _vertexIndex[_j];
-      _B = _vertexIndex[(_j + 1) % 3];
-      if (_side[_A] === undefined && _side[_B] === undefined) {
-        _side[_A] = [];
-        _side[_B] = [];
-      }
-      else {
-        if (_side[_A] === undefined) {
-          _side[_A] = [];
-        }
-        if (_side[_B] === undefined) {
-          _side[_B] = [];
-        }
-      }
-      if (_side[_A][_B] === undefined && _side[_B][_A] === undefined) {
-        _side[_A][_B] = [];
-        _d.x = (_positions[3 * _B] - _positions[3 * _A]) / _gaps;
-        _d.y = (_positions[3 * _B + 1] - _positions[3 * _A + 1]) / _gaps;
-        _d.z = (_positions[3 * _B + 2] - _positions[3 * _A + 2]) / _gaps;
-        _u.x = (_uvs[2 * _B] - _uvs[2 * _A]) / _gaps;
-        _u.y = (_uvs[2 * _B + 1] - _uvs[2 * _A + 1]) / _gaps;
-        _side[_A][_B].push(_A);
-        for (var _k = 1; _k < _gaps; _k++) {
-          _side[_A][_B].push(_positions.length / 3);
-          _positions.push(_positions[3 * _A] + _k * _d.x, _positions[3 * _A + 1] + _k * _d.y, _positions[3 * _A + 2] + _k * _d.z);
-          _uvs.push(_uvs[2 * _A] + _k * _u.x, _uvs[2 * _A + 1] + _k * _u.y);
-        }
-        _side[_A][_B].push(_B);
-        _side[_B][_A] = [];
-        _l = _side[_A][_B].length;
-        for (var _a = 0; _a < _l; _a++) {
-          _side[_B][_A][_a] = _side[_A][_B][_l - 1 - _a];
-        }
-      }
-      else {
-        if (_side[_A][_B] === undefined) {
-          _side[_A][_B] = [];
-          _l = _side[_B][_A].length;
-          for (var _a = 0; _a < _l; _a++) {
-            _side[_A][_B][_a] = _side[_B][_A][_l - 1 - _a];
-          }
-        }
-        if (_side[_B][_A] === undefined) {
-          _side[_B][_A] = [];
-          _l = _side[_A][_B].length;
-          for (var _a = 0; _a < _l; _a++) {
-            _side[_B][_A][_a] = _side[_A][_B][_l - 1 - _a];
-          }
-        }
-      }
-    }
-    _fvs[0][0] = _meshIndices[_i];
-    _fvs[1][0] = _side[_meshIndices[_i]][_meshIndices[_i + 1]][1];
-    _fvs[1][1] = _side[_meshIndices[_i]][_meshIndices[_i + 2]][1];
-    for (var _k = 2; _k < _gaps; _k++) {
-      _fvs[_k][0] = _side[_meshIndices[_i]][_meshIndices[_i + 1]][_k];
-      _fvs[_k][_k] = _side[_meshIndices[_i]][_meshIndices[_i + 2]][_k];
-      _d.x = (_positions[3 * _fvs[_k][_k]] - _positions[3 * _fvs[_k][0]]) / _k;
-      _d.y = (_positions[3 * _fvs[_k][_k] + 1] - _positions[3 * _fvs[_k][0] + 1]) / _k;
-      _d.z = (_positions[3 * _fvs[_k][_k] + 2] - _positions[3 * _fvs[_k][0] + 2]) / _k;
-      _u.x = (_uvs[2 * _fvs[_k][_k]] - _uvs[2 * _fvs[_k][0]]) / _k;
-      _u.y = (_uvs[2 * _fvs[_k][_k] + 1] - _uvs[2 * _fvs[_k][0] + 1]) / _k;
-      for (var _j = 1; _j < _k; _j++) {
-        _fvs[_k][_j] = _positions.length / 3;
-        _positions.push(_positions[3 * _fvs[_k][0]] + _j * _d.x, _positions[3 * _fvs[_k][0] + 1] + _j * _d.y, _positions[3 * _fvs[_k][0] + 2] + _j * _d.z);
-        _uvs.push(_uvs[2 * _fvs[_k][0]] + _j * _u.x, _uvs[2 * _fvs[_k][0] + 1] + _j * _u.y);
-      }
-    }
-    _fvs[_gaps] = _side[_meshIndices[_i + 1]][_meshIndices[_i + 2]];
-
-    _indices.push(_fvs[0][0], _fvs[1][0], _fvs[1][1]);
-    for (var _k = 1; _k < _gaps; _k++) {
-      for (var _j = 0; _j < _k; _j++) {
-        _indices.push(_fvs[_k][_j], _fvs[_k + 1][_j], _fvs[_k + 1][_j + 1]);
-        _indices.push(_fvs[_k][_j], _fvs[_k + 1][_j + 1], _fvs[_k][_j + 1]);
-      }
-      _indices.push(_fvs[_k][_j], _fvs[_k + 1][_j], _fvs[_k + 1][_j + 1]);
-    }
-
-  }
-
-  var vertexData = new BABYLON.VertexData();
-  vertexData.positions = _positions;
-  vertexData.indices = _indices;
-  vertexData.uvs = _uvs;
-
-  BABYLON.VertexData.ComputeNormals(_positions, _indices, _normals);
-  vertexData.normals = _normals;
-
-  vertexData.applyToMesh(mesh);
-
-}
 export class HexGrid {
   private cells: HexCell[];
   private scene;
@@ -136,13 +21,18 @@ export class HexGrid {
   private heightMapStepsHeight;
   private heightMapPixels;
   private writer;
+  public colors = [];
+  public defaultColor = new BABYLON.Color3(1,1,0);
 
+  
   private enableRTT = true;
 
   private stepHeight = 0.3;
   private mountainHeight = 5.0;
 
-
+  getCells(){
+    return this.cells;
+  }
 
   findDistancesTo(cell: HexCell) {
     for (let i = 0; i < this.cells.length; i++) {
@@ -203,6 +93,8 @@ export class HexGrid {
         mountainCells.push(cell);
       }
 
+      cell.mesh.flipFaces(true);
+      
       // hex mountain cells are not rendered 
       if (!cell.isMountainCell) {
         tmpMeshes.push(cell.mesh);
@@ -299,14 +191,14 @@ export class HexGrid {
       }
     });
 
-    this.mergedMesh = BABYLON.Mesh.MergeMeshes(tmpMeshes, true, true);
+    //this.mergedMesh = BABYLON.Mesh.MergeMeshes(tmpMeshes, true, true);
     // todo: find out why the faces point downwards
 
-    this.mergedMesh.wireframe =true;
-    this.mergedMesh.flipFaces(true);
+    //this.mergedMesh.wireframe =true;
+    //this.mergedMesh.flipFaces(true);
     //this.mergedMesh.forceSharedVertices();
     //this.mergedMesh.increaseVertices(20);
-    console.log(this.mergedMesh)
+    //console.log(this.mergedMesh)
   }
 
   constructor(gridWidth, gridHeight, heightMapTexture, scene) {
@@ -364,6 +256,8 @@ export class HexGrid {
     // x & z only -> we will mess uf y
     cell.mesh.position.x = position.x;
     cell.mesh.position.z = position.z;
+
+    cell.color = this.defaultColor;
 
     // set hex coordinates
     let coordinates = HexCoordinates.fromOffsetCoordinates(x, z);

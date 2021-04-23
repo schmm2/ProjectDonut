@@ -1,5 +1,5 @@
 import { WindowRefService } from '../services/window-ref.service';
-import {ElementRef, Injectable, NgZone} from '@angular/core';
+import { ElementRef, Injectable, NgZone } from '@angular/core';
 import {
   Engine,
   Scene,
@@ -14,13 +14,13 @@ import * as BABYLONMATERIAL from 'babylonjs-materials';
 
 import CANNON from 'cannon';
 
-import { WaterGeneratorService} from  '../services/water-generator.service';
+import { WaterGeneratorService } from '../services/water-generator.service';
 import { TerrainGeneratorService } from '../services/terrain-generator.service';
 import { ShipGeneratorService } from '../services/ship-generator.service';
 import { AssetLoaderService } from '../services/asset-loader.service';
-import {Ship} from '../classes/ship';
-import {InteractionManagerService} from '../services/interactionManager.service';
-import {GameStateService} from '../services/game-state.service';
+import { Ship } from '../classes/ship';
+import { InteractionManagerService } from '../services/interactionManager.service';
+import { GameStateService } from '../services/game-state.service';
 import * as BABYLON from "babylonjs";
 
 @Injectable({ providedIn: 'root' })
@@ -52,10 +52,10 @@ export class EngineService {
     private interactionManagerService: InteractionManagerService,
     private gameStateService: GameStateService,
   ) {
-   window.CANNON = CANNON;
+    window.CANNON = CANNON;
   }
 
-  public addFpsCounter(fpsCounter: ElementRef<HTMLDivElement>): void{
+  public addFpsCounter(fpsCounter: ElementRef<HTMLDivElement>): void {
     this.fpsCounter = fpsCounter.nativeElement;
   }
 
@@ -82,7 +82,7 @@ export class EngineService {
     this.canvas = canvas.nativeElement;
 
     // Then, load the Babylon 3D engine:
-    this.engine = new Engine(this.canvas,  true);
+    this.engine = new Engine(this.canvas, true);
 
     // create a basic BJS Scene object
     this.scene = new Scene(this.engine);
@@ -99,11 +99,11 @@ export class EngineService {
     this.scene.enablePhysics(gravityVector, physicsPlugin);
 
     // ***** Sky ****** 
-    const skyBox = MeshBuilder.CreateBox('skyBox', {size: 2000.0}, this.scene); 
+    const skyBox = MeshBuilder.CreateBox('skyBox', { size: 2000.0 }, this.scene);
     //@ts-ignore
     const skyMaterial = new BABYLONMATERIAL.SkyMaterial('skyMaterial', this.scene);
     skyMaterial.backFaceCulling = false;
-    skyMaterial.inclination = 0;  
+    skyMaterial.inclination = 0;
     skyBox.material = skyMaterial;
 
     // ****** CAMERA ******
@@ -119,16 +119,19 @@ export class EngineService {
     this.camera.layerMask = 1;
 
     // enable depth buffer
-    this.renderer = this.scene.enableDepthRenderer(this.camera,false);
+    this.renderer = this.scene.enableDepthRenderer(this.camera, false);
 
     // ***** Lights *****
     // create a basic light, aiming 0,1,0 - meaning, to the sky
     this.light = new HemisphericLight('lightHemisphere', new Vector3(0, 1, 0), this.scene);
-    this.light.intensity = 1.0;
+    //this.light.intensity = 1.0;
+    this.light.diffuse = new BABYLON.Color3(1, 1, 1);
+    //this.light.specular = new BABYLON.Color3(0, 1, 0);
+    //this.light.groundColor = new BABYLON.Color3(0, 1, 0);
 
     // ***** Test-Objects ***** 
     // Our built-in 'sphere' shape.
-    var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 100, segments: 32}, this.scene);
+    var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 100, segments: 32 }, this.scene);
 
     // Move the sphere upward 1/2 its height
     sphere.position.y = 0;
@@ -136,7 +139,7 @@ export class EngineService {
 
 
     // Our built-in 'sphere' shape.
-    var sphere2= BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 50, segments: 32}, this.scene);
+    var sphere2 = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 50, segments: 32 }, this.scene);
 
     // Move the sphere upward 1/2 its height
     sphere2.position.y = -0
@@ -145,9 +148,9 @@ export class EngineService {
 
     // ***** Water-Plane *****
     const worldSize = new BABYLON.Vector2(500, 500);
-       
-    this.waterPlaneObject = this.waterGeneratorService.buildWaterPlane(worldSize, this.scene, this.camera, this.renderer, this.light);         
-    
+
+    this.waterPlaneObject = this.waterGeneratorService.buildWaterPlane(worldSize, this.scene, this.camera, this.renderer, this.light);
+
     let time = 0.0;
     this.scene.registerBeforeRender(() => {
       // @ts-ignore
@@ -156,13 +159,13 @@ export class EngineService {
       this.waterPlaneObject.waterPlane.material.setVector3('cameraPosition', this.camera.position);
       time += 0.008;
     });
-    
+
     // Reflection
     this.waterPlaneObject.reflectionRTT.renderList.push(sphere);
     this.waterPlaneObject.reflectionRTT.renderList.push(skyBox);
-     // Refraction
+    // Refraction
     this.waterPlaneObject.refractionRTT.renderList.push(sphere);
-    
+
     this.renderer.getDepthMap().renderList = [sphere];
 
 
@@ -173,17 +176,17 @@ export class EngineService {
     // ***** AssetLoader *****
     this.assetLoaderService.subscribeToAssetsLoadState().subscribe(isLoaded => {
       if (isLoaded) {
-       
+
         // hide gameboard tiles if not in build mode
-        this.gameStateService.subscribeToBuildingMode().subscribe((buildingMode) =>{
-          if(this.gameBoardTilesVisibility != buildingMode){
-            this.gameBoardTiles.forEach(tile =>{
+        this.gameStateService.subscribeToBuildingMode().subscribe((buildingMode) => {
+          if (this.gameBoardTilesVisibility != buildingMode) {
+            this.gameBoardTiles.forEach(tile => {
               tile.mesh.visibility = buildingMode;
             })
           }
           this.gameBoardTilesVisibility = buildingMode;
-        })  
-        
+        })
+
         // ***** Terrain *****
         // subscribe terrain generation
         this.terrainGeneratorService.subscribeToGeneratedTerrain().subscribe((generatedTerrain) => {
@@ -192,8 +195,8 @@ export class EngineService {
             console.log('new terrain created');
 
             let terrainSize = generatedTerrain.getBoundingInfo().boundingBox.extendSize;
-            generatedTerrain.position.x =  - terrainSize.x;
-            generatedTerrain.position.z =  - terrainSize.z;
+            generatedTerrain.position.x = - terrainSize.x;
+            generatedTerrain.position.z = - terrainSize.z;
             generatedTerrain.position.y = 5.0;
 
             this.renderer.getDepthMap().renderList = [generatedTerrain];
@@ -214,18 +217,18 @@ export class EngineService {
           if (heightMapTexture.isReady() == true) {
             console.log("heightmap loaded");
             clearInterval(stateCheckHeightMap);
-            
+
             this.terrainGeneratorService.generateTerrain(this.scene, heightMapTexture);
-          }else{
+          } else {
             console.log("waiting for texture")
           }
         }, 500);
 
-      
+
         // ***** Ships *****
         // subscribe to generated ships
         this.shipGeneratorService.subscribeToGeneratedShip().subscribe(ship => {
-          if(ship){
+          if (ship) {
             console.log(ship);
             const shipMesh = ship.getMesh();
             this.waterPlaneObject.reflectionRTT.renderList.push(shipMesh);
@@ -245,26 +248,26 @@ export class EngineService {
             // shadowGenerator.getShadowMap().renderList.push(mesh);
           }
         });
-        
+
         // demo: build ships
         //this.shipGeneratorService.buildShip(new BABYLON.Vector2(0, -60), 'fluyt');
         //this.shipGeneratorService.buildShip(new BABYLON.Vector2(20, -60), 'fluyt');
         //this.shipGeneratorService.buildShip(new BABYLON.Vector2(-20, -60), 'fluyt');
 
-        
+
 
         // navigation
-            // navigationPlugin.createNavMesh([waterPlane], navigationParameters);
+        // navigationPlugin.createNavMesh([waterPlane], navigationParameters);
 
-            /*let navmeshdebug = navigationPlugin.createDebugNavMesh(this.scene);
-            var matdebug = new BABYLON.StandardMaterial('matdebug', this.scene);
-            matdebug.diffuseColor = new BABYLON.Color3(0.1, 0.2, 1);
-            matdebug.alpha = 0.2;
-            navmeshdebug.material = matdebug;*/
+        /*let navmeshdebug = navigationPlugin.createDebugNavMesh(this.scene);
+        var matdebug = new BABYLON.StandardMaterial('matdebug', this.scene);
+        matdebug.diffuseColor = new BABYLON.Color3(0.1, 0.2, 1);
+        matdebug.alpha = 0.2;
+        navmeshdebug.material = matdebug;*/
 
-            /*t
-            });*/
-        
+        /*t
+        });*/
+
         //this.showWorldAxis(200);
         // HELPER
         // this.showWorldAxis(150);
@@ -272,12 +275,12 @@ export class EngineService {
     });
   }
 
-  
+
   private showWorldAxis(size) {
     let makeTextPlane = (text, color, size) => {
       let dynamicTexture = new BABYLON.DynamicTexture('DynamicTexture', 50, this.scene, true);
       dynamicTexture.hasAlpha = true;
-      dynamicTexture.drawText(text, 5, 40, 'bold 36px Arial', color , 'transparent', true);
+      dynamicTexture.drawText(text, 5, 40, 'bold 36px Arial', color, 'transparent', true);
       let plane = BABYLON.Mesh.CreatePlane('TextPlane', size, this.scene, true);
       plane.material = new BABYLON.StandardMaterial('TextPlaneMaterial', this.scene);
       plane.material.backFaceCulling = false;
@@ -295,31 +298,31 @@ export class EngineService {
     let xChar = makeTextPlane('X', 'red', size / 10);
     xChar.position = new BABYLON.Vector3(0.9 * size, -0.05 * size, 0);
     let axisY = BABYLON.Mesh.CreateLines('axisY', [
-      BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, size, 0), new BABYLON.Vector3( -0.05 * size, size * 0.95, 0),
-      new BABYLON.Vector3(0, size, 0), new BABYLON.Vector3( 0.05 * size, size * 0.95, 0)
+      BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, size, 0), new BABYLON.Vector3(-0.05 * size, size * 0.95, 0),
+      new BABYLON.Vector3(0, size, 0), new BABYLON.Vector3(0.05 * size, size * 0.95, 0)
     ], this.scene);
     axisY.color = new BABYLON.Color3(0, 1, 0);
     let yChar = makeTextPlane('Y', 'green', size / 10);
     yChar.position = new BABYLON.Vector3(0, 0.9 * size, -0.05 * size);
     let axisZ = BABYLON.Mesh.CreateLines('axisZ', [
-      BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 0, size), new BABYLON.Vector3( 0 , -0.05 * size, size * 0.95),
-      new BABYLON.Vector3(0, 0, size), new BABYLON.Vector3( 0, 0.05 * size, size * 0.95)
+      BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 0, size), new BABYLON.Vector3(0, -0.05 * size, size * 0.95),
+      new BABYLON.Vector3(0, 0, size), new BABYLON.Vector3(0, 0.05 * size, size * 0.95)
     ], this.scene);
     axisZ.color = new BABYLON.Color3(0, 0, 1);
     let zChar = makeTextPlane('Z', 'blue', size / 10);
     zChar.position = new BABYLON.Vector3(0, 0.05 * size, 0.9 * size);
   }
 
-  
+
   public animate(): void {
     // We have to run this outside angular zones,
     // because it could trigger heavy changeDetection cycles.
     this.ngZone.runOutsideAngular(() => {
       const rendererLoopCallback = () => {
 
-        if(this.fpsCounter){
+        if (this.fpsCounter) {
           this.fpsCounter.innerHTML = this.engine.getFps().toFixed() + " fps";
-        }  
+        }
         this.scene.render();
       };
 

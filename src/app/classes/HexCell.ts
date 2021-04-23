@@ -18,6 +18,8 @@ export class HexCell {
   public isMountainEdgeCell: boolean = false;
   public mountainPath = [];
   public distance;
+  public color:BABYLON.Color3;
+  public colors = [];
 
   distanceTo(otherCell) {
     return this.center.x - otherCell.center.x;
@@ -42,6 +44,12 @@ export class HexCell {
     cell.neighbors[HexDirectionExtension.opposite(direction)] = this;
   }
 
+  addTriangleColor (c1: BABYLON.Color3) {
+		this.colors.push(new BABYLON.Color4(c1.r,c1.g,c1.b,1.0));
+    this.colors.push(new BABYLON.Color4(c1.r,c1.g,c1.b,1.0));
+    this.colors.push(new BABYLON.Color4(c1.r,c1.g,c1.b,1.0));
+	}
+
   addTriangle(vec1: BABYLON.Vector3, vec2: BABYLON.Vector3, vec3: BABYLON.Vector3) {
     let verticesLength = this.vertices.length;
 
@@ -54,7 +62,16 @@ export class HexCell {
     this.indices.push(verticesLength);
     this.indices.push(verticesLength + 1);
     this.indices.push(verticesLength + 2);
+
+    this.addTriangleColor(this.color);
   }
+
+  addQuadColor (c1:BABYLON.Color3, c2:BABYLON.Color3, c3:BABYLON.Color3, c4:BABYLON.Color3) {
+		this.colors.push(new BABYLON.Color4(c1.r,c1.g,c1.b,1.0));
+		this.colors.push(new BABYLON.Color4(c1.r,c1.g,c1.b,1.0));
+		this.colors.push(new BABYLON.Color4(c1.r,c1.g,c1.b,1.0));
+		this.colors.push(new BABYLON.Color4(c1.r,c1.g,c1.b,1.0));
+	}
 
   addQuad(v1: BABYLON.Vector3, v2: BABYLON.Vector3, v3: BABYLON.Vector3, v4: BABYLON.Vector3) {
     let verticesLength = this.vertices.length;
@@ -72,6 +89,13 @@ export class HexCell {
     this.indices.push(verticesLength + 1);
     this.indices.push(verticesLength + 2);
     this.indices.push(verticesLength + 3);
+
+    this.addQuadColor(
+			this.color,
+      this.color,
+      this.color,
+      this.color,
+		);
   }
 
   // build quad bridge and edge triangle
@@ -344,6 +368,16 @@ export class HexCell {
       this.positions = this.positions.concat(verticeArrayRaw);
     })
 
+    // merge color data to one single flat array
+    //console.log(this.colors[0]);
+    let colorsFinal = [];
+    this.colors.forEach(colorArrayElement => {
+      colorsFinal.push(colorArrayElement.r);
+      colorsFinal.push(colorArrayElement.g);
+      colorsFinal.push(colorArrayElement.b);
+      colorsFinal.push(colorArrayElement.a);
+    })
+
     //Empty array to contain calculated values or normals added
     var normals = [];
 
@@ -351,9 +385,16 @@ export class HexCell {
     BABYLON.VertexData.ComputeNormals(this.positions, this.indices, normals);
 
     let vertexData = new BABYLON.VertexData();
+    
+    //console.log(colorsFinal);
+    //console.log(this.positions);
+
+    vertexData.colors = colorsFinal;
     vertexData.positions = this.positions;
     vertexData.indices = this.indices;
     vertexData.normals = normals;
+
+    
 
     vertexData.applyToMesh(this.mesh, true);
   }
@@ -436,7 +477,6 @@ export class HexCell {
       this.triangulateConnection(direction, this, v1, e1, e2, v2);
     }
   }
-
 
   perturb(position: BABYLON.Vector3) {
     // we want all points which share a location on the map to be pertubed the same

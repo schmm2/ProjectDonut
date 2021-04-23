@@ -1,5 +1,6 @@
 import { Injectable } from "@angular/core";
 import * as BABYLON from "babylonjs";
+import { cellPixelShader } from "babylonjs-materials/cell/cell.fragment";
 import { BehaviorSubject } from "rxjs";
 import { HexGrid } from "../classes/HexGrid";
 import { HexMetrics } from "../classes/HexMetrics";
@@ -25,7 +26,8 @@ export class TerrainGeneratorService {
 
       // create Mesh
       let hexGrid = new HexGrid(25, 25, heightMapTexture, scene);
-      let generateTerrain = hexGrid.getMergedMesh();
+      //let generateTerrain = hexGrid.getMergedMesh();
+      let hexCells = hexGrid.getCells();
 
       // Shader Setup
       const lightPosition = new BABYLON.Vector3(-250, 500, -250);
@@ -105,10 +107,27 @@ export class TerrainGeneratorService {
 
       //terrainMaterial.wireframe = true;
 
-      //console.log(generateTerrain);
-      generateTerrain.material = terrainMaterial;
+      scene.ambientColor = new BABYLON.Color3(1, 1, 1);
 
-      this.generatedTerrainSubject.next(generateTerrain);
+      //console.log(generateTerrain);
+      //generateTerrain.material = terrainMaterial;
+      let myMaterial = new BABYLON.StandardMaterial("test1", scene)
+      /*myMaterial.diffuseColor = new BABYLON.Color3(1, 0, 1);
+      myMaterial.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);
+      myMaterial.emissiveColor = new BABYLON.Color3(1, 1, 1);
+      myMaterial.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);*/
+
+      // generateTerrain.material = terrainMaterial;
+
+      
+      hexCells.forEach((cell) => {
+        cell.mesh.useVertexColors = true;
+        terrainMaterial.setColor3("test", cell.color);
+        cell.mesh.material = terrainMaterial;
+
+      });
+
+      //this.generatedTerrainSubject.next(generateTerrain);
     });
   }
 
