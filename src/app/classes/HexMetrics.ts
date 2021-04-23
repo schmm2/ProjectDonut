@@ -21,7 +21,7 @@ export class HexMetrics {
       new BABYLON.Vector3(b.r, b.g, b.b),
       step
     );
-    return new BABYLON.Color3(lerp.x,lerp.y,lerp.z);
+    return new BABYLON.Color3(lerp.x, lerp.y, lerp.z);
   }
   public static TerraceLerp(a: BABYLON.Vector3, b: BABYLON.Vector3, step: number) {
     // horizontal offset
@@ -33,6 +33,25 @@ export class HexMetrics {
     let y = (b.y - a.y) * v;
 
     return new BABYLON.Vector3(a.x + x, a.y + y, a.z + z);
+  }
+
+  public static mix3Colors(
+    col1: BABYLON.Color3,
+    col2: BABYLON.Color3,
+    col3: BABYLON.Color3) {
+    let r = (col1.r + col2.r + col3.r) / 3;
+    let g = (col1.g + col2.g + col3.g) / 3;
+    let b = (col1.b + col2.b + col3.b) / 3;
+    return new BABYLON.Color3(r, g, b);
+  }
+
+  public static mix2Colors(
+    col1: BABYLON.Color3,
+    col2: BABYLON.Color3) {
+    let r = (col1.r + col2.r) / 2;
+    let g = (col1.g + col2.g) / 2;
+    let b = (col1.b + col2.b) / 2;
+    return new BABYLON.Color3(r, g, b);
   }
 
   public static setNoise(noiseTexture) {

@@ -26,9 +26,8 @@ export class TerrainGeneratorService {
 
       // create Mesh
       let hexGrid = new HexGrid(25, 25, heightMapTexture, scene);
-      //let generateTerrain = hexGrid.getMergedMesh();
-      let hexCells = hexGrid.getCells();
-
+      let generateTerrain = hexGrid.getMergedMesh();
+      
       // Shader Setup
       const lightPosition = new BABYLON.Vector3(-250, 500, -250);
       const lightColor = new BABYLON.Vector3(220 / 255, 220 / 255, 240 / 255);
@@ -105,29 +104,8 @@ export class TerrainGeneratorService {
       terrainMaterial.setVector3("lightPosition", lightPosition);
       terrainMaterial.setVector3("lightColor", lightColor);
 
-      //terrainMaterial.wireframe = true;
-
-      scene.ambientColor = new BABYLON.Color3(1, 1, 1);
-
-      //console.log(generateTerrain);
-      //generateTerrain.material = terrainMaterial;
-      let myMaterial = new BABYLON.StandardMaterial("test1", scene)
-      /*myMaterial.diffuseColor = new BABYLON.Color3(1, 0, 1);
-      myMaterial.specularColor = new BABYLON.Color3(0.5, 0.6, 0.87);
-      myMaterial.emissiveColor = new BABYLON.Color3(1, 1, 1);
-      myMaterial.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);*/
-
-      // generateTerrain.material = terrainMaterial;
-
-      
-      hexCells.forEach((cell) => {
-        cell.mesh.useVertexColors = true;
-        //terrainMaterial.setColor3("test", cell.color);
-        cell.mesh.material = terrainMaterial;
-
-      });
-
-      //this.generatedTerrainSubject.next(generateTerrain);
+      generateTerrain.material = terrainMaterial;
+      this.generatedTerrainSubject.next(generateTerrain);
     });
   }
 

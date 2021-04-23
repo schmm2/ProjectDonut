@@ -199,6 +199,8 @@ export class HexCell {
     beginLeft: BABYLON.Vector3, beginRight: BABYLON.Vector3, beginCell: HexCell,
     endLeft: BABYLON.Vector3, endRight: BABYLON.Vector3, endCell: HexCell
   ) {
+
+    // first quads row
     let v3 = HexMetrics.TerraceLerp(beginLeft, endLeft, 1.0);
     let v4 = HexMetrics.TerraceLerp(beginRight, endRight, 1.0);
     let c2 = HexMetrics.TerraceLerpColor(beginCell.color, endCell.color, 1.0);
@@ -206,6 +208,7 @@ export class HexCell {
     this.addQuad(beginLeft, beginRight, v3, v4);
     this.addQuadColorDouble(beginCell.color, c2);
 
+    // quad rows in between
     for (let i = 2.0; i < HexMetrics.terraceSteps; i++) {
       // need to create new object as JS will reference the objects
       let v1 = new BABYLON.Vector3(v3.x, v3.y, v3.z);
@@ -220,73 +223,103 @@ export class HexCell {
       this.addQuadColorDouble(c1, c2);
     }
 
+    // last quads row
     this.addQuad(v3, v4, endLeft, endRight);
     this.addQuadColorDouble(c2, endCell.color);
   }
 
   triangulateCorner(
-    bottom: BABYLON.Vector3, bottomCell: HexCell,
-    left: BABYLON.Vector3, leftCell_: HexCell,
+    begin: BABYLON.Vector3, beginCell: HexCell,
+    left: BABYLON.Vector3, leftCell: HexCell,
     right: BABYLON.Vector3, rightCell: HexCell,
   ) {
-
-    let v3 = HexMetrics.TerraceLerp(bottom, left, 1.0);
-    let v4 = HexMetrics.TerraceLerp(bottom, right, 1.0);
     let v5 = null;
     let v6 = null;
     let v7 = null;
     let v8 = null;
 
-    // start triangle
-    this.addTriangle(bottom, v3, v4);
-    this.addTriangleColor(this.color, this.color, this.color);
+    // center color
+    let c5 = HexMetrics.mix3Colors(beginCell.color, leftCell.color, rightCell.color);
+    let c6 = null;
+    let c7 = null;
+    let c8 = null;
+    let c9 = HexMetrics.TerraceLerpColor(leftCell.color, rightCell.color, 1.0);
+    let c10 = HexMetrics.TerraceLerpColor(leftCell.color, rightCell.color, 2.0);
+    let c11 = HexMetrics.TerraceLerpColor(leftCell.color, rightCell.color, 3.0);
+    let c12 = HexMetrics.TerraceLerpColor(leftCell.color, rightCell.color, 4.0);
+    let c13 = HexMetrics.TerraceLerpColor(leftCell.color, rightCell.color, 5.0);
+
+    // first row, start triangle, at the bottom
+    let v3 = HexMetrics.TerraceLerp(begin, left, 1.0);
+    let v4 = HexMetrics.TerraceLerp(begin, right, 1.0);
+
+    let c3 = HexMetrics.TerraceLerpColor(beginCell.color, leftCell.color, 1.0);
+    let c4 = HexMetrics.TerraceLerpColor(beginCell.color, rightCell.color, 1.0);
+
+    this.addTriangle(begin, v3, v4);
+    this.addTriangleColor(beginCell.color, c3, c4);
 
     for (let q = 2.0; q <= HexMetrics.terraceSteps; q++) {
       let v1 = new BABYLON.Vector3(v3.x, v3.y, v3.z);
       let v2 = new BABYLON.Vector3(v4.x, v4.y, v4.z);
+      let c1 = new BABYLON.Color3(c3.r, c3.g, c3.b);
+      let c2 = new BABYLON.Color3(c4.r, c4.g, c4.b);
 
-      v3 = HexMetrics.TerraceLerp(bottom, left, q);
-      v4 = HexMetrics.TerraceLerp(bottom, right, q);
+      v3 = HexMetrics.TerraceLerp(begin, left, q);
+      v4 = HexMetrics.TerraceLerp(begin, right, q);
+
+      c3 = HexMetrics.TerraceLerpColor(beginCell.color, leftCell.color, q);
+      c4 = HexMetrics.TerraceLerpColor(beginCell.color, rightCell.color, q);
 
       // add Quad Rows
       // all up to the last 3 rows
       if (q <= HexMetrics.terraceSteps - 3) {
         this.addQuad(v1, v2, v3, v4);
-        this.addQuadColor(this.color, this.color, this.color, this.color);
+        this.addQuadColor(c1, c2, c3, c4);
       }
-      // add third last row, all triangles
+
+      // third last row, all triangles
       if (q == HexMetrics.terraceSteps - 2) {
         // get horizontal point
         v5 = HexMetrics.TerraceLerp(v3, v4, 3.0);
 
         this.addTriangle(v1, v3, v5); // left
-        this.addTriangle(v5, v2, v1); // left
+        this.addTriangle(v5, v2, v1); // middle
         this.addTriangle(v2, v5, v4); // right
 
-        this.addTriangleColor(this.color, this.color, this.color);
-        this.addTriangleColor(this.color, this.color, this.color);
-        this.addTriangleColor(this.color, this.color, this.color);
+        this.addTriangleColor(c1, c3, c5); // left
+        this.addTriangleColor(c5, c2, c1); // middle
+        this.addTriangleColor(c2, c5, c4); // right
       }
+
       // second last row
       if (q == HexMetrics.terraceSteps - 1) {
         // get horizontal point
         v6 = HexMetrics.TerraceLerp(v3, v4, 2.0); // left
-        v7 = HexMetrics.TerraceLerp(v3, v4, 3.0);
-        v8 = HexMetrics.TerraceLerp(v3, v4, 4.0);
+        v7 = HexMetrics.TerraceLerp(v3, v4, 3.0); // middle
+        v8 = HexMetrics.TerraceLerp(v3, v4, 4.0); // right
 
+        // mix colors
+        c6 = HexMetrics.mix2Colors(c1, c10);
+        c7 = HexMetrics.mix2Colors(c5, c11);
+        c8 = HexMetrics.mix2Colors(c2, c12);
+
+        // triangles
         this.addTriangle(v1, v3, v6); // left
         this.addTriangle(v8, v4, v2); // right
 
-        this.addTriangleColor(this.color, this.color, this.color);
-        this.addTriangleColor(this.color, this.color, this.color);
+        this.addTriangleColor(c1, c3, c6);
+        this.addTriangleColor(c8, c4, c2);
 
-        // left quads
-        this.addQuad(v1, v5, v6, v7);
-        this.addQuad(v5, v2, v7, v8);
+        // quads
+        this.addQuad(v1, v5, v6, v7); // left
+        this.addQuad(v5, v2, v7, v8); // right
 
-        this.addQuadColor(this.color, this.color, this.color, this.color);
-        this.addQuadColor(this.color, this.color, this.color, this.color);
+        this.addQuadColor(c1, c5, c6, c7);
+        this.addQuadColor(c5, c2, c7, c8);
       }
+
+      // last row
       if (q == HexMetrics.terraceSteps) {
         let v9 = HexMetrics.TerraceLerp(v3, v4, 1.0);
         let v10 = HexMetrics.TerraceLerp(v3, v4, 2.0);
@@ -294,22 +327,21 @@ export class HexCell {
         let v12 = HexMetrics.TerraceLerp(v3, v4, 4.0);
         let v13 = HexMetrics.TerraceLerp(v3, v4, 5.0);
 
-
         this.addTriangle(v1, v3, v9); // left
         this.addTriangle(v2, v13, v4); // right
 
-        this.addTriangleColor(this.color, this.color, this.color);
-        this.addTriangleColor(this.color, this.color, this.color);
+        this.addTriangleColor(c1, c3, c9);
+        this.addTriangleColor(c2, c13, c4);
 
         this.addQuad(v8, v2, v12, v13);
         this.addQuad(v7, v8, v11, v12);
         this.addQuad(v6, v7, v10, v11);
         this.addQuad(v1, v6, v9, v10);
 
-        this.addQuadColor(this.color, this.color, this.color, this.color);
-        this.addQuadColor(this.color, this.color, this.color, this.color);
-        this.addQuadColor(this.color, this.color, this.color, this.color);
-        this.addQuadColor(this.color, this.color, this.color, this.color);
+        this.addQuadColor(c8, c2, c12, c13);
+        this.addQuadColor(c7, c8, c11, c12);
+        this.addQuadColor(c6, c7, c10, c11);
+        this.addQuadColor(c1, c6, c9, c10);
       }
     }
   }

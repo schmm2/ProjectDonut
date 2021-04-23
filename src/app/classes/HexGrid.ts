@@ -34,10 +34,6 @@ export class HexGrid {
     return Math.floor(Math.random() * max);
   }
 
-  getCells(){
-    return this.cells;
-  }
-
   findDistancesTo(cell: HexCell) {
     for (let i = 0; i < this.cells.length; i++) {
       this.cells[i].distance = 0;
@@ -195,7 +191,7 @@ export class HexGrid {
       }
     });
 
-    //this.mergedMesh = BABYLON.Mesh.MergeMeshes(tmpMeshes, true, true);
+    this.mergedMesh = BABYLON.Mesh.MergeMeshes(tmpMeshes, true, true);
     // todo: find out why the faces point downwards
 
     //this.mergedMesh.wireframe =true;
