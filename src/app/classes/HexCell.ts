@@ -18,8 +18,8 @@ export class HexCell {
   public isMountainEdgeCell: boolean = false;
   public mountainPath = [];
   public distance;
-  public color:BABYLON.Color3;
-  public colors = [];
+  public color: BABYLON.Color4;
+  public colors: BABYLON.Color4[] = [];
 
   distanceTo(otherCell) {
     return this.center.x - otherCell.center.x;
@@ -44,11 +44,11 @@ export class HexCell {
     cell.neighbors[HexDirectionExtension.opposite(direction)] = this;
   }
 
-  addTriangleColor (c1: BABYLON.Color3) {
-		this.colors.push(new BABYLON.Color4(c1.r,c1.g,c1.b,1.0));
-    this.colors.push(new BABYLON.Color4(c1.r,c1.g,c1.b,1.0));
-    this.colors.push(new BABYLON.Color4(c1.r,c1.g,c1.b,1.0));
-	}
+  addTriangleColor(c1: BABYLON.Color4, c2: BABYLON.Color4, c3: BABYLON.Color4) {
+    this.colors.push(c1);
+    this.colors.push(c2);
+    this.colors.push(c3);
+  }
 
   addTriangle(vec1: BABYLON.Vector3, vec2: BABYLON.Vector3, vec3: BABYLON.Vector3) {
     let verticesLength = this.vertices.length;
@@ -62,16 +62,14 @@ export class HexCell {
     this.indices.push(verticesLength);
     this.indices.push(verticesLength + 1);
     this.indices.push(verticesLength + 2);
-
-    this.addTriangleColor(this.color);
   }
 
-  addQuadColor (c1:BABYLON.Color3, c2:BABYLON.Color3, c3:BABYLON.Color3, c4:BABYLON.Color3) {
-		this.colors.push(new BABYLON.Color4(c1.r,c1.g,c1.b,1.0));
-		this.colors.push(new BABYLON.Color4(c1.r,c1.g,c1.b,1.0));
-		this.colors.push(new BABYLON.Color4(c1.r,c1.g,c1.b,1.0));
-		this.colors.push(new BABYLON.Color4(c1.r,c1.g,c1.b,1.0));
-	}
+  addQuadColor(c1: BABYLON.Color4, c2: BABYLON.Color4, c3: BABYLON.Color4, c4: BABYLON.Color4) {
+    this.colors.push(c1);
+    this.colors.push(c2);
+    this.colors.push(c3);
+    this.colors.push(c4);
+  }
 
   addQuad(v1: BABYLON.Vector3, v2: BABYLON.Vector3, v3: BABYLON.Vector3, v4: BABYLON.Vector3) {
     let verticesLength = this.vertices.length;
@@ -89,13 +87,6 @@ export class HexCell {
     this.indices.push(verticesLength + 1);
     this.indices.push(verticesLength + 2);
     this.indices.push(verticesLength + 3);
-
-    this.addQuadColor(
-			this.color,
-      this.color,
-      this.color,
-      this.color,
-		);
   }
 
   // build quad bridge and edge triangle
@@ -166,7 +157,8 @@ export class HexCell {
     // connection bridge contains 3 quads
     this.triangulateEdgeTerraces(v1, e1, cell, v3, e3, neighbor);
     this.triangulateEdgeTerraces(e1, e2, cell, e3, e4, neighbor);
-    this.triangulateEdgeTerraces(e2, v2, cell, e4, v4, neighbor);/*
+    this.triangulateEdgeTerraces(e2, v2, cell, e4, v4, neighbor);
+    
     /*this.addQuad(v1, e1, v3, e3);
     this.addQuad(e1, e2, e3, e4);
     this.addQuad(e2, v2, e4, v4);*/
@@ -211,6 +203,7 @@ export class HexCell {
     //let c2 = HexMetrics.TerraceLerp(beginCell.color, endCell.color, 1);
 
     this.addQuad(beginLeft, beginRight, v3, v4);
+    this.addQuadColor(this.color,this.color,this.color,this.color);
 
     for (let i = 2.0; i < HexMetrics.terraceSteps; i++) {
       let v1 = new BABYLON.Vector3(v3.x, v3.y, v3.z);
@@ -219,99 +212,49 @@ export class HexCell {
       v3 = HexMetrics.TerraceLerp(beginLeft, endLeft, i);
       v4 = HexMetrics.TerraceLerp(beginRight, endRight, i);
       //c2 = HexMetrics.TerraceLerp(beginCell.color, endCell.color, i);
+      
       this.addQuad(v1, v2, v3, v4);
+      this.addQuadColor(this.color,this.color,this.color,this.color);
+
       //AddQuadColor(c1, c2);
     }
 
     this.addQuad(v3, v4, endLeft, endRight);
+    this.addQuadColor(this.color,this.color,this.color,this.color);
+
     //this.addQuad(beginLeft, beginRight, endLeft, endRight);
     // AddQuadColor(beginCell.color, endCell.color);
   }
 
   triangulateCorner(
-    lowest: BABYLON.Vector3, bottomCell: HexCell,
-    middle: BABYLON.Vector3, leftCell: HexCell,
-    highest: BABYLON.Vector3, rightCell: HexCell
-  ) {
-    //this.addTriangle(bottom, left, right);
-
-    // find center of the three triangle edges
-    let xCenter = (lowest.x + middle.x + highest.x) / 3;
-    let yCenter = (lowest.y + middle.y + highest.y) / 3;
-    let zCenter = (lowest.z + middle.z + highest.z) / 3;
-
-    let center = new BABYLON.Vector3(xCenter, yCenter, zCenter);
-
-    this.triangulateCornerTerraces2(
-      lowest, bottomCell, middle, leftCell, highest, rightCell, center
-    )
-  }
-
-  triangulateCornerTerraces(
-    lowest: BABYLON.Vector3, lowestCell: HexCell,
-    middle: BABYLON.Vector3, middleCell_: HexCell,
-    higest: BABYLON.Vector3, higestCell: HexCell,
-    center: BABYLON.Vector3
-  ) {
-    let v4 = HexMetrics.TerraceLerp(lowest, middle, 1.0);
-    let v5 = HexMetrics.TerraceLerp(middle, higest, 1.0);
-    let v6 = HexMetrics.TerraceLerp(higest, lowest, 1.0);
-
-    // start triangle
-    this.addTriangle(center, lowest, v4);
-    this.addTriangle(center, middle, v5);
-    this.addTriangle(center, higest, v6);
-
-    // triangle per steps
-    for (let i = 2.0; i < HexMetrics.terraceSteps; i++) {
-      let v1 = new BABYLON.Vector3(v4.x, v4.y, v4.z);
-      let v2 = new BABYLON.Vector3(v5.x, v5.y, v5.z);
-      let v3 = new BABYLON.Vector3(v6.x, v6.y, v6.z);
-
-      v4 = HexMetrics.TerraceLerp(lowest, middle, i);
-      v5 = HexMetrics.TerraceLerp(middle, higest, i);
-      v6 = HexMetrics.TerraceLerp(higest, lowest, i);
-
-
-      this.addTriangle(center, v1, v4);
-      this.addTriangle(center, v2, v5);
-      this.addTriangle(center, v3, v6);
-    }
-
-    // end triangle
-    this.addTriangle(middle, center, v4);
-    this.addTriangle(higest, center, v5);
-    this.addTriangle(lowest, center, v6);
-  }
-
-  triangulateCornerTerraces2(
-    lowest: BABYLON.Vector3, lowestCell: HexCell,
-    middle: BABYLON.Vector3, middleCell_: HexCell,
-    higest: BABYLON.Vector3, higestCell: HexCell,
-    center: BABYLON.Vector3
+    bottom: BABYLON.Vector3, bottomCell: HexCell,
+    left: BABYLON.Vector3, leftCell_: HexCell,
+    right: BABYLON.Vector3, rightCell: HexCell,
   ) {
 
-    let v3 = HexMetrics.TerraceLerp(lowest, middle, 1.0);
-    let v4 = HexMetrics.TerraceLerp(lowest, higest, 1.0);
+    let v3 = HexMetrics.TerraceLerp(bottom, left, 1.0);
+    let v4 = HexMetrics.TerraceLerp(bottom, right, 1.0);
     let v5 = null;
     let v6 = null;
     let v7 = null;
     let v8 = null;
 
     // start triangle
-    this.addTriangle(lowest, v3, v4);
+    this.addTriangle(bottom, v3, v4);
+    this.addTriangleColor(this.color,this.color,this.color);
 
     for (let q = 2.0; q <= HexMetrics.terraceSteps; q++) {
       let v1 = new BABYLON.Vector3(v3.x, v3.y, v3.z);
       let v2 = new BABYLON.Vector3(v4.x, v4.y, v4.z);
 
-      v3 = HexMetrics.TerraceLerp(lowest, middle, q);
-      v4 = HexMetrics.TerraceLerp(lowest, higest, q);
+      v3 = HexMetrics.TerraceLerp(bottom, left, q);
+      v4 = HexMetrics.TerraceLerp(bottom, right, q);
 
       // add Quad Rows
       // all up to the last 3 rows
       if (q <= HexMetrics.terraceSteps - 3) {
         this.addQuad(v1, v2, v3, v4);
+        this.addQuadColor(this.color,this.color,this.color,this.color);
       }
       // add third last row, all triangles
       if (q == HexMetrics.terraceSteps - 2) {
@@ -319,8 +262,12 @@ export class HexCell {
         v5 = HexMetrics.TerraceLerp(v3, v4, 3.0);
 
         this.addTriangle(v1, v3, v5); // left
-        this.addTriangle(v5, v2, v1); // middle
+        this.addTriangle(v5, v2, v1); // left
         this.addTriangle(v2, v5, v4); // right
+
+        this.addTriangleColor(this.color,this.color,this.color);
+        this.addTriangleColor(this.color,this.color,this.color);
+        this.addTriangleColor(this.color,this.color,this.color);
       }
       // second last row
       if (q == HexMetrics.terraceSteps - 1) {
@@ -332,10 +279,15 @@ export class HexCell {
         this.addTriangle(v1, v3, v6); // left
         this.addTriangle(v8, v4, v2); // right
 
-        // middle quads
+        this.addTriangleColor(this.color,this.color,this.color);
+        this.addTriangleColor(this.color,this.color,this.color);
+
+        // left quads
         this.addQuad(v1, v5, v6, v7);
         this.addQuad(v5, v2, v7, v8);
-        
+
+        this.addQuadColor(this.color,this.color,this.color,this.color);
+        this.addQuadColor(this.color,this.color,this.color,this.color);
       }
       if (q == HexMetrics.terraceSteps) {
         let v9 = HexMetrics.TerraceLerp(v3, v4, 1.0);
@@ -348,10 +300,18 @@ export class HexCell {
         this.addTriangle(v1, v3, v9); // left
         this.addTriangle(v2, v13, v4); // right
 
+        this.addTriangleColor(this.color,this.color,this.color);
+        this.addTriangleColor(this.color,this.color,this.color);
+
         this.addQuad(v8, v2, v12, v13);
         this.addQuad(v7, v8, v11, v12);
         this.addQuad(v6, v7, v10, v11);
         this.addQuad(v1, v6, v9, v10);
+
+        this.addQuadColor(this.color,this.color,this.color,this.color);
+        this.addQuadColor(this.color,this.color,this.color,this.color);
+        this.addQuadColor(this.color,this.color,this.color,this.color);
+        this.addQuadColor(this.color,this.color,this.color,this.color);
       }
     }
   }
@@ -385,7 +345,7 @@ export class HexCell {
     BABYLON.VertexData.ComputeNormals(this.positions, this.indices, normals);
 
     let vertexData = new BABYLON.VertexData();
-    
+
     //console.log(colorsFinal);
     //console.log(this.positions);
 
@@ -393,8 +353,6 @@ export class HexCell {
     vertexData.positions = this.positions;
     vertexData.indices = this.indices;
     vertexData.normals = normals;
-
-    
 
     vertexData.applyToMesh(this.mesh, true);
   }
@@ -425,6 +383,10 @@ export class HexCell {
       e2,
       v2
     )
+
+    this.addTriangleColor(this.color,this.color,this.color);
+    this.addTriangleColor(this.color,this.color,this.color);
+    this.addTriangleColor(this.color,this.color,this.color);
 
     if (cell.isMountainCell) {
       if (cell.neighbors[direction]) {

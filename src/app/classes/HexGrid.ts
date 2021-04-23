@@ -21,7 +21,7 @@ export class HexGrid {
   private heightMapStepsHeight;
   private heightMapPixels;
   private writer;
-  public colors = [];
+  public colors = [new BABYLON.Color4(1,0,0,1),new BABYLON.Color4(0,1,0,1), new BABYLON.Color4(0,0,1,1)];
   public defaultColor = new BABYLON.Color3(1,1,0);
 
   
@@ -29,6 +29,10 @@ export class HexGrid {
 
   private stepHeight = 0.3;
   private mountainHeight = 5.0;
+
+  getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+  }
 
   getCells(){
     return this.cells;
@@ -94,7 +98,7 @@ export class HexGrid {
       }
 
       cell.mesh.flipFaces(true);
-      
+
       // hex mountain cells are not rendered 
       if (!cell.isMountainCell) {
         tmpMeshes.push(cell.mesh);
@@ -257,7 +261,8 @@ export class HexGrid {
     cell.mesh.position.x = position.x;
     cell.mesh.position.z = position.z;
 
-    cell.color = this.defaultColor;
+    let randomInt = this.getRandomInt(3);
+    cell.color = this.colors[randomInt];
 
     // set hex coordinates
     let coordinates = HexCoordinates.fromOffsetCoordinates(x, z);

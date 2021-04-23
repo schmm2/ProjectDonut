@@ -122,7 +122,7 @@ export class TerrainGeneratorService {
       
       hexCells.forEach((cell) => {
         cell.mesh.useVertexColors = true;
-        terrainMaterial.setColor3("test", cell.color);
+        //terrainMaterial.setColor3("test", cell.color);
         cell.mesh.material = terrainMaterial;
 
       });
