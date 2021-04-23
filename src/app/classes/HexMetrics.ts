@@ -14,7 +14,16 @@ export class HexMetrics {
   public static horizontalTerraceStepSize = 1.0 / HexMetrics.terraceSteps;
   public static verticalTerraceStepSize = 1.0 / HexMetrics.terraceSteps;
 
-  public static TerraceLerp(a: BABYLON.Vector3, b: BABYLON.Vector3, step) {
+  // reuse of function not direct Type mismatch Color3/ Vector3
+  public static TerraceLerpColor(a: BABYLON.Color3, b: BABYLON.Color3, step: number) {
+    let lerp = HexMetrics.TerraceLerp(
+      new BABYLON.Vector3(a.r, a.g, a.b),
+      new BABYLON.Vector3(b.r, b.g, b.b),
+      step
+    );
+    return new BABYLON.Color3(lerp.x,lerp.y,lerp.z);
+  }
+  public static TerraceLerp(a: BABYLON.Vector3, b: BABYLON.Vector3, step: number) {
     // horizontal offset
     let h = step * HexMetrics.horizontalTerraceStepSize;
     let x = (b.x - a.x) * h;
@@ -22,7 +31,7 @@ export class HexMetrics {
     // height, vertical offset, removed terrace formula from example: ((step + 1) / 2) * HexMetrics.verticalTerraceStepSize;
     let v = step * HexMetrics.verticalTerraceStepSize;
     let y = (b.y - a.y) * v;
-    
+
     return new BABYLON.Vector3(a.x + x, a.y + y, a.z + z);
   }
 

@@ -18,8 +18,8 @@ export class HexCell {
   public isMountainEdgeCell: boolean = false;
   public mountainPath = [];
   public distance;
-  public color: BABYLON.Color4;
-  public colors: BABYLON.Color4[] = [];
+  public color: BABYLON.Color3;
+  public colors: BABYLON.Color3[] = [];
 
   distanceTo(otherCell) {
     return this.center.x - otherCell.center.x;
@@ -44,7 +44,7 @@ export class HexCell {
     cell.neighbors[HexDirectionExtension.opposite(direction)] = this;
   }
 
-  addTriangleColor(c1: BABYLON.Color4, c2: BABYLON.Color4, c3: BABYLON.Color4) {
+  addTriangleColor(c1: BABYLON.Color3, c2: BABYLON.Color3, c3: BABYLON.Color3) {
     this.colors.push(c1);
     this.colors.push(c2);
     this.colors.push(c3);
@@ -64,7 +64,11 @@ export class HexCell {
     this.indices.push(verticesLength + 2);
   }
 
-  addQuadColor(c1: BABYLON.Color4, c2: BABYLON.Color4, c3: BABYLON.Color4, c4: BABYLON.Color4) {
+  addQuadColorDouble(c1: BABYLON.Color3, c2: BABYLON.Color3) {
+    this.addQuadColor(c1, c1, c2, c2);
+  }
+
+  addQuadColor(c1: BABYLON.Color3, c2: BABYLON.Color3, c3: BABYLON.Color3, c4: BABYLON.Color3) {
     this.colors.push(c1);
     this.colors.push(c2);
     this.colors.push(c3);
@@ -155,13 +159,9 @@ export class HexCell {
     // console.log(v2);
 
     // connection bridge contains 3 quads
-    this.triangulateEdgeTerraces(v1, e1, cell, v3, e3, neighbor);
-    this.triangulateEdgeTerraces(e1, e2, cell, e3, e4, neighbor);
-    this.triangulateEdgeTerraces(e2, v2, cell, e4, v4, neighbor);
-    
-    /*this.addQuad(v1, e1, v3, e3);
-    this.addQuad(e1, e2, e3, e4);
-    this.addQuad(e2, v2, e4, v4);*/
+    this.triangulateEdgeSlope(v1, e1, cell, v3, e3, neighbor);
+    this.triangulateEdgeSlope(e1, e2, cell, e3, e4, neighbor);
+    this.triangulateEdgeSlope(e2, v2, cell, e4, v4, neighbor);
 
     let nextNeighbor = cell.getNeighbor(HexDirectionExtension.next(direction));
 
@@ -171,7 +171,8 @@ export class HexCell {
     }
 
     // add corner triangles
-    // Not yet, as we're now producing overlapping triangles. Because three cells share one triangular connection, we only need to add them for two connections. So just NE and E will do.
+    // Explenation from Tutorial: 
+    // Because three cells share one triangular connection, we only need to add them for two connections. So just NE and E will do.
     if (direction <= HexDirection.E && nextNeighbor != null) {
       let bridge = HexMetrics.getBridge(HexDirectionExtension.next(direction));
       let v5 = v2.add(bridge);
@@ -194,36 +195,33 @@ export class HexCell {
     }
   }
 
-  triangulateEdgeTerraces(
+  triangulateEdgeSlope(
     beginLeft: BABYLON.Vector3, beginRight: BABYLON.Vector3, beginCell: HexCell,
     endLeft: BABYLON.Vector3, endRight: BABYLON.Vector3, endCell: HexCell
   ) {
     let v3 = HexMetrics.TerraceLerp(beginLeft, endLeft, 1.0);
     let v4 = HexMetrics.TerraceLerp(beginRight, endRight, 1.0);
-    //let c2 = HexMetrics.TerraceLerp(beginCell.color, endCell.color, 1);
+    let c2 = HexMetrics.TerraceLerpColor(beginCell.color, endCell.color, 1.0);
 
     this.addQuad(beginLeft, beginRight, v3, v4);
-    this.addQuadColor(this.color,this.color,this.color,this.color);
+    this.addQuadColorDouble(beginCell.color, c2);
 
     for (let i = 2.0; i < HexMetrics.terraceSteps; i++) {
+      // need to create new object as JS will reference the objects
       let v1 = new BABYLON.Vector3(v3.x, v3.y, v3.z);
       let v2 = new BABYLON.Vector3(v4.x, v4.y, v4.z);
-      //let c1 = c2;
+      let c1 = new BABYLON.Color3(c2.r, c2.g, c2.b);
+
       v3 = HexMetrics.TerraceLerp(beginLeft, endLeft, i);
       v4 = HexMetrics.TerraceLerp(beginRight, endRight, i);
-      //c2 = HexMetrics.TerraceLerp(beginCell.color, endCell.color, i);
-      
-      this.addQuad(v1, v2, v3, v4);
-      this.addQuadColor(this.color,this.color,this.color,this.color);
+      c2 = HexMetrics.TerraceLerpColor(beginCell.color, endCell.color, i);
 
-      //AddQuadColor(c1, c2);
+      this.addQuad(v1, v2, v3, v4);
+      this.addQuadColorDouble(c1, c2);
     }
 
     this.addQuad(v3, v4, endLeft, endRight);
-    this.addQuadColor(this.color,this.color,this.color,this.color);
-
-    //this.addQuad(beginLeft, beginRight, endLeft, endRight);
-    // AddQuadColor(beginCell.color, endCell.color);
+    this.addQuadColorDouble(c2, endCell.color);
   }
 
   triangulateCorner(
@@ -241,7 +239,7 @@ export class HexCell {
 
     // start triangle
     this.addTriangle(bottom, v3, v4);
-    this.addTriangleColor(this.color,this.color,this.color);
+    this.addTriangleColor(this.color, this.color, this.color);
 
     for (let q = 2.0; q <= HexMetrics.terraceSteps; q++) {
       let v1 = new BABYLON.Vector3(v3.x, v3.y, v3.z);
@@ -254,7 +252,7 @@ export class HexCell {
       // all up to the last 3 rows
       if (q <= HexMetrics.terraceSteps - 3) {
         this.addQuad(v1, v2, v3, v4);
-        this.addQuadColor(this.color,this.color,this.color,this.color);
+        this.addQuadColor(this.color, this.color, this.color, this.color);
       }
       // add third last row, all triangles
       if (q == HexMetrics.terraceSteps - 2) {
@@ -265,9 +263,9 @@ export class HexCell {
         this.addTriangle(v5, v2, v1); // left
         this.addTriangle(v2, v5, v4); // right
 
-        this.addTriangleColor(this.color,this.color,this.color);
-        this.addTriangleColor(this.color,this.color,this.color);
-        this.addTriangleColor(this.color,this.color,this.color);
+        this.addTriangleColor(this.color, this.color, this.color);
+        this.addTriangleColor(this.color, this.color, this.color);
+        this.addTriangleColor(this.color, this.color, this.color);
       }
       // second last row
       if (q == HexMetrics.terraceSteps - 1) {
@@ -279,15 +277,15 @@ export class HexCell {
         this.addTriangle(v1, v3, v6); // left
         this.addTriangle(v8, v4, v2); // right
 
-        this.addTriangleColor(this.color,this.color,this.color);
-        this.addTriangleColor(this.color,this.color,this.color);
+        this.addTriangleColor(this.color, this.color, this.color);
+        this.addTriangleColor(this.color, this.color, this.color);
 
         // left quads
         this.addQuad(v1, v5, v6, v7);
         this.addQuad(v5, v2, v7, v8);
 
-        this.addQuadColor(this.color,this.color,this.color,this.color);
-        this.addQuadColor(this.color,this.color,this.color,this.color);
+        this.addQuadColor(this.color, this.color, this.color, this.color);
+        this.addQuadColor(this.color, this.color, this.color, this.color);
       }
       if (q == HexMetrics.terraceSteps) {
         let v9 = HexMetrics.TerraceLerp(v3, v4, 1.0);
@@ -300,18 +298,18 @@ export class HexCell {
         this.addTriangle(v1, v3, v9); // left
         this.addTriangle(v2, v13, v4); // right
 
-        this.addTriangleColor(this.color,this.color,this.color);
-        this.addTriangleColor(this.color,this.color,this.color);
+        this.addTriangleColor(this.color, this.color, this.color);
+        this.addTriangleColor(this.color, this.color, this.color);
 
         this.addQuad(v8, v2, v12, v13);
         this.addQuad(v7, v8, v11, v12);
         this.addQuad(v6, v7, v10, v11);
         this.addQuad(v1, v6, v9, v10);
 
-        this.addQuadColor(this.color,this.color,this.color,this.color);
-        this.addQuadColor(this.color,this.color,this.color,this.color);
-        this.addQuadColor(this.color,this.color,this.color,this.color);
-        this.addQuadColor(this.color,this.color,this.color,this.color);
+        this.addQuadColor(this.color, this.color, this.color, this.color);
+        this.addQuadColor(this.color, this.color, this.color, this.color);
+        this.addQuadColor(this.color, this.color, this.color, this.color);
+        this.addQuadColor(this.color, this.color, this.color, this.color);
       }
     }
   }
@@ -335,7 +333,7 @@ export class HexCell {
       colorsFinal.push(colorArrayElement.r);
       colorsFinal.push(colorArrayElement.g);
       colorsFinal.push(colorArrayElement.b);
-      colorsFinal.push(colorArrayElement.a);
+      colorsFinal.push(1.0);
     })
 
     //Empty array to contain calculated values or normals added
@@ -384,9 +382,9 @@ export class HexCell {
       v2
     )
 
-    this.addTriangleColor(this.color,this.color,this.color);
-    this.addTriangleColor(this.color,this.color,this.color);
-    this.addTriangleColor(this.color,this.color,this.color);
+    this.addTriangleColor(this.color, this.color, this.color);
+    this.addTriangleColor(this.color, this.color, this.color);
+    this.addTriangleColor(this.color, this.color, this.color);
 
     if (cell.isMountainCell) {
       if (cell.neighbors[direction]) {

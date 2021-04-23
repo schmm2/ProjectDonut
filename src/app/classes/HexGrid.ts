@@ -21,7 +21,7 @@ export class HexGrid {
   private heightMapStepsHeight;
   private heightMapPixels;
   private writer;
-  public colors = [new BABYLON.Color4(1,0,0,1),new BABYLON.Color4(0,1,0,1), new BABYLON.Color4(0,0,1,1)];
+  public colors = [new BABYLON.Color3(1,0,0),new BABYLON.Color3(0,1,0), new BABYLON.Color3(0,0,1)];
   public defaultColor = new BABYLON.Color3(1,1,0);
 
   
