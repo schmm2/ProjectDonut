@@ -2,8 +2,22 @@ import { HexDirection } from '../enums/HexDirection.enum';
 
 export class HexDirectionExtension {
 	public static opposite (direction: HexDirection) {
-        //let directionNumber = HexDirection[direction];
-		return direction < 3 ? (direction + 3) : (direction - 3);
+    return direction < 3 ? (direction + 3) : (direction - 3);
+	}
+
+	public static mirrorAtXAxis (direction: HexDirection){
+		switch(direction){
+			case 5:
+				return 3;
+			case 0:
+				return 2;
+			case 2: 
+				return 0;
+			case 3:
+				return 5;
+			default:
+				return direction;
+		}
 	}
 
     public static previous (direction: HexDirection) {

@@ -87,6 +87,9 @@ export class EngineService {
     // create a basic BJS Scene object
     this.scene = new Scene(this.engine);
 
+    // enable debug layer
+    this.scene.debugLayer.show();
+
     // load assets
     this.assetLoaderService.init(this.scene);
 

@@ -21,8 +21,8 @@ export class TerrainGeneratorService {
     noiseTexture.onLoadObservable.add(() => {
       // first we set the noisedata in HexMetrics
       // All cells need to be able to sample noise, we store it once
-      HexMetrics.setNoise(noiseTexture);  
-      
+      HexMetrics.setNoise(noiseTexture);
+
       // create Mesh
       let hexGrid = new HexGrid(25, 25, heightMapTexture, scene);
       let generateTerrain = hexGrid.getMergedMesh();
@@ -103,11 +103,13 @@ export class TerrainGeneratorService {
       terrainMaterial.setVector3("lightPosition", lightPosition);
       terrainMaterial.setVector3("lightColor", lightColor);
 
+      //terrainMaterial.wireframe = true;
+
       //console.log(generateTerrain);
       generateTerrain.material = terrainMaterial;
 
       this.generatedTerrainSubject.next(generateTerrain);
-    });    
+    });
   }
 
   public subscribeToGeneratedTerrain() {

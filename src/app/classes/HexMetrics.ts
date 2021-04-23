@@ -9,7 +9,24 @@ export class HexMetrics {
   private static noiseTextureSize;
   private static noiseTexturePixels;
 
-  public static setNoise(noiseTexture){
+  // removed terrasesperslope as we do not want terraces -> we perturb the vertices to get an uneven look
+  public static terraceSteps = 6;
+  public static horizontalTerraceStepSize = 1.0 / HexMetrics.terraceSteps;
+  public static verticalTerraceStepSize = 1.0 / HexMetrics.terraceSteps;
+
+  public static TerraceLerp(a: BABYLON.Vector3, b: BABYLON.Vector3, step) {
+    // horizontal offset
+    let h = step * HexMetrics.horizontalTerraceStepSize;
+    let x = (b.x - a.x) * h;
+    let z = (b.z - a.z) * h;
+    // height, vertical offset, removed terrace formula from example: ((step + 1) / 2) * HexMetrics.verticalTerraceStepSize;
+    let v = step * HexMetrics.verticalTerraceStepSize;
+    let y = (b.y - a.y) * v;
+    
+    return new BABYLON.Vector3(a.x + x, a.y + y, a.z + z);
+  }
+
+  public static setNoise(noiseTexture) {
     this.noiseTextureSize = noiseTexture.getSize();
     this.noiseTexturePixels = noiseTexture.readPixels();
   }
