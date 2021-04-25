@@ -25,6 +25,7 @@ export class HexCell {
   public colors: BABYLON.Color3[] = [];
   private terrainTypes: BABYLON.Vector3[] = [];
   public terrainTypeIndex: number;
+  private terrainTypesFlatArray = [];
 
   static color1 = new BABYLON.Color3(1, 0, 0);
   static color2 = new BABYLON.Color3(0, 1, 0);
@@ -32,6 +33,10 @@ export class HexCell {
 
   distanceTo(otherCell) {
     return this.center.x - otherCell.center.x;
+  }
+
+  public getTerrainTypes(){
+    return this.terrainTypesFlatArray;
   }
 
   public isAMountainAroundMe() {
@@ -139,7 +144,7 @@ export class HexCell {
     let e4 = BABYLON.Vector3.Lerp(v3, v4, 2.0 / 3.0);
 
     // im a normal hex cell and my neighbor is a mountain cell
-    if (!cell.isMountainCell && neighbor.isMountainCell) {
+    //if (!cell.isMountainCell && neighbor.isMountainCell) {
       /*
       // store vertices next to mountain, they belong to the mountain path
       let mountainPatObject = {
@@ -156,8 +161,8 @@ export class HexCell {
       console.log(neighbor.name);
       neighbor.mountainPath[oppositeDirection] = mountainPatObject;
       neighbor.isMountainEdgeCell = true;*/
-      return;
-    }
+      //return;
+    //}
 
 
     /*
@@ -189,9 +194,9 @@ export class HexCell {
     let nextNeighbor = cell.getNeighbor(HexDirectionExtension.next(direction));
 
     // handle mountain neighbor, no need for an edge triangle
-    if (nextNeighbor && nextNeighbor.isMountainCell) {
+    /*if (nextNeighbor && nextNeighbor.isMountainCell) {
       return;
-    }
+    }*/
 
     
     // add corner triangles
@@ -268,10 +273,6 @@ export class HexCell {
 
     let types = new BABYLON.Vector3(type1, type2, type1);
     this.addQuadTerrainTypes(types);
-
-    /*if (hasRoad) {
-      TriangulateRoadSegment(e1.v2, e1.v3, e1.v4, e2.v2, e2.v3, e2.v4);
-    }*/
   }
 
   triangulateCorner(
@@ -280,6 +281,8 @@ export class HexCell {
     right: BABYLON.Vector3, rightCell: HexCell,
     color1: BABYLON.Color3, color2: BABYLON.Color3, color3: BABYLON.Color3
   ) {
+    let types = new BABYLON.Vector3(beginCell.terrainTypeIndex, leftCell.terrainTypeIndex, rightCell.terrainTypeIndex);
+
     // bottom -> red, left -> green, right -> blue
     let v5 = null;
     let v6 = null;
@@ -306,7 +309,6 @@ export class HexCell {
 
     this.addTriangle(begin, v3, v4);
     this.addTriangleColor(color1, c3, c4);
-    let types = new BABYLON.Vector3(beginCell.terrainTypeIndex, leftCell.terrainTypeIndex, rightCell.terrainTypeIndex);
     this.addTriangleTerrainTypes(types);
 
     for (let q = 2.0; q <= HexMetrics.terraceSteps; q++) {
@@ -326,7 +328,7 @@ export class HexCell {
       if (q <= HexMetrics.terraceSteps - 3) {
         this.addQuad(v1, v2, v3, v4);
         this.addQuadColor(c1, c2, c3, c4);
-        let types = new BABYLON.Vector3(beginCell.terrainTypeIndex, leftCell.terrainTypeIndex, rightCell.terrainTypeIndex);
+        
         this.addQuadTerrainTypes(types);
       }
 
@@ -343,7 +345,6 @@ export class HexCell {
         this.addTriangleColor(c5, c2, c1); // middle
         this.addTriangleColor(c2, c5, c4); // right
 
-        let types = new BABYLON.Vector3(beginCell.terrainTypeIndex, leftCell.terrainTypeIndex, rightCell.terrainTypeIndex);
         this.addTriangleTerrainTypes(types);
         this.addTriangleTerrainTypes(types);
         this.addTriangleTerrainTypes(types);
@@ -368,7 +369,6 @@ export class HexCell {
         this.addTriangleColor(c1, c3, c6);
         this.addTriangleColor(c8, c4, c2);
 
-        let types = new BABYLON.Vector3(beginCell.terrainTypeIndex, leftCell.terrainTypeIndex, rightCell.terrainTypeIndex);
         this.addTriangleTerrainTypes(types);
         this.addTriangleTerrainTypes(types);
 
@@ -397,7 +397,6 @@ export class HexCell {
         this.addTriangleColor(c1, c3, c9);
         this.addTriangleColor(c2, c13, c4);
 
-        let types = new BABYLON.Vector3(beginCell.terrainTypeIndex, leftCell.terrainTypeIndex, rightCell.terrainTypeIndex);
         this.addTriangleTerrainTypes(types);
         this.addTriangleTerrainTypes(types);
 
@@ -432,19 +431,13 @@ export class HexCell {
     })
 
     // merge verticedata to one single flat array
-    let terrainTypesFinal = [];
     this.terrainTypes.forEach(terrainTypeArrayElement => {
-      //console.log(terrainTypeArrayElement);
-      //console.log(terrainTypeArrayElement.x.toFixed(1))
-      terrainTypesFinal.push(terrainTypeArrayElement.x);
-      terrainTypesFinal.push(terrainTypeArrayElement.y);
-      terrainTypesFinal.push(terrainTypeArrayElement.z);
+      this.terrainTypesFlatArray.push(terrainTypeArrayElement.x);
+      this.terrainTypesFlatArray.push(terrainTypeArrayElement.y);
+      this.terrainTypesFlatArray.push(terrainTypeArrayElement.z);
     })
-    //console.log(terrainTypesFinal);
-
 
     // merge color data to one single flat array
-    //console.log(this.colors[0]);
     let colorsFinal = [];
     this.colors.forEach(colorArrayElement => {
       colorsFinal.push(colorArrayElement.r);
@@ -460,20 +453,11 @@ export class HexCell {
     BABYLON.VertexData.ComputeNormals(this.positions, this.indices, normals);
 
     let vertexData = new BABYLON.VertexData();
-
-    //console.log(colorsFinal);
-    //console.log(this.positions);
-    //console.log(terrainTypesFinal);
-
-    var terrainTypesRefBuffer = new BABYLON.Buffer(engine, terrainTypesFinal, false);
-    this.mesh.setVerticesBuffer(terrainTypesRefBuffer.createVertexBuffer("terrainTypes", 0, 3, 3));
-
     vertexData.colors = colorsFinal;
     vertexData.positions = this.positions;
     vertexData.indices = this.indices;
     vertexData.normals = normals;
-    //vertexData.uvs2 = terrainTypesFinal;
-
+   
     vertexData.applyToMesh(this.mesh, true);
   }
 
@@ -501,9 +485,9 @@ export class HexCell {
     this.addTriangleTerrainTypes(types);
     this.addTriangleTerrainTypes(types);
 
-    if (cell.isMountainCell) {
+    //if (cell.isMountainCell) {
       if (cell.neighbors[direction]) {
-        if (!cell.neighbors[direction].isMountainCell) {
+        //if (!cell.neighbors[direction].isMountainCell) {
           // build bridge
           let bridge = HexMetrics.getBridge(direction);
           // console.log(bridge);
@@ -543,9 +527,9 @@ export class HexCell {
           }
 
           cell.isMountainEdgeCell = true;
-        }
+       // }
       };
-    }
+    //}
 
     // build bridges and edge triangle
     if (direction <= HexDirection.SE) {

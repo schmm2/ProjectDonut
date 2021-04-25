@@ -85,6 +85,7 @@ export class HexGrid {
     let tmpMeshes = [];
     let mountainCells = [];
     let mountainMeshed = [];
+    let allTerrainTypes = [];
 
     // triangulate
     this.cells.forEach((cell) => {
@@ -92,6 +93,8 @@ export class HexGrid {
       // console.log(cell);
 
       cell.triangulate(this.engine);
+      let terrainTypes = cell.getTerrainTypes();
+      allTerrainTypes = allTerrainTypes.concat(terrainTypes);
 
       // this cell is on the edge of a mountain
       if (cell.isMountainCell) {
@@ -102,12 +105,13 @@ export class HexGrid {
 
       // hex mountain cells are not rendered 
       if (!cell.isMountainCell) {
-        tmpMeshes.push(cell.mesh);
+       
       }
+      tmpMeshes.push(cell.mesh);
     });
 
     console.log(mountainCells);
-
+    
     // build mountains
     mountainCells.forEach((cell) => {
       console.log(cell);
@@ -198,6 +202,10 @@ export class HexGrid {
 
     this.mergedMesh = BABYLON.Mesh.MergeMeshes(tmpMeshes, true, true);
     
+    console.log(allTerrainTypes);
+    var terrainTypesRefBuffer = new BABYLON.Buffer(this.engine, allTerrainTypes, false);
+    this.mergedMesh.setVerticesBuffer(terrainTypesRefBuffer.createVertexBuffer("terrainTypes", 0, 3, 3));
+
     // todo: find out why the faces point downwards
 
     //this.mergedMesh.wireframe =true;
