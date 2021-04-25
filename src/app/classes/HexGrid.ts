@@ -12,6 +12,7 @@ import * as earcut from "earcut";
 export class HexGrid {
   private cells: HexCell[];
   private scene;
+  private engine;
   private mat;
   private width;
   private height;
@@ -38,6 +39,10 @@ export class HexGrid {
     for (let i = 0; i < this.cells.length; i++) {
       this.cells[i].distance = 0;
     }
+  }
+
+  getCells(){
+    return this.cells;
   }
 
   getMergedMesh() {
@@ -86,7 +91,7 @@ export class HexGrid {
       // console.log("TRIANGULATE CELL: " + cell.name);
       // console.log(cell);
 
-      cell.triangulate();
+      cell.triangulate(this.engine);
 
       // this cell is on the edge of a mountain
       if (cell.isMountainCell) {
@@ -192,6 +197,7 @@ export class HexGrid {
     });
 
     this.mergedMesh = BABYLON.Mesh.MergeMeshes(tmpMeshes, true, true);
+    
     // todo: find out why the faces point downwards
 
     //this.mergedMesh.wireframe =true;
@@ -201,7 +207,7 @@ export class HexGrid {
     //console.log(this.mergedMesh)
   }
 
-  constructor(gridWidth, gridHeight, heightMapTexture, scene) {
+  constructor(gridWidth, gridHeight, heightMapTexture, scene, engine) {
 
     //this.writer = MeshWriter(scene, { scale: .25, defaultFont: "Arial" });
 
@@ -213,6 +219,7 @@ export class HexGrid {
 
     this.heightMapPixels = heightMapTexture.readPixels();
 
+    this.engine = engine;
     this.scene = scene;
     this.cells = new Array(gridHeight * gridWidth);
     this.width = gridWidth;
@@ -257,57 +264,12 @@ export class HexGrid {
     cell.mesh.position.x = position.x;
     cell.mesh.position.z = position.z;
 
-    let randomInt = this.getRandomInt(3);
-    cell.color = this.colors[randomInt];
+    // handle type definition
+    cell.terrainTypeIndex = this.getRandomInt(3);
 
     // set hex coordinates
     let coordinates = HexCoordinates.fromOffsetCoordinates(x, z);
     cell.coordinates = coordinates;
-
-
-    /*
-    //Set width an height for plane
-    var planeWidth = 7;
-    var planeHeight = 7;
-
-    //Create plane
-    var plane = BABYLON.MeshBuilder.CreatePlane("plane", { width: planeWidth, height: planeHeight }, this.scene);
-
-    //Set width and height for dynamic texture using same multiplier
-    var DTWidth = planeWidth * 60;
-    var DTHeight = planeHeight * 60;
-
-    //Create dynamic texture
-    var dynamicTexture = new BABYLON.DynamicTexture("DynamicTexture", { width: DTWidth, height: DTHeight }, this.scene, false);
-
-    //Set font type
-    var font_type = "Arial";
-
-    //Check width of text for given font type at any size of font
-    var ctx = dynamicTexture.getContext();
-    var size = 12; //any value will work
-    ctx.font = size + "px " + font_type;
-    var textWidth = ctx.measureText(coordinates.toString()).width;
-
-    //Calculate ratio of text width to size of font used
-    var ratio = textWidth / size;
-
-    //set font to be actually used to write text on dynamic texture
-    var font_size = Math.floor(DTWidth / (ratio * 1)); //size of multiplier (1) can be adjusted, increase for smaller text
-    var font = font_size + "px " + font_type;
-
-    //Draw text
-    dynamicTexture.drawText(coordinates.toString(), null, null, font, "#000000", "#ffffff", true);
-
-    //create material
-    var mat = new BABYLON.StandardMaterial("mat", this.scene);
-    mat.diffuseTexture = dynamicTexture;
-
-    //apply material
-    plane.material = mat;
-    plane.position.x = position.x;
-    plane.position.z = position.z;
-    //plane.position.y = elevation + 1.0;*/
 
     // find neighbors
     if (x > 0) {

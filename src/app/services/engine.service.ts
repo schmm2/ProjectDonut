@@ -218,7 +218,7 @@ export class EngineService {
             console.log("heightmap loaded");
             clearInterval(stateCheckHeightMap);
 
-            this.terrainGeneratorService.generateTerrain(this.scene, heightMapTexture);
+            this.terrainGeneratorService.generateTerrain(this.engine, this.scene, heightMapTexture);
           } else {
             console.log("waiting for texture")
           }
@@ -273,6 +273,10 @@ export class EngineService {
         // this.showWorldAxis(150);
       }
     });
+  }
+
+  public getEngine(){
+    return this.engine;
   }
 
 

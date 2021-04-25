@@ -1,40 +1,85 @@
 #extension GL_OES_standard_derivatives : enable
 
 precision highp float;
+precision highp sampler2DArray;
 
 // uniforms
 uniform mat4 worldView;
 uniform mat4 world;
 
-uniform sampler2D snowTexture;
-uniform sampler2D snowNormalMap;
-
-uniform sampler2D rockTexture;
-uniform sampler2D rockNormalMap;
-
-uniform sampler2D grassTexture;
-uniform sampler2D grassNormalMap;
-
-uniform sampler2D sandTexture;
-uniform sampler2D sandNormalMap;
-
 uniform vec3 lightPosition;
 uniform vec3 lightColor;
 uniform vec3 cameraPosition;
 
+uniform sampler2D terrainTextures[4];
 
 // Varying
 varying vec3 vPosition;
 varying vec3 vNormal;
 varying vec2 vUv;
-
-// Declare empty Variables
-vec3 finalColor;
-
+varying vec3 vTerrainTypes;
 varying vec4 vColor;
 
-uniform vec3 test;
+// attributes
+attribute vec3 terrainTypes;
+
+// constants
+float textureSamplingRate = 0.05;
+float ambientStrength = 1.0;
+float lightStrength = 0.9;
+
+vec4 GetTerrainColor (int index) {
+  float terrainIndex = 0.0;
+  float colorValueForThisChannel = 0.0;
+  vec4 activeTerrainTexture = vec4(0,0,0,0);
+
+  if(index == 0){
+    terrainIndex = round(vTerrainTypes.x * 1.0);
+    colorValueForThisChannel = vColor.r;
+  }
+  else if(index == 1){
+    terrainIndex = round(vTerrainTypes.y * 1.0);
+     colorValueForThisChannel = vColor.g;
+  }
+  else if(index == 2){
+    terrainIndex = round(vTerrainTypes.z * 1.0);
+    colorValueForThisChannel = vColor.b;
+  }
+
+  if(terrainIndex == 0.0){
+    activeTerrainTexture = texture2D(terrainTextures[0], vPosition.xz * textureSamplingRate);
+  }
+  else if(terrainIndex == 1.0){
+     activeTerrainTexture = texture2D(terrainTextures[1],  vPosition.xz * textureSamplingRate);
+  }
+  else if(terrainIndex == 2.0){
+    activeTerrainTexture = texture2D(terrainTextures[2],  vPosition.xz * textureSamplingRate);
+  }
+  else if(terrainIndex == 3.0){
+    activeTerrainTexture = texture2D(terrainTextures[3],  vPosition.xz * textureSamplingRate);
+  }
+  return (activeTerrainTexture * colorValueForThisChannel);
+}
 
 void main(void) {
-  gl_FragColor = vec4(vColor);
+  // World values
+  vec3 positionWorld = vec3(world * vec4(vPosition, 1.0));
+  vec3 normalWorldN = normalize(vec3(world * vec4(vNormal, 0.0)));
+  vec3 viewDirectionWorldN = normalize(cameraPosition - positionWorld);
+
+  // Light
+  vec3 lightVectorN = normalize(lightPosition - positionWorld);
+  vec3 ambientColor = ambientStrength * lightColor;
+  // diffuse
+  float ndl = max(0., dot(normalWorldN, lightVectorN));
+
+  // get color for the three color chanels
+  vec4 color_red = GetTerrainColor(0);
+  vec4 color_blue = GetTerrainColor(1);
+  vec4 color_green = GetTerrainColor(2);
+
+  // calculate final color value
+  vec4 finalColor = color_red + color_green + color_blue;
+
+  gl_FragColor = vec4((ndl + ambientColor),1.0) * finalColor;
 }

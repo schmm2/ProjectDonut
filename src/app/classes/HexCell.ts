@@ -3,6 +3,9 @@ import { HexDirection } from '../enums/HexDirection.enum';
 import { HexCoordinates } from './HexCoordinates';
 import { HexDirectionExtension } from './HexDirectionExtension';
 import { HexMetrics } from './HexMetrics';
+import { EdgeVertices } from './EdgeVertices';
+import { ThinSprite } from 'babylonjs/Sprites/thinSprite';
+import { float } from 'babylonjs/types';
 
 export class HexCell {
   public mesh;
@@ -20,6 +23,12 @@ export class HexCell {
   public distance;
   public color: BABYLON.Color3;
   public colors: BABYLON.Color3[] = [];
+  private terrainTypes: BABYLON.Vector3[] = [];
+  public terrainTypeIndex: number;
+
+  static color1 = new BABYLON.Color3(1, 0, 0);
+  static color2 = new BABYLON.Color3(0, 1, 0);
+  static color3 = new BABYLON.Color3(0, 0, 1);
 
   distanceTo(otherCell) {
     return this.center.x - otherCell.center.x;
@@ -62,6 +71,20 @@ export class HexCell {
     this.indices.push(verticesLength);
     this.indices.push(verticesLength + 1);
     this.indices.push(verticesLength + 2);
+  }
+
+  // per vertice one type
+  addTriangleTerrainTypes(types: BABYLON.Vector3) {
+    this.terrainTypes.push(types);
+    this.terrainTypes.push(types);
+    this.terrainTypes.push(types);
+  }
+
+  addQuadTerrainTypes(types: BABYLON.Vector3) {
+    this.terrainTypes.push(types);
+    this.terrainTypes.push(types);
+    this.terrainTypes.push(types);
+    this.terrainTypes.push(types);
   }
 
   addQuadColorDouble(c1: BABYLON.Color3, c2: BABYLON.Color3) {
@@ -159,9 +182,9 @@ export class HexCell {
     // console.log(v2);
 
     // connection bridge contains 3 quads
-    this.triangulateEdgeSlope(v1, e1, cell, v3, e3, neighbor);
-    this.triangulateEdgeSlope(e1, e2, cell, e3, e4, neighbor);
-    this.triangulateEdgeSlope(e2, v2, cell, e4, v4, neighbor);
+    this.triangulateEdgeSlope(v1, e1, cell, v3, e3, neighbor, HexCell.color1, HexCell.color2);
+    this.triangulateEdgeSlope(e1, e2, cell, e3, e4, neighbor, HexCell.color1, HexCell.color2);
+    this.triangulateEdgeSlope(e2, v2, cell, e4, v4, neighbor, HexCell.color1, HexCell.color2);
 
     let nextNeighbor = cell.getNeighbor(HexDirectionExtension.next(direction));
 
@@ -170,6 +193,7 @@ export class HexCell {
       return;
     }
 
+    
     // add corner triangles
     // Explenation from Tutorial: 
     // Because three cells share one triangular connection, we only need to add them for two connections. So just NE and E will do.
@@ -180,33 +204,35 @@ export class HexCell {
 
       if (cell.elevation <= neighbor.elevation) {
         if (cell.elevation <= nextNeighbor.elevation) {
-          this.triangulateCorner(v2, cell, v4, neighbor, v5, nextNeighbor);
+          this.triangulateCorner(v2, cell, v4, neighbor, v5, nextNeighbor, HexCell.color1, HexCell.color2, HexCell.color3);
         }
         else {
-          this.triangulateCorner(v5, nextNeighbor, v2, cell, v4, neighbor);
+          this.triangulateCorner(v5, nextNeighbor, v2, cell, v4, neighbor, HexCell.color1, HexCell.color2, HexCell.color3);
         }
       }
       else if (neighbor.elevation <= nextNeighbor.elevation) {
-        this.triangulateCorner(v4, neighbor, v5, nextNeighbor, v2, cell);
+        this.triangulateCorner(v4, neighbor, v5, nextNeighbor, v2, cell, HexCell.color1, HexCell.color2, HexCell.color3);
       }
       else {
-        this.triangulateCorner(v5, nextNeighbor, v2, cell, v4, neighbor);
+        this.triangulateCorner(v5, nextNeighbor, v2, cell, v4, neighbor, HexCell.color1, HexCell.color2, HexCell.color3);
       }
     }
   }
 
   triangulateEdgeSlope(
     beginLeft: BABYLON.Vector3, beginRight: BABYLON.Vector3, beginCell: HexCell,
-    endLeft: BABYLON.Vector3, endRight: BABYLON.Vector3, endCell: HexCell
+    endLeft: BABYLON.Vector3, endRight: BABYLON.Vector3, endCell: HexCell,
+    color1: BABYLON.Color3, color2: BABYLON.Color3,
   ) {
+    let t1 = beginCell.terrainTypeIndex;
+    let t2 = endCell.terrainTypeIndex;
 
     // first quads row
     let v3 = HexMetrics.TerraceLerp(beginLeft, endLeft, 1.0);
     let v4 = HexMetrics.TerraceLerp(beginRight, endRight, 1.0);
-    let c2 = HexMetrics.TerraceLerpColor(beginCell.color, endCell.color, 1.0);
+    let c2 = HexMetrics.TerraceLerpColor(color1, color2, 1.0);
 
-    this.addQuad(beginLeft, beginRight, v3, v4);
-    this.addQuadColorDouble(beginCell.color, c2);
+    this.triangulateEdgeSlopePart(beginLeft, beginRight, v3, v4, color1, t1, c2, t2);
 
     // quad rows in between
     for (let i = 2.0; i < HexMetrics.terraceSteps; i++) {
@@ -217,47 +243,71 @@ export class HexCell {
 
       v3 = HexMetrics.TerraceLerp(beginLeft, endLeft, i);
       v4 = HexMetrics.TerraceLerp(beginRight, endRight, i);
-      c2 = HexMetrics.TerraceLerpColor(beginCell.color, endCell.color, i);
+      c2 = HexMetrics.TerraceLerpColor(color1, color2, i);
 
-      this.addQuad(v1, v2, v3, v4);
-      this.addQuadColorDouble(c1, c2);
+      this.triangulateEdgeSlopePart(v1, v2, v3, v4, c1, t1, c2, t2);
     }
 
     // last quads row
-    this.addQuad(v3, v4, endLeft, endRight);
-    this.addQuadColorDouble(c2, endCell.color);
+    this.triangulateEdgeSlopePart(v3, v4, endLeft, endRight, c2, t1, color2, t2);
+  }
+
+  triangulateEdgeSlopePart(
+    v1: BABYLON.Vector3,
+    v2: BABYLON.Vector3,
+    v3: BABYLON.Vector3,
+    v4: BABYLON.Vector3,
+    c1: BABYLON.Color3,
+    type1: any,
+    c2: BABYLON.Color3,
+    type2: any,
+    hasRoad: Boolean = false
+  ) {
+    this.addQuad(v1, v2, v3, v4);
+    this.addQuadColorDouble(c1, c2);
+
+    let types = new BABYLON.Vector3(type1, type2, type1);
+    this.addQuadTerrainTypes(types);
+
+    /*if (hasRoad) {
+      TriangulateRoadSegment(e1.v2, e1.v3, e1.v4, e2.v2, e2.v3, e2.v4);
+    }*/
   }
 
   triangulateCorner(
     begin: BABYLON.Vector3, beginCell: HexCell,
     left: BABYLON.Vector3, leftCell: HexCell,
     right: BABYLON.Vector3, rightCell: HexCell,
+    color1: BABYLON.Color3, color2: BABYLON.Color3, color3: BABYLON.Color3
   ) {
+    // bottom -> red, left -> green, right -> blue
     let v5 = null;
     let v6 = null;
     let v7 = null;
     let v8 = null;
 
     // center color
-    let c5 = HexMetrics.mix3Colors(beginCell.color, leftCell.color, rightCell.color);
+    let c5 = HexMetrics.mix3Colors(color1, color2, color3);
     let c6 = null;
     let c7 = null;
     let c8 = null;
-    let c9 = HexMetrics.TerraceLerpColor(leftCell.color, rightCell.color, 1.0);
-    let c10 = HexMetrics.TerraceLerpColor(leftCell.color, rightCell.color, 2.0);
-    let c11 = HexMetrics.TerraceLerpColor(leftCell.color, rightCell.color, 3.0);
-    let c12 = HexMetrics.TerraceLerpColor(leftCell.color, rightCell.color, 4.0);
-    let c13 = HexMetrics.TerraceLerpColor(leftCell.color, rightCell.color, 5.0);
+    let c9 = HexMetrics.TerraceLerpColor(color2, color3, 1.0);
+    let c10 = HexMetrics.TerraceLerpColor(color2, color3, 2.0);
+    let c11 = HexMetrics.TerraceLerpColor(color2, color3, 3.0);
+    let c12 = HexMetrics.TerraceLerpColor(color2, color3, 4.0);
+    let c13 = HexMetrics.TerraceLerpColor(color2, color3, 5.0);
 
     // first row, start triangle, at the bottom
     let v3 = HexMetrics.TerraceLerp(begin, left, 1.0);
     let v4 = HexMetrics.TerraceLerp(begin, right, 1.0);
 
-    let c3 = HexMetrics.TerraceLerpColor(beginCell.color, leftCell.color, 1.0);
-    let c4 = HexMetrics.TerraceLerpColor(beginCell.color, rightCell.color, 1.0);
+    let c3 = HexMetrics.TerraceLerpColor(color1, color2, 1.0);
+    let c4 = HexMetrics.TerraceLerpColor(color1, color3, 1.0);
 
     this.addTriangle(begin, v3, v4);
-    this.addTriangleColor(beginCell.color, c3, c4);
+    this.addTriangleColor(color1, c3, c4);
+    let types = new BABYLON.Vector3(beginCell.terrainTypeIndex, leftCell.terrainTypeIndex, rightCell.terrainTypeIndex);
+    this.addTriangleTerrainTypes(types);
 
     for (let q = 2.0; q <= HexMetrics.terraceSteps; q++) {
       let v1 = new BABYLON.Vector3(v3.x, v3.y, v3.z);
@@ -268,14 +318,16 @@ export class HexCell {
       v3 = HexMetrics.TerraceLerp(begin, left, q);
       v4 = HexMetrics.TerraceLerp(begin, right, q);
 
-      c3 = HexMetrics.TerraceLerpColor(beginCell.color, leftCell.color, q);
-      c4 = HexMetrics.TerraceLerpColor(beginCell.color, rightCell.color, q);
+      c3 = HexMetrics.TerraceLerpColor(color1, color2, q);
+      c4 = HexMetrics.TerraceLerpColor(color1, color3, q);
 
       // add Quad Rows
       // all up to the last 3 rows
       if (q <= HexMetrics.terraceSteps - 3) {
         this.addQuad(v1, v2, v3, v4);
         this.addQuadColor(c1, c2, c3, c4);
+        let types = new BABYLON.Vector3(beginCell.terrainTypeIndex, leftCell.terrainTypeIndex, rightCell.terrainTypeIndex);
+        this.addQuadTerrainTypes(types);
       }
 
       // third last row, all triangles
@@ -290,6 +342,11 @@ export class HexCell {
         this.addTriangleColor(c1, c3, c5); // left
         this.addTriangleColor(c5, c2, c1); // middle
         this.addTriangleColor(c2, c5, c4); // right
+
+        let types = new BABYLON.Vector3(beginCell.terrainTypeIndex, leftCell.terrainTypeIndex, rightCell.terrainTypeIndex);
+        this.addTriangleTerrainTypes(types);
+        this.addTriangleTerrainTypes(types);
+        this.addTriangleTerrainTypes(types);
       }
 
       // second last row
@@ -311,12 +368,19 @@ export class HexCell {
         this.addTriangleColor(c1, c3, c6);
         this.addTriangleColor(c8, c4, c2);
 
+        let types = new BABYLON.Vector3(beginCell.terrainTypeIndex, leftCell.terrainTypeIndex, rightCell.terrainTypeIndex);
+        this.addTriangleTerrainTypes(types);
+        this.addTriangleTerrainTypes(types);
+
         // quads
         this.addQuad(v1, v5, v6, v7); // left
         this.addQuad(v5, v2, v7, v8); // right
 
         this.addQuadColor(c1, c5, c6, c7);
         this.addQuadColor(c5, c2, c7, c8);
+
+        this.addQuadTerrainTypes(types);
+        this.addQuadTerrainTypes(types);
       }
 
       // last row
@@ -333,6 +397,10 @@ export class HexCell {
         this.addTriangleColor(c1, c3, c9);
         this.addTriangleColor(c2, c13, c4);
 
+        let types = new BABYLON.Vector3(beginCell.terrainTypeIndex, leftCell.terrainTypeIndex, rightCell.terrainTypeIndex);
+        this.addTriangleTerrainTypes(types);
+        this.addTriangleTerrainTypes(types);
+
         this.addQuad(v8, v2, v12, v13);
         this.addQuad(v7, v8, v11, v12);
         this.addQuad(v6, v7, v10, v11);
@@ -342,14 +410,19 @@ export class HexCell {
         this.addQuadColor(c7, c8, c11, c12);
         this.addQuadColor(c6, c7, c10, c11);
         this.addQuadColor(c1, c6, c9, c10);
+
+        this.addQuadTerrainTypes(types);
+        this.addQuadTerrainTypes(types);
+        this.addQuadTerrainTypes(types);
+        this.addQuadTerrainTypes(types);      
       }
     }
   }
 
-  triangulate() {
+  triangulate(engine) {
     // hexagon is separated in 6 pieces
     for (let i = 0; i < 6; i++) {
-      this.triangulateInner(i, this);
+      this.triangulateInner(i, this, this.terrainTypeIndex);
     }
 
     // merge verticedata to one single flat array
@@ -357,6 +430,18 @@ export class HexCell {
       let verticeArrayRaw = [verticeArray.x, verticeArray.y, verticeArray.z];
       this.positions = this.positions.concat(verticeArrayRaw);
     })
+
+    // merge verticedata to one single flat array
+    let terrainTypesFinal = [];
+    this.terrainTypes.forEach(terrainTypeArrayElement => {
+      //console.log(terrainTypeArrayElement);
+      //console.log(terrainTypeArrayElement.x.toFixed(1))
+      terrainTypesFinal.push(terrainTypeArrayElement.x);
+      terrainTypesFinal.push(terrainTypeArrayElement.y);
+      terrainTypesFinal.push(terrainTypeArrayElement.z);
+    })
+    //console.log(terrainTypesFinal);
+
 
     // merge color data to one single flat array
     //console.log(this.colors[0]);
@@ -378,16 +463,21 @@ export class HexCell {
 
     //console.log(colorsFinal);
     //console.log(this.positions);
+    //console.log(terrainTypesFinal);
+
+    var terrainTypesRefBuffer = new BABYLON.Buffer(engine, terrainTypesFinal, false);
+    this.mesh.setVerticesBuffer(terrainTypesRefBuffer.createVertexBuffer("terrainTypes", 0, 3, 3));
 
     vertexData.colors = colorsFinal;
     vertexData.positions = this.positions;
     vertexData.indices = this.indices;
     vertexData.normals = normals;
+    //vertexData.uvs2 = terrainTypesFinal;
 
     vertexData.applyToMesh(this.mesh, true);
   }
 
-  triangulateInner(direction: HexDirection, cell: HexCell) {
+  triangulateInner(direction: HexDirection, cell: HexCell, terrainType: number) {
     // inner vertices
     let v1 = this.center.add(HexMetrics.getFirstSolidCorner(direction));
     let v2 = this.center.add(HexMetrics.getSecondSolidCorner(direction));
@@ -396,27 +486,20 @@ export class HexCell {
     let e2 = BABYLON.Vector3.Lerp(v1, v2, 2.0 / 3.0);
 
     // add inner triangles, 3 pieces
-    this.addTriangle(
-      this.center,
-      v1,
-      e1
-    )
+    this.addTriangle(this.center, v1, e1)
+    this.addTriangle(this.center, e1, e2)
+    this.addTriangle(this.center, e2, v2)
 
-    this.addTriangle(
-      this.center,
-      e1,
-      e2
-    )
+    // add color
+    this.addTriangleColor(HexCell.color1, HexCell.color1, HexCell.color1);
+    this.addTriangleColor(HexCell.color1, HexCell.color1, HexCell.color1);
+    this.addTriangleColor(HexCell.color1, HexCell.color1, HexCell.color1);
 
-    this.addTriangle(
-      this.center,
-      e2,
-      v2
-    )
-
-    this.addTriangleColor(this.color, this.color, this.color);
-    this.addTriangleColor(this.color, this.color, this.color);
-    this.addTriangleColor(this.color, this.color, this.color);
+    // add terrainTypes
+    let types = new BABYLON.Vector3(terrainType, terrainType, terrainType);
+    this.addTriangleTerrainTypes(types);
+    this.addTriangleTerrainTypes(types);
+    this.addTriangleTerrainTypes(types);
 
     if (cell.isMountainCell) {
       if (cell.neighbors[direction]) {
