@@ -6,6 +6,7 @@ attribute vec3 normal;
 attribute vec2 uv;
 attribute vec3 uv2;
 attribute vec3 terrainTypes;
+attribute float verticeHighlight;
 
 // Uniforms
 uniform mat4 worldViewProjection;
@@ -18,6 +19,7 @@ varying vec2 vUv;
 varying vec3 vUv2;
 varying vec4 vColor;
 varying vec3 vTerrainTypes;
+varying float vVerticeHighlight;
 
 
 #ifdef VERTEXCOLOR
@@ -35,7 +37,9 @@ void main() {
   //vTerrainIndex = gl_VertexID;
   //vVertexPosition = position;
   vTerrainTypes = terrainTypes;
-  
+
+  vVerticeHighlight = verticeHighlight;
+
   // Vertex color
   #ifdef VERTEXCOLOR
 	  vColor = color;

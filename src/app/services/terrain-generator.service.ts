@@ -84,6 +84,18 @@ export class TerrainGeneratorService {
         scene
       );
 
+      const gridTexture = new BABYLON.Texture(
+        "assets/terrain/textures/grid.png",
+        scene
+      );
+
+      let generatedTerrainVertices = generateTerrain.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+      let highlightVertice = [...Array(generatedTerrainVertices.length)].map(x => 0);
+
+
+      var terrainTypesRefBuffer = new BABYLON.Buffer(engine, highlightVertice, false);
+      generateTerrain.setVerticesBuffer(terrainTypesRefBuffer.createVertexBuffer("verticeHighlight", 0, 1, 1));
+
       const terrainMaterial = new BABYLON.ShaderMaterial(
         "terrainMaterial",
         scene,
@@ -92,17 +104,79 @@ export class TerrainGeneratorService {
           fragmentElement: "./assets/shaders/terrain/terrain",
         },
         {
-          attributes: ["position", "uv", "normal", "terrainTypes"],
+          attributes: ["position", "uv", "normal", "terrainTypes", "verticeHighlight"],
           uniforms: ["worldViewProjection", "world", "worldView"],
         }
       );
 
+      terrainMaterial.setTexture("gridTexture", gridTexture);
       terrainMaterial.setTextureArray("terrainTextures", [rockTexture, snowTexture, grassTexture, sandTexture]);
 
       terrainMaterial.setVector3("cameraPosition", scene.activeCamera.position);
       terrainMaterial.setVector3("lightPosition", lightPosition);
       terrainMaterial.setVector3("lightColor", lightColor);
 
+
+
+      scene.onPointerDown = function (evt, pickResult) {
+        console.log(pickResult);
+        console.log(evt)
+        var pickedMesh = pickResult.pickedMesh;
+
+        if (pickedMesh.uniqueId == generateTerrain.uniqueId) {
+
+          var vertices = pickedMesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+          console.log(vertices.length);
+
+          console.log("TERRAIN");
+          var pickedMeshIndices = pickedMesh.getIndices();
+          // pickedMeshIndices[pickResult.faceId * 3] -> vertex number,not the index itself
+          var vertexIndex = pickedMeshIndices[pickResult.faceId * 3];
+
+          // create vertex buffer
+          let highlightVertice = [...Array(vertices.length / 3.0)].map(x => 0);
+
+          console.log(pickedMeshIndices);
+          console.log(vertexIndex);
+          console.log(pickedMesh.flatPlaneVerticeStartOffset);
+
+          
+          // i = hexCell number in this mesh
+          for (let i = 0; i < pickedMesh.flatPlaneVerticeStartOffset.length; i++) {
+            // we selected a verticeIndex that matches in a range of flatPlane vertice indexes
+            if (vertexIndex > pickedMesh.flatPlaneVerticeStartOffset[i] && vertexIndex < (pickedMesh.flatPlaneVerticeStartOffset[i] + pickedMesh.flatPlaneVerticeCount[i])) {
+              let offset = pickedMesh.flatPlaneVerticeStartOffset[i];
+              console.log("YOU HIT A PLANE");
+              console.log(vertexIndex);
+              console.log(i);
+
+              // mark every vertice of the plane as "highlited"
+              // * 3 because every vertice contains 3 values
+              for (let p = 0; p < (pickedMesh.flatPlaneVerticeCount[i]); p++) {
+                highlightVertice[offset + p] = 1.0;
+                //console.log(offset + p);
+              }
+              //console.log(i);
+            }
+          }
+          /*
+          // build mode
+          for (let i = 0; i < pickedMesh.flatPlaneVerticeStartOffset.length; i++) {
+            let offset = pickedMesh.flatPlaneVerticeStartOffset[i];
+
+            // mark every vertice of the plane as "highlited"
+            // * 3 because every vertice contains 3 values
+            for (let p = 0; p < (pickedMesh.flatPlaneVerticeCount[i]); p++) {
+              highlightVertice[offset + p] = 1.0;
+              //console.log(offset + p);
+            }
+          }*/
+
+          console.log(highlightVertice);
+          var terrainTypesRefBuffer = new BABYLON.Buffer(engine, highlightVertice, false);
+          pickedMesh.setVerticesBuffer(terrainTypesRefBuffer.createVertexBuffer("verticeHighlight", 0, 1, 1));
+        }
+      };
 
       generateTerrain.material = terrainMaterial;
       this.generatedTerrainSubject.next(generateTerrain);

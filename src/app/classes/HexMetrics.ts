@@ -9,6 +9,10 @@ export class HexMetrics {
   private static noiseTextureSize;
   private static noiseTexturePixels;
 
+  public static elevationStep = 5.0;
+  public static solidFactor = 0.5;
+  public static blendFactor = 1.0 - HexMetrics.solidFactor;
+
   // removed terrasesperslope as we do not want terraces -> we perturb the vertices to get an uneven look
   public static terraceSteps = 6;
   public static horizontalTerraceStepSize = 1.0 / HexMetrics.terraceSteps;
@@ -94,9 +98,6 @@ export class HexMetrics {
     new BABYLON.Vector3(0.0, 0.0, HexMetrics.outerRadius)
   ];
 
-  public static elevationStep = 5.0;
-  public static solidFactor = 0.65;
-  public static blendFactor = 1.0 - HexMetrics.solidFactor;
 
   public static getFirstSolidCorner(direction: HexDirection) {
     //console.log(direction);

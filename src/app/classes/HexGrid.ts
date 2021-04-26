@@ -22,10 +22,12 @@ export class HexGrid {
   private heightMapStepsHeight;
   private heightMapPixels;
   private writer;
-  public colors = [new BABYLON.Color3(1,0,0),new BABYLON.Color3(0,1,0), new BABYLON.Color3(0,0,1)];
-  public defaultColor = new BABYLON.Color3(1,1,0);
+  public colors = [new BABYLON.Color3(1, 0, 0), new BABYLON.Color3(0, 1, 0), new BABYLON.Color3(0, 0, 1)];
+  public defaultColor = new BABYLON.Color3(1, 1, 0);
 
-  
+  public flatPlaneVerticeCount = [];
+  public flatPlaneVerticeStartOffset = [];
+
   private enableRTT = true;
 
   private stepHeight = 0.3;
@@ -41,7 +43,7 @@ export class HexGrid {
     }
   }
 
-  getCells(){
+  getCells() {
     return this.cells;
   }
 
@@ -87,6 +89,8 @@ export class HexGrid {
     let mountainMeshed = [];
     let allTerrainTypes = [];
 
+    let flatPlaneVertexOffset = 0;
+
     // triangulate
     this.cells.forEach((cell) => {
       // console.log("TRIANGULATE CELL: " + cell.name);
@@ -105,27 +109,38 @@ export class HexGrid {
 
       // hex mountain cells are not rendered 
       if (!cell.isMountainCell) {
-       
+
       }
       tmpMeshes.push(cell.mesh);
-    });
 
-    console.log(mountainCells);
-    
+      // build highliht vertices buffer
+      this.flatPlaneVerticeCount.push(54);
+      this.flatPlaneVerticeStartOffset.push(flatPlaneVertexOffset);
+      // set offset for next cell 
+      flatPlaneVertexOffset += cell.vertices.length;
+      
+      
+    });
+    console.log(this.flatPlaneVerticeCount);
+    console.log(this.flatPlaneVerticeStartOffset);
+    console.log(allTerrainTypes);
+
+    //console.log(mountainCells);
+
     // build mountains
     mountainCells.forEach((cell) => {
-      console.log(cell);
+      //console.log(cell);
       let out = [];
       // we found a lonely mountain
       if (cell.mountainPath.length == 6 && cell.isMountainEdgeCell) {
         let mountainName = "mountain_" + cell.name;
-        console.log(cell.mountainPath)
+        //console.log(cell.mountainPath)
         let tmp1 = [];
         let tmp2 = [];
 
-        console.log(JSON.stringify(cell.mountainPath))
+        //console.log(JSON.stringify(cell.mountainPath))
 
-        for (let i = 0; i < cell.mountainPath.length /2; i++) {
+        for (let i = 0; i < cell.mountainPath.length / 2; i++) {
           if (cell.mountainPath[i] && cell.mountainPath[i].vertices) {
             cell.mountainPath[i].vertices.forEach(element => {
               if (element) {
@@ -136,14 +151,14 @@ export class HexGrid {
                 y: element.y,
                 z: element.z
               }
-            
+
               out.push(newObject);
-     
+
             });
           }
         }
 
-        
+
         for (let e = cell.mountainPath.length / 2; e < cell.mountainPath.length; e++) {
           if (cell.mountainPath[e] && cell.mountainPath[e].vertices) {
             cell.mountainPath[e].vertices.forEach(element => {
@@ -154,7 +169,7 @@ export class HexGrid {
                   y: element.y,
                   z: element.z
                 }
-              
+
                 out.push(newObject);
               }
             });
@@ -167,7 +182,7 @@ export class HexGrid {
 
         let mountainMesh = null;
         if (tmp1.length == tmp2.length) {
-          mountainMesh = BABYLON.MeshBuilder.CreateRibbon(mountainName, { pathArray: [tmp1, tmp2], updatable: true}, this.scene);
+          mountainMesh = BABYLON.MeshBuilder.CreateRibbon(mountainName, { pathArray: [tmp1, tmp2], updatable: true }, this.scene);
           mountainMesh.position = new BABYLON.Vector3(-200, 6, -200);
           mountainMesh.material = new BABYLON.StandardMaterial("test", this.scene);
           mountainMesh.material.wireframe = true;
@@ -200,9 +215,14 @@ export class HexGrid {
       }
     });
 
-    this.mergedMesh = BABYLON.Mesh.MergeMeshes(tmpMeshes, true, true);
     
-    console.log(allTerrainTypes);
+    this.mergedMesh = BABYLON.Mesh.MergeMeshes(tmpMeshes, true, true);
+
+    // store flat plane vertice information
+    this.mergedMesh.flatPlaneVerticeCount = this.flatPlaneVerticeCount;
+    this.mergedMesh.flatPlaneVerticeStartOffset = this.flatPlaneVerticeStartOffset;
+
+    //console.log(allTerrainTypes);
     var terrainTypesRefBuffer = new BABYLON.Buffer(this.engine, allTerrainTypes, false);
     this.mergedMesh.setVerticesBuffer(terrainTypesRefBuffer.createVertexBuffer("terrainTypes", 0, 3, 3));
 

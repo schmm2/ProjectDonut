@@ -12,6 +12,7 @@ uniform vec3 lightColor;
 uniform vec3 cameraPosition;
 
 uniform sampler2D terrainTextures[4];
+uniform sampler2D gridTexture;
 
 // Varying
 varying vec3 vPosition;
@@ -22,11 +23,13 @@ varying vec4 vColor;
 
 // attributes
 attribute vec3 terrainTypes;
+varying float vVerticeHighlight;
 
 // constants
 float textureSamplingRate = 0.05;
 float ambientStrength = 1.0;
 float lightStrength = 0.9;
+vec4 highLightColor = vec4(0.3,0.5,0.8,1.0);
 
 vec4 GetTerrainColor (int index) {
   float terrainIndex = 0.0;
@@ -78,8 +81,28 @@ void main(void) {
   vec4 color_blue = GetTerrainColor(1);
   vec4 color_green = GetTerrainColor(2);
 
+  /*float highlightx = round(vVerticeHighlight.x * 1.0);
+  
+  float highlighty = round(vVerticeHighlight.y * 1.0);
+  float highlightz = round(vVerticeHighlight.z * 1.0);*/
+  float highlightx = round(vVerticeHighlight * 1.0);
+
+  vec4 highlightColor = vec4(vec3(highlightx),1.0) * 0.1;
+
   // calculate final color value
   vec4 finalColor = color_red + color_green + color_blue;
+
+  if(highlightx == 1.0){
+    
+  }
+  finalColor = finalColor - highlightColor;
+  
+ 
+  // grid
+  vec2 gridUV = vPosition.xz;
+	gridUV.x *= 1.0 / (4.0 * 8.66025404);
+	gridUV.y *= 1.0 / (2.0 * 15.0);
+  //vec4 gridColor = texture2D(gridTexture, gridUV);
 
   gl_FragColor = vec4((ndl + ambientColor),1.0) * finalColor;
 }

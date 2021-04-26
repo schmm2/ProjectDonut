@@ -131,20 +131,19 @@ export class EngineService {
 
     // ***** Test-Objects ***** 
     // Our built-in 'sphere' shape.
-    var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 100, segments: 32 }, this.scene);
+   /* var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 100, segments: 32 }, this.scene);
 
     // Move the sphere upward 1/2 its height
     sphere.position.y = 0;
-    sphere.visibility = 0;
-
+    sphere.visibility = 0;/*
 
     // Our built-in 'sphere' shape.
-    var sphere2 = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 50, segments: 32 }, this.scene);
+    /*var sphere2 = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 50, segments: 32 }, this.scene);
 
     // Move the sphere upward 1/2 its height
     sphere2.position.y = -0
     sphere2.position.x = -100;
-    sphere2.visibility = 0;
+    sphere2.visibility = 0;*/
 
     // ***** Water-Plane *****
     const worldSize = new BABYLON.Vector2(500, 500);
@@ -161,12 +160,12 @@ export class EngineService {
     });
 
     // Reflection
-    this.waterPlaneObject.reflectionRTT.renderList.push(sphere);
+    //this.waterPlaneObject.reflectionRTT.renderList.push(sphere);
     this.waterPlaneObject.reflectionRTT.renderList.push(skyBox);
     // Refraction
-    this.waterPlaneObject.refractionRTT.renderList.push(sphere);
+    //this.waterPlaneObject.refractionRTT.renderList.push(sphere);
 
-    this.renderer.getDepthMap().renderList = [sphere];
+    //this.renderer.getDepthMap().renderList = [sphere];
 
 
     // init injector services

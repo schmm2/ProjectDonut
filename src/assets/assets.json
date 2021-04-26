@@ -25,6 +25,10 @@
       {
         "name": "terrainNoise",
         "fileName": "terrainNoise.png"
+      },
+      {
+        "name": "grid",
+        "fileName": "grid.png"
       }
     ]
   },

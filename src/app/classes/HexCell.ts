@@ -6,6 +6,7 @@ import { HexMetrics } from './HexMetrics';
 import { EdgeVertices } from './EdgeVertices';
 import { ThinSprite } from 'babylonjs/Sprites/thinSprite';
 import { float } from 'babylonjs/types';
+import { dir } from 'node:console';
 
 export class HexCell {
   public mesh;
@@ -27,6 +28,7 @@ export class HexCell {
   public terrainTypeIndex: number;
   private terrainTypesFlatArray = [];
 
+
   static color1 = new BABYLON.Color3(1, 0, 0);
   static color2 = new BABYLON.Color3(0, 1, 0);
   static color3 = new BABYLON.Color3(0, 0, 1);
@@ -35,7 +37,7 @@ export class HexCell {
     return this.center.x - otherCell.center.x;
   }
 
-  public getTerrainTypes(){
+  public getTerrainTypes() {
     return this.terrainTypesFlatArray;
   }
 
@@ -58,7 +60,7 @@ export class HexCell {
     cell.neighbors[HexDirectionExtension.opposite(direction)] = this;
   }
 
-  addTriangleColor(c1: BABYLON.Color3, c2: BABYLON.Color3, c3: BABYLON.Color3) {
+  addTriangleColor(c1: BABYLON.Color3, c2: BABYLON.Color3, c3: BABYLON.Color3,) {
     this.colors.push(c1);
     this.colors.push(c2);
     this.colors.push(c3);
@@ -145,23 +147,23 @@ export class HexCell {
 
     // im a normal hex cell and my neighbor is a mountain cell
     //if (!cell.isMountainCell && neighbor.isMountainCell) {
-      /*
-      // store vertices next to mountain, they belong to the mountain path
-      let mountainPatObject = {
-        vertices: [
-          v2,
-          v1
-        ]
-      };
-     
-      let oppositeDirection = HexDirectionExtension.opposite(direction);
-      console.log("direction is" + direction, " opposite"+ oppositeDirection );
-      console.log(mountainPatObject);
-      console.log(cell.name);
-      console.log(neighbor.name);
-      neighbor.mountainPath[oppositeDirection] = mountainPatObject;
-      neighbor.isMountainEdgeCell = true;*/
-      //return;
+    /*
+    // store vertices next to mountain, they belong to the mountain path
+    let mountainPatObject = {
+      vertices: [
+        v2,
+        v1
+      ]
+    };
+   
+    let oppositeDirection = HexDirectionExtension.opposite(direction);
+    console.log("direction is" + direction, " opposite"+ oppositeDirection );
+    console.log(mountainPatObject);
+    console.log(cell.name);
+    console.log(neighbor.name);
+    neighbor.mountainPath[oppositeDirection] = mountainPatObject;
+    neighbor.isMountainEdgeCell = true;*/
+    //return;
     //}
 
 
@@ -198,7 +200,7 @@ export class HexCell {
       return;
     }*/
 
-    
+
     // add corner triangles
     // Explenation from Tutorial: 
     // Because three cells share one triangular connection, we only need to add them for two connections. So just NE and E will do.
@@ -328,7 +330,7 @@ export class HexCell {
       if (q <= HexMetrics.terraceSteps - 3) {
         this.addQuad(v1, v2, v3, v4);
         this.addQuadColor(c1, c2, c3, c4);
-        
+
         this.addQuadTerrainTypes(types);
       }
 
@@ -413,7 +415,7 @@ export class HexCell {
         this.addQuadTerrainTypes(types);
         this.addQuadTerrainTypes(types);
         this.addQuadTerrainTypes(types);
-        this.addQuadTerrainTypes(types);      
+        this.addQuadTerrainTypes(types);
       }
     }
   }
@@ -423,6 +425,18 @@ export class HexCell {
     for (let i = 0; i < 6; i++) {
       this.triangulateInner(i, this, this.terrainTypeIndex);
     }
+
+    for (let direction = 0; direction <= HexDirection.SE; direction++) {
+      // inner vertices
+      let v1 = this.center.add(HexMetrics.getFirstSolidCorner(direction));
+      let v2 = this.center.add(HexMetrics.getSecondSolidCorner(direction));
+
+      let e1 = BABYLON.Vector3.Lerp(v1, v2, 1.0 / 3.0);
+      let e2 = BABYLON.Vector3.Lerp(v1, v2, 2.0 / 3.0);
+
+      this.triangulateConnection(direction, this, v1, e1, e2, v2);
+    }
+
 
     // merge verticedata to one single flat array
     this.vertices.forEach(verticeArray => {
@@ -457,7 +471,7 @@ export class HexCell {
     vertexData.positions = this.positions;
     vertexData.indices = this.indices;
     vertexData.normals = normals;
-   
+
     vertexData.applyToMesh(this.mesh, true);
   }
 
@@ -474,6 +488,7 @@ export class HexCell {
     this.addTriangle(this.center, e1, e2)
     this.addTriangle(this.center, e2, v2)
 
+
     // add color
     this.addTriangleColor(HexCell.color1, HexCell.color1, HexCell.color1);
     this.addTriangleColor(HexCell.color1, HexCell.color1, HexCell.color1);
@@ -486,55 +501,55 @@ export class HexCell {
     this.addTriangleTerrainTypes(types);
 
     //if (cell.isMountainCell) {
-      if (cell.neighbors[direction]) {
-        //if (!cell.neighbors[direction].isMountainCell) {
-          // build bridge
-          let bridge = HexMetrics.getBridge(direction);
-          // console.log(bridge);
-          // v3: upper left vector of bridge
-          let v3 = v1.add(bridge);
-          // v4: upper right vector of bridge
-          let v4 = v2.add(bridge);
-          v3.y = v4.y = cell.neighbors[direction].elevation;
+    if (cell.neighbors[direction]) {
+      //if (!cell.neighbors[direction].isMountainCell) {
+      // build bridge
+      let bridge = HexMetrics.getBridge(direction);
+      // console.log(bridge);
+      // v3: upper left vector of bridge
+      let v3 = v1.add(bridge);
+      // v4: upper right vector of bridge
+      let v4 = v2.add(bridge);
+      v3.y = v4.y = cell.neighbors[direction].elevation;
 
-          // calculate extra edges (splited hexagon side in 3 pieces => 4 vertices)
-          let e3 = BABYLON.Vector3.Lerp(v3, v4, 1.0 / 3.0);
-          let e4 = BABYLON.Vector3.Lerp(v3, v4, 2.0 / 3.0);
+      // calculate extra edges (splited hexagon side in 3 pieces => 4 vertices)
+      let e3 = BABYLON.Vector3.Lerp(v3, v4, 1.0 / 3.0);
+      let e4 = BABYLON.Vector3.Lerp(v3, v4, 2.0 / 3.0);
 
-          let mountainPatObject = {}
-          // found flat land remember vertices
-          if (direction > 2) {
-            mountainPatObject = {
-              vertices: [
-                this.perturb(v4),
-                this.perturb(e4),
-                this.perturb(e3),
-                this.perturb(v3)
-              ]
-            };
-            cell.mountainPath[HexDirectionExtension.mirrorAtXAxis(direction)] = mountainPatObject;
+      let mountainPatObject = {}
+      // found flat land remember vertices
+      if (direction > 2) {
+        mountainPatObject = {
+          vertices: [
+            this.perturb(v4),
+            this.perturb(e4),
+            this.perturb(e3),
+            this.perturb(v3)
+          ]
+        };
+        cell.mountainPath[HexDirectionExtension.mirrorAtXAxis(direction)] = mountainPatObject;
 
-          } else {
-            mountainPatObject = {
-              vertices: [
-                this.perturb(v3),
-                this.perturb(e3),
-                this.perturb(e4),
-                this.perturb(v4)
-              ]
-            };
-            cell.mountainPath[direction] = mountainPatObject;
-          }
+      } else {
+        mountainPatObject = {
+          vertices: [
+            this.perturb(v3),
+            this.perturb(e3),
+            this.perturb(e4),
+            this.perturb(v4)
+          ]
+        };
+        cell.mountainPath[direction] = mountainPatObject;
+      }
 
-          cell.isMountainEdgeCell = true;
-       // }
-      };
+      cell.isMountainEdgeCell = true;
+      // }
+    };
     //}
 
     // build bridges and edge triangle
-    if (direction <= HexDirection.SE) {
+    /*if (direction <= HexDirection.SE) {
       this.triangulateConnection(direction, this, v1, e1, e2, v2);
-    }
+    }*/
   }
 
   perturb(position: BABYLON.Vector3) {
